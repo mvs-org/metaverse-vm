@@ -1,0 +1,85 @@
+[package]
+name = "betelgeuse"
+version = "0.0.4"
+authors = ["MVS Core DEV Team"]
+license = "GPL-3.0-or-later"
+build = "build.rs"
+edition = "2018"
+
+[[bin]]
+name = "betelgeuse"
+path = "src/main.rs"
+
+[dependencies]
+futures = "0.3"
+log = "0.4"
+structopt = "0.3"
+codec = { package = "parity-scale-codec", version = "1.0.0", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+jsonrpc-core = "15.0.0"
+parking_lot = "0.10.0"
+
+sc-cli = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sc-rpc = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sp-keystore = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sc-keystore = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sp-core = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sp-api = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sp-blockchain = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sp-block-builder = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sc-rpc-api = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sp-timestamp = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sc-executor = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sc-service = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sp-inherents = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sc-transaction-pool = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sp-transaction-pool = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sc-network = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sc-consensus-pow = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sp-consensus = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sc-consensus = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sc-finality-grandpa = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sp-finality-grandpa = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sc-client-api = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sp-runtime = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+sc-basic-authorship = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+substrate-frame-rpc-system = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+pallet-transaction-payment-rpc = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+
+pallet-grandpa = { version = "2.0.0", git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b", default-features = false }
+pallet-session = { version = "2.0.0", git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b", default-features = false }
+pallet-authorship = { version = "2.0.0", git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b", default-features = false }
+
+pallet-rewards = { path = "frame/rewards" }
+pallet-eras = { path = "frame/eras" }
+betelgeuse-pow = { path = "pow" }
+betelgeuse-runtime = { path = "runtime" }
+betelgeuse-primitives = { path = "primitives" }
+
+# benchmarking
+frame-benchmarking = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+frame-benchmarking-cli = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+
+[build-dependencies]
+substrate-build-script-utils = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
+
+[features]
+default = []
+wasmtime = [
+	"sc-executor/wasmtime",
+	"sc-cli/wasmtime",
+	"sc-service/wasmtime",
+]
+runtime-benchmarks = [
+	"wasmtime",
+	"betelgeuse-runtime/runtime-benchmarks",
+]
+
+[workspace]
+members = [
+	"runtime",
+	"pow",
+	"frame/rewards",
+	"frame/eras",
+]

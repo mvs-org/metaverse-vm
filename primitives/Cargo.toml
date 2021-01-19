@@ -1,0 +1,15 @@
+[package]
+name = "betelgeuse-primitives"
+version = "2.4.0"
+authors = ["MVS"]
+license = "GPL-3.0-or-later"
+edition = "2018"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "1.0.0", default-features = false, features = ["derive"] }
+sp-core = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b", default-features = false }
+sp-api = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b", default-features = false }
+
+[features]
+default = ["std"]
+std = ["sp-core/std", "sp-api/std", "codec/std"]

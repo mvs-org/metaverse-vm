@@ -1,0 +1,13 @@
+[package]
+name = "betelgeuse-randomx-sys"
+description = "FFI bindings for RandomX"
+license = "GPL-3.0-or-later"
+version = "2.4.0"
+authors = ["Wei Tang <wei@that.world>"]
+edition = "2018"
+
+[dependencies]
+
+[build-dependencies]
+bindgen = "0.54"
+cmake = "0.1"
