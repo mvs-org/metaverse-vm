@@ -1,5 +1,6 @@
-# betelgeuse
+# betelgeuse - Alpha TestNet
 Hybrid PoW/PoS consensus node
+
 [![Discord](https://img.shields.io/discord/586902457053872148.svg)](https://discord.gg/qKMMzcx8)
 ## Build
 
