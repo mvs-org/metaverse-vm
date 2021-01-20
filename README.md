@@ -61,7 +61,7 @@ The syntax of the command to run a node and start mining is:
   
 *You only have to change your node name and your public key obtained in the previous step and you should start mining.
 
-#### Step 3 - check mining results
+#### Step 4 - check mining results
 You can check the node synchronization and other data using the Web wallet located at the following URL:  
 http://95.111.250.21:2028/
 
