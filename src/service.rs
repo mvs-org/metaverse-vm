@@ -307,7 +307,7 @@ pub fn new_full(
 								},
 								Ok(None) => (),
 								Err(err) => {
-									warn!("Mining failed: {:?}", err);
+									//warn!("Mining failed: {:?}", err);
 								},
 							}
 						} else {
