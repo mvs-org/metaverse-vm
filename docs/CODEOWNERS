@@ -1,0 +1,31 @@
+# Lists some code owners.
+#
+# A codeowner just oversees some part of the codebase. If an owned file is changed then the
+# corresponding codeowner receives a review request. An approval of the codeowner is
+# not required for merging a PR though.
+#
+# **This is pretty much an experiment at the moment**. Feel free to remove yourself at any time if
+# you do not want to receive review requests any longer.
+#
+# For details about syntax, see:
+# https://help.github.com/en/articles/about-code-owners
+# But here are some important notes:
+#
+# - Glob syntax is git-like, e.g. `/core` means the core directory in the root, unlike `core` which
+#   can be everywhere.
+# - Multiple owners are supported.
+# - Either handle (e.g, @AurevoirXavier) or email can be used. Keep in mind, that handles might work
+#   better because they are more recognizable on GitHub, you can use them for mentioning unlike
+#   an email.
+# - The latest matching rule, if multiple, takes precedence.
+
+/frame/bridge/ethereum/linear-relay/ @AurevoirXavier @clearloop @HackFisher
+/frame/bridge/ethereum/offchain/ @AurevoirXavier @yanganto
+/frame/bridge/ethereum/relay/ @AurevoirXavier @HackFisher @yanganto
+/frame/bridge/relay-authorities/ @AurevoirXavier
+/frame/bridge/relayer-game/ @AurevoirXavier @yanganto
+
+/primitives/array-bytes/ @AurevoirXavier
+/primitives/ethereum-primitives/ @AurevoirXavier @HackFisher
+/primitives/merkle-patricia-trie/ @HackFisher
+/primitives/relay/ @AurevoirXavier
