@@ -1,0 +1,63 @@
+[package]
+authors     = ["Metaverse <hello@mvs.org>"]
+description = "FRAME pallet to relay Ethereum header automactically"
+edition     = "2018"
+homepage    = "https://mvs.org/"
+license     = "GPL-3.0"
+name        = "hyperspace-ethereum-offchain"
+readme      = "README.md"
+repository  = "https://github.com/hyperspace-network/hyperspace-common/"
+version     = "1.3.0"
+
+[dependencies]
+# crates
+codec = { package = "parity-scale-codec", version = "1.3.5", default-features = false }
+# hyperspace
+array-bytes                    = { default-features = false, path = "../../../../primitives/array-bytes" }
+hyperspace-ethereum-linear-relay = { default-features = false, path = "../linear-relay" }
+hyperspace-support               = { default-features = false, path = "../../../../frame/support" }
+ethereum-primitives            = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
+# github
+rlp = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
+# substrate
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+
+[dev-dependencies]
+# crates
+serde_json = { version = "1.0.61" }
+# hyperspace
+hyperspace-balances   = { path = "../../../../frame/balances" }
+ethereum-primitives = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
+# substrate
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+
+[features]
+default = ["std"]
+
+std = [
+	"crates-std",
+	"hyperspace-std",
+	"github-std",
+	"substrate-std",
+]
+
+crates-std    = ["codec/std"]
+hyperspace-std  = [
+	"array-bytes/std",
+	"hyperspace-ethereum-linear-relay/std",
+	"hyperspace-support/std",
+	"ethereum-primitives/std",
+]
+github-std    = ["rlp/std"]
+substrate-std = [
+	"frame-support/std",
+	"frame-system/std",
+	"sp-core/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]

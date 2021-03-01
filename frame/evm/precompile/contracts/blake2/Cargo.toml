@@ -1,0 +1,37 @@
+[package]
+authors     = ["Metaverse <hello@mvs.org>"]
+description = "BLAKE2 precompiles for EVM pallet."
+edition     = "2018"
+homepage    = "https://mvs.org/"
+license     = "GPL-3.0"
+name        = "hyperspace-evm-precompile-blake2"
+readme      = "README.md"
+repository  = "https://github.com/hyperspace-network/hyperspace-common/"
+version     = "1.3.0"
+
+
+[dependencies]
+# crates
+evm                     = { default-features = false, git = "https://github.com/darwinia-network/evm.git", branch = "darwinia", features = ["with-codec"] }
+hyperspace-evm-primitives = { default-features = false, path = "../../../../../primitives/evm" }
+# substrate
+sp-core                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io                   = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+
+[features]
+default = ["std"]
+
+std = [
+	"crates-std",
+	"substrate-std",
+]
+
+crates-std = [
+	"evm/std",
+	"hyperspace-evm-primitives/std",
+]
+
+substrate-std = [
+	"sp-core/std",
+	"sp-io/std",
+]

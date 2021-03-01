@@ -1,5 +1,26 @@
-/**/target
+# Cross Compile
+wasm
+
+# IDE
+.idea
+.vscode
+.ignore
+
+# macOS
+.DS_Store
+
+# PM2
+.pm2.json
+
+# Release
+release/
+
+# Rust
 **/*.rs.bk
-/keys
-/data*
-/shell.nix
+**/target/
+.cargo-ok
+Cargo.toml.bak
+expand.rs
+
+# Js
+node_modules/

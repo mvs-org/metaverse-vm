@@ -1,0 +1,13 @@
+pub mod hyperspace_balances;
+pub mod hyperspace_democracy;
+pub mod hyperspace_elections_phragmen;
+pub mod hyperspace_staking;
+pub mod hyperspace_treasury;
+pub mod frame_system;
+pub mod pallet_collective;
+pub mod pallet_im_online;
+pub mod pallet_multisig;
+pub mod pallet_proxy;
+pub mod pallet_scheduler;
+pub mod pallet_session;
+pub mod pallet_timestamp;

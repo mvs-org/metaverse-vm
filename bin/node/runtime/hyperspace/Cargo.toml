@@ -1,0 +1,158 @@
+[package]
+authors    = ["Metaverse <hello@mvs.org>"]
+build      = "build.rs"
+edition    = "2018"
+homepage   = "https://mvs.org/"
+license    = "Unlicense"
+name       = "hyperspace-runtime"
+readme     = "README.md"
+repository = "https://github.com/hyperspace-network/hyperspace-common/"
+version    = "1.0.12"
+
+[dependencies]
+# crates
+codec             = { package = "parity-scale-codec", version = "1.3.5", default-features = false }
+serde             = { version = "1.0.118", optional = true }
+smallvec          = { version = "1.6.1" }
+static_assertions = { version = "1.1.0" }
+# hyperspace
+hyperspace-balances                   = { default-features = false, path = "../../../../frame/balances" }
+hyperspace-balances-rpc-runtime-api   = { default-features = false, path = "../../../../frame/balances/rpc/runtime-api" }
+hyperspace-claims                     = { default-features = false, path = "../../../../frame/claims" }
+hyperspace-oldETP-backing               = { default-features = false, path = "../../../../frame/bridge/oldETP/backing" }
+hyperspace-oldETP-issuing               = { default-features = false, path = "../../../../frame/bridge/oldETP/issuing" }
+hyperspace-democracy                  = { default-features = false, path = "../../../../frame/democracy" }
+hyperspace-elections-phragmen         = { default-features = false, path = "../../../../frame/elections-phragmen" }
+hyperspace-ethereum-backing           = { default-features = false, path = "../../../../frame/bridge/ethereum/backing" }
+hyperspace-ethereum-relay             = { default-features = false, path = "../../../../frame/bridge/ethereum/relay" }
+hyperspace-evm                        = { default-features = false, path = "../../../../frame/evm" }
+hyperspace-evm-precompile             = { default-features = false, path = "../../../../frame/evm/precompile" }
+hyperspace-header-mmr                 = { default-features = false, path = "../../../../frame/header-mmr" }
+hyperspace-header-mmr-rpc-runtime-api = { default-features = false, path = "../../../../frame/header-mmr/rpc/runtime-api" }
+hyperspace-relay-authorities          = { default-features = false, path = "../../../../frame/bridge/relay-authorities" }
+hyperspace-relay-primitives           = { default-features = false, path = "../../../../primitives/relay" }
+hyperspace-relayer-game               = { default-features = false, path = "../../../../frame/bridge/relayer-game" }
+hyperspace-staking                    = { default-features = false, path = "../../../../frame/staking" }
+hyperspace-staking-rpc-runtime-api    = { default-features = false, path = "../../../../frame/staking/rpc/runtime-api" }
+hyperspace-support                    = { default-features = false, path = "../../../../frame/support" }
+hyperspace-treasury                   = { default-features = false, path = "../../../../frame/treasury" }
+hyperspace-oldtestnet-backing               = { default-features = false, path = "../../../../frame/bridge/oldtestnet/backing" }
+hyperspace-vesting                    = { default-features = false, path = "../../../../frame/vesting" }
+hyperspace-primitives                     = { default-features = false, path = "../../primitives" }
+mvm-ethereum                        = { default-features = false, path = "../../../../frame/mvm" }
+mvm-rpc-runtime-api                 = { default-features = false, path = "../../../../frame/mvm/rpc/runtime-api" }
+ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
+# substrate
+frame-executive                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support                              = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-system                               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-system-rpc-runtime-api               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-authority-discovery                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-authorship                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-babe                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-collective                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-grandpa                             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-im-online                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-membership                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+# Multisig
+pallet-multisig                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+#
+pallet-offences                            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-proxy                               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-randomness-collective-flip          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-scheduler                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-session                             = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-sudo                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-timestamp                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-transaction-payment                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-api                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-application-crypto                      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-authority-discovery                     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-block-builder                           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-consensus-babe                          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core                                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-inherents                               = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io                                      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-offchain                                = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-session                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-staking                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std                                     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-transaction-pool                        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-version                                 = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+
+[build-dependencies]
+# substrate
+wasm-builder-runner = { package = "substrate-wasm-builder-runner", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+
+[features]
+default = ["std"]
+std     = [
+	"codec/std",
+	"serde",
+	"hyperspace-balances/std",
+	"hyperspace-balances-rpc-runtime-api/std",
+	"hyperspace-claims/std",
+	"hyperspace-oldETP-backing/std",
+	"hyperspace-oldETP-issuing/std",
+	"hyperspace-democracy/std",
+	"hyperspace-elections-phragmen/std",
+	"hyperspace-ethereum-backing/std",
+	"hyperspace-ethereum-relay/std",
+	"hyperspace-evm/std",
+	"hyperspace-evm-precompile/std",
+	"hyperspace-header-mmr/std",
+	"hyperspace-header-mmr-rpc-runtime-api/std",
+	"hyperspace-relay-authorities/std",
+	"hyperspace-relay-primitives/std",
+	"hyperspace-relayer-game/std",
+	"hyperspace-staking/std",
+	"hyperspace-staking-rpc-runtime-api/std",
+	"hyperspace-support/std",
+	"hyperspace-treasury/std",
+	"hyperspace-oldtestnet-backing/std",
+	"hyperspace-vesting/std",
+	"hyperspace-primitives/std",
+	"mvm-ethereum/std",
+	"mvm-rpc-runtime-api/std",
+	"ethereum-primitives/std",
+	"frame-executive/std",
+	"frame-support/std",
+	"frame-system/std",
+	"frame-system-rpc-runtime-api/std",
+	"pallet-authority-discovery/std",
+	"pallet-authorship/std",
+	"pallet-babe/std",
+	"pallet-collective/std",
+	"pallet-grandpa/std",
+	"pallet-im-online/std",
+	"pallet-membership/std",
+	"pallet-multisig/std",
+	"pallet-offences/std",
+	"pallet-proxy/std",
+	"pallet-randomness-collective-flip/std",
+	"pallet-scheduler/std",
+	"pallet-session/std",
+	"pallet-sudo/std",
+	"pallet-timestamp/std",
+	"pallet-transaction-payment/std",
+	"pallet-transaction-payment-rpc-runtime-api/std",
+	"sp-api/std",
+	"sp-application-crypto/std",
+	"sp-authority-discovery/std",
+	"sp-block-builder/std",
+	"sp-consensus-babe/std",
+	"sp-core/std",
+	"sp-inherents/std",
+	"sp-io/std",
+	"sp-offchain/std",
+	"sp-runtime/std",
+	"sp-session/std",
+	"sp-staking/std",
+	"sp-std/std",
+	"sp-transaction-pool/std",
+	"sp-version/std",
+]
+
+with-tracing = ["frame-executive/with-tracing"]

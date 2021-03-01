@@ -1,0 +1,25 @@
+[package]
+authors     = ["Metaverse <hello@mvs.org>"]
+description = "Withdraw precompile for EVM pallet."
+edition     = "2018"
+homepage    = "https://mvs.org/"
+license     = "GPL-3.0"
+name        = "hyperspace-evm-precompile"
+readme      = "README.md"
+repository  = "https://github.com/hyperspace-network/hyperspace-common/"
+version     = "1.3.0"
+
+[dependencies]
+# hyperspace
+hyperspace-evm-precompile-empty	   = { default-features = false, path = "contracts/empty" }
+hyperspace-evm-precompile-simple     = { default-features = false, path = "contracts/simple" }
+hyperspace-evm-precompile-withdraw   = { default-features = false, path = "contracts/withdraw" }
+
+[features]
+default = ["std"]
+
+std = [
+	"hyperspace-evm-precompile-empty/std",
+	"hyperspace-evm-precompile-simple/std",
+	"hyperspace-evm-precompile-withdraw/std",
+]

@@ -1,85 +1,121 @@
-[package]
-name = "betelgeuse"
-version = "0.0.4"
-authors = ["MVS Core DEV Team"]
-license = "GPL-3.0-or-later"
-build = "build.rs"
-edition = "2018"
-
-[[bin]]
-name = "betelgeuse"
-path = "src/main.rs"
-
-[dependencies]
-futures = "0.3"
-log = "0.4"
-structopt = "0.3"
-codec = { package = "parity-scale-codec", version = "1.0.0", features = ["derive"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-jsonrpc-core = "15.0.0"
-parking_lot = "0.10.0"
-
-sc-cli = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sc-rpc = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sp-keystore = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sc-keystore = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sp-core = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sp-api = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sp-blockchain = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sp-block-builder = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sc-rpc-api = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sp-timestamp = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sc-executor = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sc-service = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sp-inherents = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sc-transaction-pool = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sp-transaction-pool = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sc-network = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sc-consensus-pow = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sp-consensus = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sc-consensus = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sc-finality-grandpa = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sp-finality-grandpa = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sc-client-api = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sp-runtime = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-sc-basic-authorship = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-substrate-frame-rpc-system = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-pallet-transaction-payment-rpc = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-
-pallet-grandpa = { version = "2.0.0", git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b", default-features = false }
-pallet-session = { version = "2.0.0", git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b", default-features = false }
-pallet-authorship = { version = "2.0.0", git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b", default-features = false }
-
-pallet-rewards = { path = "frame/rewards" }
-pallet-eras = { path = "frame/eras" }
-betelgeuse-pow = { path = "pow" }
-betelgeuse-runtime = { path = "runtime" }
-betelgeuse-primitives = { path = "primitives" }
-
-# benchmarking
-frame-benchmarking = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-frame-benchmarking-cli = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-
-[build-dependencies]
-substrate-build-script-utils = { git = "https://github.com/Sarmale-Team/substrate", rev = "62e252b" }
-
-[features]
-default = []
-wasmtime = [
-	"sc-executor/wasmtime",
-	"sc-cli/wasmtime",
-	"sc-service/wasmtime",
-]
-runtime-benchmarks = [
-	"wasmtime",
-	"betelgeuse-runtime/runtime-benchmarks",
-]
-
 [workspace]
 members = [
-	"runtime",
-	"pow",
-	"frame/rewards",
-	"frame/eras",
+	# node
+	"bin/node/cli",
+	"bin/node/primitives",
+	"bin/node/runtime/hyperspace",
+	# client
+	"client/cli",
+	"client/mvm/consensus",
+	"client/mvm/rpc",
+	# frame
+	"frame/balances",
+	"frame/balances/rpc",
+	"frame/balances/rpc/runtime-api",
+	"frame/bridge/oldETP/backing",
+	"frame/bridge/oldETP/issuing",
+	"frame/bridge/ethereum/backing",
+	"frame/bridge/ethereum/linear-relay",
+	"frame/bridge/ethereum/relay",
+	"frame/bridge/relayer-game",
+	"frame/bridge/relay-authorities",
+	"frame/bridge/oldtestnet/backing",
+	"frame/claims",
+	"frame/democracy",
+	"frame/mvm",
+	"frame/mvm/rpc",
+	"frame/mvm/rpc/runtime-api",
+	"frame/elections-phragmen",
+	"frame/evm",
+	"frame/evm/precompile",
+	"frame/evm/precompile/contracts/blake2",
+	"frame/evm/precompile/contracts/bn128",
+	"frame/evm/precompile/contracts/dispatch",
+	"frame/evm/precompile/contracts/ed25519",
+	"frame/evm/precompile/contracts/empty",
+	"frame/evm/precompile/contracts/modexp",
+	"frame/evm/precompile/contracts/simple",
+	"frame/evm/precompile/contracts/withdraw",
+	"frame/header-mmr",
+	"frame/header-mmr/rpc",
+	"frame/header-mmr/rpc/runtime-api",
+	"frame/staking",
+	"frame/staking/rpc",
+	"frame/staking/rpc/runtime-api",
+	"frame/support",
+	"frame/treasury",
+	"frame/vesting",
+	# primitives
+	"primitives/array-bytes",
+	"primitives/consensus",
+	"primitives/mvm-rpc-core",
+	"primitives/ethereum-primitives",
+	"primitives/evm",
+	"primitives/merkle-patricia-trie",
+	"primitives/relay",
 ]
+
+# The list of dependencies below (which can be both direct and indirect dependencies) are crates
+# that are suspected to be CPU-intensive, and that are unlikely to require debugging (as some of
+# their debug info might be missing) or to require to be frequently recompiled. We compile these
+# dependencies with `opt-level=3` even in "dev" mode in order to make "dev" mode more usable.
+# The majority of these crates are cryptographic libraries.
+#
+# Note that this does **not** affect crates that depend on Substrate. In other words, if you add
+# a dependency on Substrate, you have to copy-paste this list in your own `Cargo.toml` (assuming
+# that you want the same list). This list is only relevant when running `cargo build` from within
+# the Substrate workspace.
+#
+# If you see an error mentioning "profile package spec ... did not match any packages", it
+# probably concerns this list.
+#
+# This list is ordered alphabetically.
+[profile.dev.package]
+aes-soft         = { opt-level = 3 }
+aesni            = { opt-level = 3 }
+blake2           = { opt-level = 3 }
+blake2-rfc       = { opt-level = 3 }
+blake2b_simd     = { opt-level = 3 }
+blake2s_simd     = { opt-level = 3 }
+crc32fast        = { opt-level = 3 }
+crossbeam-deque  = { opt-level = 3 }
+crossbeam-queue  = { opt-level = 3 }
+crypto-mac       = { opt-level = 3 }
+curve25519-dalek = { opt-level = 3 }
+ed25519-dalek    = { opt-level = 3 }
+flate2           = { opt-level = 3 }
+futures-channel  = { opt-level = 3 }
+h2               = { opt-level = 3 }
+hash-db          = { opt-level = 3 }
+hashbrown        = { opt-level = 3 }
+hmac             = { opt-level = 3 }
+httparse         = { opt-level = 3 }
+integer-sqrt     = { opt-level = 3 }
+keccak           = { opt-level = 3 }
+libm             = { opt-level = 3 }
+librocksdb-sys   = { opt-level = 3 }
+libsecp256k1     = { opt-level = 3 }
+libz-sys         = { opt-level = 3 }
+mio              = { opt-level = 3 }
+nalgebra         = { opt-level = 3 }
+num-bigint       = { opt-level = 3 }
+parking_lot      = { opt-level = 3 }
+parking_lot_core = { opt-level = 3 }
+percent-encoding = { opt-level = 3 }
+primitive-types  = { opt-level = 3 }
+ring             = { opt-level = 3 }
+rustls           = { opt-level = 3 }
+sha2             = { opt-level = 3 }
+sha3             = { opt-level = 3 }
+smallvec         = { opt-level = 3 }
+snow             = { opt-level = 3 }
+twox-hash        = { opt-level = 3 }
+uint             = { opt-level = 3 }
+wasmi            = { opt-level = 3 }
+x25519-dalek     = { opt-level = 3 }
+yamux            = { opt-level = 3 }
+zeroize          = { opt-level = 3 }
+
+[profile.release]
+# Darwinia runtime requires unwinding.
+panic = "unwind"

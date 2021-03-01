@@ -1,0 +1,45 @@
+[package]
+authors     = ["Metaverse <hello@mvs.org>"]
+description = "Merkle-Patricia Trie (Ethereum Style)"
+edition     = "2018"
+homepage    = "https://mvs.org/"
+license     = "GPL-3.0"
+name        = "merkle-patricia-trie"
+readme      = "README.md"
+repository  = "https://github.com/hyperspace-network/hyperspace-common/"
+version     = "1.3.0"
+
+[[bench]]
+harness = false
+name    = "trie"
+
+[dependencies]
+# crates
+hashbrown = { version = "0.9.1" }
+# github
+hash = { package = "keccak-hash", default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
+rlp  = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
+# substrate
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+
+[dev-dependencies]
+# crates
+criterion      = { version = "0.3.3" }
+ethereum-types = { version = "0.5.2" }
+hex            = { version = "0.4.2" }
+rand           = { version = "0.7.3" }
+uuid           = { version = "0.8.1", features = ["serde", "v4"] }
+
+[features]
+default = ["std"]
+
+std = [
+	"github-std",
+	"substrate-std",
+]
+
+github-std    = [
+	"hash/std",
+	"rlp/std",
+]
+substrate-std = ["sp-std/std"]

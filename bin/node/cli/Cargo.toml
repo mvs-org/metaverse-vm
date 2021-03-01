@@ -1,0 +1,105 @@
+[package]
+authors     = ["Metaverse <hello@mvs.org>"]
+build       = "build.rs"
+description = "Hyperspace Runtime Module Library Node"
+edition     = "2018"
+homepage    = "https://mvs.org/"
+license     = "GPL-3.0"
+name        = "hyperspace"
+readme      = "README.md"
+repository  = "https://github.com/hyperspace-network/hyperspace-common/"
+version     = "1.0.12"
+
+# TODO: Consider rename this repo to hyperspace-runtime-module-library
+[[bin]]
+name = "hyperspace"
+
+[dependencies]
+# crates
+codec          = { package = "parity-scale-codec", version = "1.3.5" }
+futures        = { version = "=0.3.8" }
+jsonrpc-core   = { version = "15.1.0" }
+jsonrpc-pubsub = { version = "15.1.0" }
+log            = { version = "0.4.13" }
+structopt      = { version = "0.3.21" }
+tokio          = { version = "0.3.6", optional = true, features = ["rt-multi-thread"] }
+# hyperspace
+array-bytes                         = { path = "../../../primitives/array-bytes" }
+hyperspace-balances-rpc               = { path = "../../../frame/balances/rpc" }
+hyperspace-balances-rpc-runtime-api   = { path = "../../../frame/balances/rpc/runtime-api" }
+hyperspace-claims                     = { path = "../../../frame/claims" }
+hyperspace-cli                        = { optional = true, path = "../../../client/cli" }
+hyperspace-ethereum-relay             = { path = "../../../frame/bridge/ethereum/relay" }
+hyperspace-evm                        = { path = "../../../frame/evm" }
+hyperspace-header-mmr-rpc             = { path = "../../../frame/header-mmr/rpc" }
+hyperspace-header-mmr-rpc-runtime-api = { path = "../../../frame/header-mmr/rpc/runtime-api" }
+hyperspace-staking                    = { path = "../../../frame/staking" }
+hyperspace-staking-rpc                = { path = "../../../frame/staking/rpc" }
+hyperspace-staking-rpc-runtime-api    = { path = "../../../frame/staking/rpc/runtime-api" }
+hyperspace-primitives                     = { path = "../primitives" }
+mvm-consensus                       = { path = "../../../client/mvm/consensus" }
+mvm-rpc                             = { path = "../../../client/mvm/rpc" }
+mvm-rpc-runtime-api                 = { path = "../../../frame/mvm/rpc/runtime-api" }
+hyperspace-runtime                    = { path = "../runtime/hyperspace" }
+# substrate
+frame-system-rpc-runtime-api               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-im-online                           = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-transaction-payment-rpc             = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-authority-discovery                     = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-basic-authorship                        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-chain-spec                              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-cli                                     = { optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-client-api                              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-consensus                               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-consensus-babe                          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-consensus-babe-rpc                      = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-consensus-epochs                        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-executor                                = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-finality-grandpa                        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-finality-grandpa-rpc                    = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-network                                 = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-rpc                                     = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-service                                 = { optional = true, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-sync-state-rpc                          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-telemetry                               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-transaction-pool                        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-api                                     = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-authority-discovery                     = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-block-builder                           = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-blockchain                              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-consensus                               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-consensus-babe                          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core                                    = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-finality-grandpa                        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-inherents                               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-keystore                                = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-offchain                                = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime                                 = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-session                                 = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-transaction-pool                        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-trie                                    = { features = ["memory-tracker"], git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+substrate-frame-rpc-system                 = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+substrate-prometheus-endpoint              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+
+[build-dependencies]
+# substrate
+substrate-build-script-utils = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+
+[features]
+default = [
+	"cli",
+	"db",
+	"full-node",
+	"wasmtime",
+]
+
+cli       = [
+	"tokio",
+	"hyperspace-cli",
+	"sc-cli",
+	"sc-service",
+]
+db        = ["sc-service/db"]
+full-node = []
+wasmtime  = ["sc-cli/wasmtime"]

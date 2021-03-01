@@ -1,0 +1,62 @@
+[package]
+authors     = ["Metaverse <hello@mvs.org>"]
+description = "Pallet for logging MMR into header digest"
+edition     = "2018"
+homepage    = "https://mvs.org/"
+license     = "GPL-3.0"
+name        = "hyperspace-header-mmr"
+readme      = "README.md"
+repository  = "https://github.com/hyperspace-network/hyperspace-common/"
+version     = "1.3.0"
+
+[dependencies]
+# crates
+codec = { package = "parity-scale-codec", version = "1.3.5", default-features = false }
+serde = { version = "1.0.118", optional = true }
+# hyperspace
+hyperspace-header-mmr-rpc-runtime-api = { default-features = false, path = "./rpc/runtime-api" }
+hyperspace-relay-primitives           = { default-features = false, path = "../../primitives/relay" }
+hyperspace-support                    = { default-features = false, path = "../support" }
+# github
+merkle-mountain-range = { package = "ckb-merkle-mountain-range", default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range.git" }
+# substrate
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+
+[dev-dependencies]
+# crates
+serde_json = { version = "1.0.61" }
+# hyperspace
+array-bytes = { path = "../../primitives/array-bytes" }
+# substrate
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io   = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+
+[features]
+default = ["std"]
+
+std = [
+	"crates-std",
+	"hyperspace-std",
+	"github-std",
+	"substrate-std",
+]
+
+crates-std    = [
+	"codec/std",
+	"serde",
+]
+hyperspace-std  = [
+	"hyperspace-header-mmr-rpc-runtime-api/std",
+	"hyperspace-relay-primitives/std",
+	"hyperspace-support/std",
+]
+github-std    = ["merkle-mountain-range/std"]
+substrate-std = [
+	"frame-support/std",
+	"frame-system/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]
