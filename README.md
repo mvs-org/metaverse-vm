@@ -11,6 +11,7 @@ Install Substrate pre-requisites (including Rust):
 For Unix-based operating systems, you should run the following commands:
 ```
 curl https://sh.rustup.rs -sSf | sh
+source ~/.cargo/env
 
 rustup default nightly
 rustup target add wasm32-unknown-unknown
