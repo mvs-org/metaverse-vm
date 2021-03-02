@@ -2,11 +2,11 @@
 
 Balances currently contains **ETP** and **DNA**.
 
-**ETP** is system token of Metaverse, the initial supply before Hyperspace network mainnet release is 2 billion.
+**ETP** is system token of Metaverse, the initial supply before Hyperspace network mainnet release is 80 Millions tokens.
 
 **DNA** is the staking and governance credential of Metaverse, DNA can **only obtained by locking ETP**, the initial supply is 0.
 
-At present, some **ETP** and **DNA** exist in the Ethereum network and the Tron network in the form of **ERC-20** and **TRC-20**. These TOKENs will be transferred to the Hyperspace main network by 1:1 cross-chain conversion after the Hyperspace main online.
+At present, some **ETP** and **DNA** exist in the Ethereum network and the Tron network in the form of **ERC-20** . These TOKENs will be transferred to the Hyperspace main network by 1:1 cross-chain conversion after the Hyperspace main online.
 
 **The Balances module provides functions for**
 
