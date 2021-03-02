@@ -16,6 +16,19 @@ source ~/.cargo/env
 rustup default nightly
 rustup target add wasm32-unknown-unknown
 ```
+You will also need to install the following packages:
+
+Linux:
+```
+sudo apt install cmake pkg-config libssl-dev git clang libclang-dev
+```
+Linux on ARM: rust-lld is required for linking wasm, but is missing on non Tier 1 platforms. So, use this script to build lld and create the symlink /usr/bin/rust-lld to the build binary.
+
+Mac:
+```
+brew install cmake pkg-config openssl git llvm
+```
+
 # Build the corresponding binary file:
 ```
 cd Hyperspace
