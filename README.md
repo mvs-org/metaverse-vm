@@ -1,5 +1,5 @@
 # Hyperspace Mainnet
-Hyperspace Mainnet Node - Stage 1
+Hyperspace Mainnet Node - Stage 1 - PoS Consensus Mode
 
 First of all you have to get the code:
 ```
