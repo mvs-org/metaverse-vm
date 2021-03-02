@@ -18,6 +18,7 @@ rustup target add wasm32-unknown-unknown
 ```
 # Build the corresponding binary file:
 ```
+cd Hyperspace
 cargo build --release
 ```
 The first build takes a long time, as it compiles all the necessary libraries.
