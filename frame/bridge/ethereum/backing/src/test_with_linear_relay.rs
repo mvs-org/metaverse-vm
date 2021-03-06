@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -39,7 +39,7 @@ parameter_types! {
 	pub const EthereumLinearRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
-impl hyperspace_ethereum_linear_relay::Trait for Test {
+impl hyperspace_ethereum_linear_relay::Config for Test {
 	type ModuleId = EthereumLinearRelayModuleId;
 	type Event = ();
 	type EthereumNetwork = EthereumNetwork;
@@ -235,7 +235,7 @@ fn verify_linear_redeem_deposit() {
 		.execute_with(|| {
 			assert_ok!(EthereumRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
 
-			// 1234ring -> 0.1234dna
+			// 1234 -> 0.1234dna
 
 			// _depositID    2
 			// 0: address: 0xcC5E48BEb33b83b8bD0D9d9A85A8F6a27C51F5C5  _depositor

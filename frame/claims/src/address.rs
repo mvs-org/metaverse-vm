@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -20,7 +20,7 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // --- hyperspace ---
 use crate::AddressT;
-use array_bytes::{fixed_hex_bytes_unchecked, hex_string_unchecked};
+use array_bytes::{fixed_hex_bytes_unchecked, hex_stetp_unchecked};
 
 macro_rules! impl_address {
 	($name:ident, $sname:expr, $prefix:expr) => {
@@ -38,7 +38,7 @@ macro_rules! impl_address {
 			where
 				S: Serializer,
 			{
-				let hex: String = hex_string_unchecked(&self.0, $prefix).into_iter().collect();
+				let hex: String = hex_stetp_unchecked(&self.0, $prefix).into_iter().collect();
 				serializer.serialize_str(&hex)
 			}
 		}
@@ -48,12 +48,20 @@ macro_rules! impl_address {
 				D: Deserializer<'de>,
 			{
 				let base_string = String::deserialize(deserializer)?;
-				let offset = if base_string.starts_with($prefix) { 2 } else { 0 };
+				let offset = if base_string.starts_with($prefix) {
+					2
+				} else {
+					0
+				};
 				let s = &base_string[offset..];
 				if s.len() != 40 {
-					Err(serde::de::Error::custom(
-						concat!("Bad length of ", $sname, " address (should be 42 including '", $prefix, "')"),
-					))?;
+					Err(serde::de::Error::custom(concat!(
+						"Bad length of ",
+						$sname,
+						" address (should be 42 including '",
+						$prefix,
+						"')"
+					)))?;
 				}
 
 				Ok($name(fixed_hex_bytes_unchecked!(s, 20)))
@@ -72,9 +80,9 @@ hyperspace_support::impl_genesis! {
 	struct ClaimsList {
 		dot: Vec<Account<EthereumAddress>>,
 		eth: Vec<Account<EthereumAddress>>,
-		oldtestnet: Vec<Account<TronAddress>>
+		oldetp: Vec<Account<OldetpAddress>>
 	}
 }
 
 impl_address!(EthereumAddress, "Ethereum", "0x");
-impl_address!(TronAddress, "Tron", "41");
+impl_address!(OldetpAddress, "Oldetp", "41");

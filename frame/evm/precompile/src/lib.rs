@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -40,4 +40,5 @@ pub type HyperspacePrecompiles<Runtime> = (
 	hyperspace_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000013
 	hyperspace_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000014
 	hyperspace_evm_precompile_withdraw::WithDraw<Runtime>, // 0x0000000000000000000000000000000000000015
+	hyperspace_evm_precompile_dna::Dna<Runtime>, // 0x0000000000000000000000000000000000000016
 );

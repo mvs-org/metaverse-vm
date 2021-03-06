@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -42,7 +42,7 @@ pub type HyperspaceChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
 type AccountPublic = <Signature as Verify>::Signer;
 
-const PANGOLIN_TELEMETRY_URL: &str = "wss://telemetry.mvs.org/submit/";
+const PANGOLIN_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 pub fn hyperspace_config() -> Result<HyperspaceChainSpec, String> {
 	HyperspaceChainSpec::from_json_bytes(&include_bytes!("../../../res/hyperspace/hyperspace.json")[..])
@@ -66,7 +66,7 @@ pub fn properties() -> Properties {
 	let mut properties = Properties::new();
 
 	properties.insert("ss58Format".into(), 42.into());
-	properties.insert("tokenDecimals".into(), vec![8, 8].into());
+	properties.insert("tokenDecimals".into(), vec![9, 9].into());
 	properties.insert("tokenSymbol".into(), vec!["ETP", "DNA"].into());
 
 	properties
@@ -175,8 +175,8 @@ fn hyperspace_build_spec_genesis() -> GenesisConfig {
 				.cloned()
 				.map(|x| (x.0, x.1, GENESIS_VALIDATOR_BOND, StakerStatus::Validator))
 				.collect(),
-			slash_reward_fraction: Perbill::from_percent(0),
-			payout_fraction: Perbill::from_percent(0),
+			slash_reward_fraction: Perbill::from_percent(10),
+			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
 		}),
 		pallet_session: Some(SessionConfig {
@@ -197,10 +197,10 @@ fn hyperspace_build_spec_genesis() -> GenesisConfig {
 		hyperspace_claims: Some(Default::default()),
 		hyperspace_vesting: Some(Default::default()),
 		pallet_sudo: Some(SudoConfig { key: root.clone() }),
-		hyperspace_oldETP_issuing: Some(oldETPIssuingConfig {
+		hyperspace_oldna_issuing: Some(OldnaIssuingConfig {
 			total_mapped_etp: 1 << 56
 		}),
-		hyperspace_oldETP_backing: Some(oldETPBackingConfig {
+		hyperspace_oldna_backing: Some(OldnaBackingConfig {
 			backed_etp: 1 << 56
 		}),
 		hyperspace_ethereum_backing: Some(EthereumBackingConfig {
@@ -223,14 +223,14 @@ fn hyperspace_build_spec_genesis() -> GenesisConfig {
 			),
 			..Default::default()
 		}),
-		hyperspace_oldtestnet_backing: Some(TronBackingConfig {
+		hyperspace_oldetp_backing: Some(OldetpBackingConfig {
 			backed_etp: 1 << 56,
 			backed_dna: 1 << 56,
 		}),
 		hyperspace_evm: Some(EVMConfig {
 			accounts: evm_accounts,
 		}),
-		mvm_ethereum: Some(Default::default()),
+		dvm_ethereum: Some(Default::default()),
 		hyperspace_relay_authorities_Instance0: Some(EthereumRelayAuthoritiesConfig {
 			authorities: vec![(root, fixed_hex_bytes_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(), 1)]
 		}),
@@ -239,8 +239,8 @@ fn hyperspace_build_spec_genesis() -> GenesisConfig {
 
 pub fn hyperspace_development_config() -> HyperspaceChainSpec {
 	HyperspaceChainSpec::from_genesis(
-		"Live",
-		"hyperspace",
+		"Development",
+		"hyperspace_dev",
 		ChainType::Development,
 		|| {
 			let initial_evm_account = vec![
@@ -291,7 +291,7 @@ fn hyperspace_development_genesis(
 		AuthorityDiscoveryId,
 	)>,
 	root_key: AccountId,
-	endowed_accounts: Vec<AccountId>,
+	mut endowed_accounts: Vec<AccountId>,
 	evm_accounts: BTreeMap<H160, GenesisAccount>,
 ) -> GenesisConfig {
 	const GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str =
@@ -302,6 +302,12 @@ fn hyperspace_development_genesis(
 	const SET_AUTHORITIES_ADDRESS: &'static str = "0xE4A2892599Ad9527D76Ce6E26F93620FA7396D85";
 	const ETP_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 	const DNA_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
+
+	initial_authorities.iter().for_each(|x| {
+		if !endowed_accounts.contains(&x.0) {
+			endowed_accounts.push(x.0.clone())
+		}
+	});
 
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
@@ -333,8 +339,8 @@ fn hyperspace_development_genesis(
 				.collect(),
 			invulnerables: initial_authorities.iter().cloned().map(|x| x.0).collect(),
 			force_era: hyperspace_staking::Forcing::ForceAlways,
-			slash_reward_fraction: Perbill::from_percent(0),
-			payout_fraction: Perbill::from_percent(1),
+			slash_reward_fraction: Perbill::from_percent(10),
+			payout_fraction: Perbill::from_percent(50),
 			..Default::default()
 		}),
 		pallet_session: Some(SessionConfig {
@@ -360,10 +366,10 @@ fn hyperspace_development_genesis(
 		}),
 		hyperspace_vesting: Some(Default::default()),
 		pallet_sudo: Some(SudoConfig { key: root_key.clone() }),
-		hyperspace_oldETP_issuing: Some(oldETPIssuingConfig {
+		hyperspace_oldna_issuing: Some(OldnaIssuingConfig {
 			total_mapped_etp: 1 << 56
 		}),
-		hyperspace_oldETP_backing: Some(oldETPBackingConfig {
+		hyperspace_oldna_backing: Some(OldnaBackingConfig {
 			backed_etp: 1 << 56
 		}),
 		hyperspace_ethereum_backing: Some(EthereumBackingConfig {
@@ -386,14 +392,14 @@ fn hyperspace_development_genesis(
 			),
 			..Default::default()
 		}),
-		hyperspace_oldtestnet_backing: Some(TronBackingConfig {
+		hyperspace_oldetp_backing: Some(OldetpBackingConfig {
 			backed_etp: 1 << 56,
 			backed_dna: 1 << 56,
 		}),
 		hyperspace_evm: Some(EVMConfig {
 			accounts: evm_accounts,
 		}),
-		mvm_ethereum: Some(Default::default()),
+		dvm_ethereum: Some(Default::default()),
 		hyperspace_relay_authorities_Instance0: Some(EthereumRelayAuthoritiesConfig {
 			authorities: vec![(root_key, fixed_hex_bytes_unchecked!(GENESIS_ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(), 1)]
 		}),

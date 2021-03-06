@@ -15,7 +15,7 @@ describe("Test Web3 API", function () {
 
 	it.skip("should get client version", async function () {
 		const version = await web3.eth.getNodeInfo();
-		expect(version).to.be.equal("Hyperspace/v2.1/mvm-rpc-1.2.2");
+		expect(version).to.be.equal("Hyperspace/v2.1/dvm-rpc-1.2.2");
 	});
 
 	it("should remote sha3", async function () {

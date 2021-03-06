@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -19,6 +19,10 @@
 //! # Relayer Game Module
 
 #![cfg_attr(not(feature = "std"), no_std)]
+
+pub mod weights;
+// --- hyperspace ---
+pub use weights::WeightInfo;
 
 #[cfg(test)]
 mod mock;
@@ -29,8 +33,8 @@ mod types {
 	// --- hyperspace ---
 	use crate::*;
 
-	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
-	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
+	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 
 	pub type EtpBalance<T, I> = <EtpCurrency<T, I> as Currency<AccountId<T>>>::Balance;
 	pub type EtpNegativeImbalance<T, I> =
@@ -47,9 +51,9 @@ mod types {
 		RelayHeaderId<T, I>,
 	>;
 
-	type EtpCurrency<T, I> = <T as Trait<I>>::EtpCurrency;
+	type EtpCurrency<T, I> = <T as Config<I>>::EtpCurrency;
 
-	type RelayableChainT<T, I> = <T as Trait<I>>::RelayableChain;
+	type RelayableChainT<T, I> = <T as Config<I>>::RelayableChain;
 }
 
 // --- substrate ---
@@ -70,7 +74,7 @@ use hyperspace_relay_primitives::relayer_game::*;
 use hyperspace_support::balance::lock::*;
 use types::*;
 
-pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
+pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
 	/// The currency use for stake
 	type EtpCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 
@@ -93,12 +97,8 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type WeightInfo: WeightInfo;
 }
 
-// TODO: https://github.com/hyperspace-network/hyperspace-common/issues/209
-pub trait WeightInfo {}
-impl WeightInfo for () {}
-
 decl_error! {
-	pub enum Error for Module<T: Trait<I>, I: Instance> {
+	pub enum Error for Module<T: Config<I>, I: Instance> {
 		/// Relay Parcel - ALREADY RELAYED
 		RelayParcelAR,
 		/// Round - MISMATCHED
@@ -127,7 +127,7 @@ decl_error! {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as HyperspaceRelayerGame {
+	trait Store for Module<T: Config<I>, I: Instance = DefaultInstance> as HyperspaceRelayerGame {
 		/// Active games' relay header parcel's ids
 		pub RelayHeaderParcelToResolve
 			get(fn relay_header_parcel_to_resolve)
@@ -189,7 +189,7 @@ decl_storage! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait<I>, I: Instance = DefaultInstance> for enum Call
+	pub struct Module<T: Config<I>, I: Instance = DefaultInstance> for enum Call
 	where
 		origin: T::Origin
 	{
@@ -213,7 +213,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait<I>, I: Instance> Module<T, I> {
+impl<T: Config<I>, I: Instance> Module<T, I> {
 	/// Check if time for proposing
 	pub fn is_game_open_at(
 		game_id: &RelayHeaderId<T, I>,
@@ -777,7 +777,7 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	}
 }
 
-impl<T: Trait<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
+impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 	type Relayer = AccountId<T>;
 	type RelayHeaderId = RelayHeaderId<T, I>;
 	type RelayHeaderParcel = RelayHeaderParcel<T, I>;

@@ -43,10 +43,10 @@ pub struct Modexp;
 //       see: https://eips.ethereum.org/EIPS/eip-198
 
 impl LinearCostPrecompile for Modexp {
-	const BASE: usize = 15;
-	const WORD: usize = 3;
+	const BASE: u64 = 15;
+	const WORD: u64 = 3;
 
-	fn execute(input: &[u8], _: usize) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError> {
+	fn execute(input: &[u8], _: u64) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError> {
 		if input.len() < 96 {
 			return Err(ExitError::Other(
 				"input must contain at least 96 bytes".into(),
@@ -144,7 +144,7 @@ mod tests {
 	#[test]
 	fn test_empty_input() -> std::result::Result<(), ExitError> {
 		let input: [u8; 0] = [];
-		let cost: usize = 1;
+		let cost: u64 = 1;
 
 		match Modexp::execute(&input, cost) {
 			Ok((_, _)) => {
@@ -169,7 +169,7 @@ mod tests {
 		)
 		.expect("Decode failed");
 
-		let cost: usize = 1;
+		let cost: u64 = 1;
 
 		match Modexp::execute(&input, cost) {
 			Ok((_, _)) => {
@@ -194,7 +194,7 @@ mod tests {
 		)
 		.expect("Decode failed");
 
-		let cost: usize = 1;
+		let cost: u64 = 1;
 
 		match Modexp::execute(&input, cost) {
 			Ok((_, _)) => {
@@ -221,7 +221,7 @@ mod tests {
 
 		// 3 ^ 5 % 7 == 5
 
-		let cost: usize = 1;
+		let cost: u64 = 1;
 
 		match Modexp::execute(&input, cost) {
 			Ok((_, output)) => {
@@ -250,7 +250,7 @@ mod tests {
 
 		// 59999 ^ 21 % 14452 = 10055
 
-		let cost: usize = 1;
+		let cost: u64 = 1;
 
 		match Modexp::execute(&input, cost) {
 			Ok((_, output)) => {
@@ -277,7 +277,7 @@ mod tests {
 		)
 		.expect("Decode failed");
 
-		let cost: usize = 1;
+		let cost: u64 = 1;
 
 		match Modexp::execute(&input, cost) {
 			Ok((_, output)) => {

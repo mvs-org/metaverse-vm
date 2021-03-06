@@ -19,8 +19,8 @@
 
 use crate::runner::Runner as RunnerT;
 use crate::{
-	AccountBasicMapping, AccountCodes, AccountStorages, AddressMapping, Error, Event,
-	FeeCalculator, Module, PrecompileSet, Trait,
+	AccountBasicMapping, AccountCodes, AccountStorages, AddressMapping, Config, Error, Event,
+	FeeCalculator, Module, PrecompileSet,
 };
 use hyperspace_evm_primitives::{Account, CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 use evm::backend::Backend as BackendT;
@@ -37,16 +37,16 @@ use sp_runtime::traits::UniqueSaturatedInto;
 use sp_std::{boxed::Box, collections::btree_set::BTreeSet, marker::PhantomData, mem, vec::Vec};
 
 #[derive(Default)]
-pub struct Runner<T: Trait> {
+pub struct Runner<T: Config> {
 	_marker: PhantomData<T>,
 }
 
-impl<T: Trait> Runner<T> {
+impl<T: Config> Runner<T> {
 	/// Execute an EVM operation.
 	pub fn execute<'config, F, R>(
 		source: H160,
 		value: U256,
-		gas_limit: u32,
+		gas_limit: u64,
 		gas_price: Option<U256>,
 		nonce: Option<U256>,
 		config: &'config evm::Config,
@@ -74,7 +74,7 @@ impl<T: Trait> Runner<T> {
 			origin: source,
 		};
 
-		let metadata = StackSubstateMetadata::new(gas_limit as usize, &config);
+		let metadata = StackSubstateMetadata::new(gas_limit, &config);
 		let state = SubstrateStackState::new(&vicinity, metadata);
 		let mut executor =
 			StackExecutor::new_with_precompile(state, config, T::Precompiles::execute);
@@ -149,7 +149,7 @@ impl<T: Trait> Runner<T> {
 	}
 }
 
-impl<T: Trait> RunnerT<T> for Runner<T> {
+impl<T: Config> RunnerT<T> for Runner<T> {
 	type Error = Error<T>;
 
 	fn call(
@@ -157,7 +157,7 @@ impl<T: Trait> RunnerT<T> for Runner<T> {
 		target: H160,
 		input: Vec<u8>,
 		value: U256,
-		gas_limit: u32,
+		gas_limit: u64,
 		gas_price: Option<U256>,
 		nonce: Option<U256>,
 		config: &evm::Config,
@@ -169,7 +169,7 @@ impl<T: Trait> RunnerT<T> for Runner<T> {
 			gas_price,
 			nonce,
 			config,
-			|executor| executor.transact_call(source, target, value, input, gas_limit as usize),
+			|executor| executor.transact_call(source, target, value, input, gas_limit),
 		)
 	}
 
@@ -177,7 +177,7 @@ impl<T: Trait> RunnerT<T> for Runner<T> {
 		source: H160,
 		init: Vec<u8>,
 		value: U256,
-		gas_limit: u32,
+		gas_limit: u64,
 		gas_price: Option<U256>,
 		nonce: Option<U256>,
 		config: &evm::Config,
@@ -192,7 +192,7 @@ impl<T: Trait> RunnerT<T> for Runner<T> {
 			|executor| {
 				let address = executor.create_address(evm::CreateScheme::Legacy { caller: source });
 				(
-					executor.transact_create(source, value, init, gas_limit as usize),
+					executor.transact_create(source, value, init, gas_limit),
 					address,
 				)
 			},
@@ -204,7 +204,7 @@ impl<T: Trait> RunnerT<T> for Runner<T> {
 		init: Vec<u8>,
 		salt: H256,
 		value: U256,
-		gas_limit: u32,
+		gas_limit: u64,
 		gas_price: Option<U256>,
 		nonce: Option<U256>,
 		config: &evm::Config,
@@ -224,7 +224,7 @@ impl<T: Trait> RunnerT<T> for Runner<T> {
 					salt,
 				});
 				(
-					executor.transact_create2(source, value, init, salt, gas_limit as usize),
+					executor.transact_create2(source, value, init, salt, gas_limit),
 					address,
 				)
 			},
@@ -248,7 +248,7 @@ impl<'config> SubstrateStackSubstate<'config> {
 		&mut self.metadata
 	}
 
-	pub fn enter(&mut self, gas_limit: usize, is_static: bool) {
+	pub fn enter(&mut self, gas_limit: u64, is_static: bool) {
 		let mut entering = Self {
 			metadata: self.metadata.spit_child(gas_limit, is_static),
 			parent: None,
@@ -326,7 +326,7 @@ pub struct SubstrateStackState<'vicinity, 'config, T> {
 	_marker: PhantomData<T>,
 }
 
-impl<'vicinity, 'config, T: Trait> SubstrateStackState<'vicinity, 'config, T> {
+impl<'vicinity, 'config, T: Config> SubstrateStackState<'vicinity, 'config, T> {
 	/// Create a new backend with given vicinity.
 	pub fn new(vicinity: &'vicinity Vicinity, metadata: StackSubstateMetadata<'config>) -> Self {
 		Self {
@@ -342,7 +342,7 @@ impl<'vicinity, 'config, T: Trait> SubstrateStackState<'vicinity, 'config, T> {
 	}
 }
 
-impl<'vicinity, 'config, T: Trait> BackendT for SubstrateStackState<'vicinity, 'config, T> {
+impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 'config, T> {
 	fn gas_price(&self) -> U256 {
 		self.vicinity.gas_price
 	}
@@ -411,7 +411,7 @@ impl<'vicinity, 'config, T: Trait> BackendT for SubstrateStackState<'vicinity, '
 	}
 }
 
-impl<'vicinity, 'config, T: Trait> StackStateT<'config>
+impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	for SubstrateStackState<'vicinity, 'config, T>
 {
 	fn metadata(&self) -> &StackSubstateMetadata<'config> {
@@ -422,7 +422,7 @@ impl<'vicinity, 'config, T: Trait> StackStateT<'config>
 		self.substate.metadata_mut()
 	}
 
-	fn enter(&mut self, gas_limit: usize, is_static: bool) {
+	fn enter(&mut self, gas_limit: u64, is_static: bool) {
 		self.substate.enter(gas_limit, is_static)
 	}
 

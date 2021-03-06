@@ -6,25 +6,25 @@ members = [
 	"bin/node/runtime/hyperspace",
 	# client
 	"client/cli",
-	"client/mvm/consensus",
-	"client/mvm/rpc",
+	"client/dvm/consensus",
+	"client/dvm/rpc",
 	# frame
 	"frame/balances",
 	"frame/balances/rpc",
 	"frame/balances/rpc/runtime-api",
-	"frame/bridge/oldETP/backing",
-	"frame/bridge/oldETP/issuing",
+	"frame/bridge/oldna/backing",
+	"frame/bridge/oldna/issuing",
 	"frame/bridge/ethereum/backing",
 	"frame/bridge/ethereum/linear-relay",
 	"frame/bridge/ethereum/relay",
 	"frame/bridge/relayer-game",
 	"frame/bridge/relay-authorities",
-	"frame/bridge/oldtestnet/backing",
+	"frame/bridge/oldetp/backing",
 	"frame/claims",
 	"frame/democracy",
-	"frame/mvm",
-	"frame/mvm/rpc",
-	"frame/mvm/rpc/runtime-api",
+	"frame/dvm",
+	"frame/dvm/rpc",
+	"frame/dvm/rpc/runtime-api",
 	"frame/elections-phragmen",
 	"frame/evm",
 	"frame/evm/precompile",
@@ -33,6 +33,7 @@ members = [
 	"frame/evm/precompile/contracts/dispatch",
 	"frame/evm/precompile/contracts/ed25519",
 	"frame/evm/precompile/contracts/empty",
+	"frame/evm/precompile/contracts/dna",
 	"frame/evm/precompile/contracts/modexp",
 	"frame/evm/precompile/contracts/simple",
 	"frame/evm/precompile/contracts/withdraw",
@@ -48,7 +49,7 @@ members = [
 	# primitives
 	"primitives/array-bytes",
 	"primitives/consensus",
-	"primitives/mvm-rpc-core",
+	"primitives/dvm-rpc-core",
 	"primitives/ethereum-primitives",
 	"primitives/evm",
 	"primitives/merkle-patricia-trie",
@@ -76,7 +77,6 @@ aesni            = { opt-level = 3 }
 blake2           = { opt-level = 3 }
 blake2-rfc       = { opt-level = 3 }
 blake2b_simd     = { opt-level = 3 }
-blake2s_simd     = { opt-level = 3 }
 crc32fast        = { opt-level = 3 }
 crossbeam-deque  = { opt-level = 3 }
 crossbeam-queue  = { opt-level = 3 }
@@ -117,5 +117,5 @@ yamux            = { opt-level = 3 }
 zeroize          = { opt-level = 3 }
 
 [profile.release]
-# Darwinia runtime requires unwinding.
+# Hyperspace runtime requires unwinding.
 panic = "unwind"

@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -403,7 +403,7 @@ fn mmr_root_signed_event_should_work() {
 		));
 		assert_eq!(
 			relay_authorities_events(),
-			vec![Event::relay_authorities(RawEvent::MMRRootSigned(
+			vec![Event::hyperspace_relay_authorities(RawEvent::MMRRootSigned(
 				10,
 				DEFAULT_MMR_ROOT,
 				vec![(9, DEFAULT_SIGNATURE), (1, DEFAULT_SIGNATURE)]
@@ -429,11 +429,13 @@ fn authorities_change_signed_event_should_work() {
 
 		assert_eq!(
 			relay_authorities_events(),
-			vec![Event::relay_authorities(RawEvent::AuthoritiesChangeSigned(
-				0,
-				vec![signer_of(9), signer_of(1)],
-				vec![(9, DEFAULT_SIGNATURE)]
-			))]
+			vec![Event::hyperspace_relay_authorities(
+				RawEvent::AuthoritiesChangeSigned(
+					0,
+					vec![signer_of(9), signer_of(1)],
+					vec![(9, DEFAULT_SIGNATURE)]
+				)
+			)]
 		);
 
 		RelayAuthorities::apply_authorities_change().unwrap();
@@ -458,11 +460,13 @@ fn authorities_change_signed_event_should_work() {
 		// Enough signatures, `2 / 2 > 60%`
 		assert_eq!(
 			relay_authorities_events(),
-			vec![Event::relay_authorities(RawEvent::AuthoritiesChangeSigned(
-				1,
-				vec![signer_of(9), signer_of(1), signer_of(2)],
-				vec![(9, DEFAULT_SIGNATURE), (1, DEFAULT_SIGNATURE)]
-			))]
+			vec![Event::hyperspace_relay_authorities(
+				RawEvent::AuthoritiesChangeSigned(
+					1,
+					vec![signer_of(9), signer_of(1), signer_of(2)],
+					vec![(9, DEFAULT_SIGNATURE), (1, DEFAULT_SIGNATURE)]
+				)
+			)]
 		);
 	});
 }
@@ -730,9 +734,9 @@ fn slash_should_work() {
 		assert_eq!(
 			relay_authorities_events(),
 			vec![
-				Event::relay_authorities(RawEvent::SlashOnMisbehavior(9, 1)),
-				Event::relay_authorities(RawEvent::SlashOnMisbehavior(1, 50)),
-				Event::relay_authorities(RawEvent::SlashOnMisbehavior(2, 60)),
+				Event::hyperspace_relay_authorities(RawEvent::SlashOnMisbehavior(9, 1)),
+				Event::hyperspace_relay_authorities(RawEvent::SlashOnMisbehavior(1, 50)),
+				Event::hyperspace_relay_authorities(RawEvent::SlashOnMisbehavior(2, 60)),
 			]
 		);
 		assert!(Etp::locks(9).is_empty());
@@ -750,9 +754,9 @@ fn slash_should_work() {
 			assert_eq!(
 				relay_authorities_events(),
 				vec![
-					Event::relay_authorities(RawEvent::SlashOnMisbehavior(9, 0)),
-					Event::relay_authorities(RawEvent::SlashOnMisbehavior(1, 0)),
-					Event::relay_authorities(RawEvent::SlashOnMisbehavior(2, 0)),
+					Event::hyperspace_relay_authorities(RawEvent::SlashOnMisbehavior(9, 0)),
+					Event::hyperspace_relay_authorities(RawEvent::SlashOnMisbehavior(1, 0)),
+					Event::hyperspace_relay_authorities(RawEvent::SlashOnMisbehavior(2, 0)),
 				]
 			);
 			assert!(Etp::locks(9).is_empty());

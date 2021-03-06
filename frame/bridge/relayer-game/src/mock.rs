@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -32,7 +32,7 @@ pub mod mock_relay {
 	use crate::{mock::*, *};
 
 	decl_storage! {
-		trait Store for Module<T: Trait> as HyperspaceRelay {
+		trait Store for Module<T: Config> as HyperspaceRelay {
 			pub ConfirmedBlockNumbers get(fn best_confirmed_block_number): MockRelayBlockNumber;
 
 			pub ConfirmedHeaders
@@ -68,13 +68,13 @@ pub mod mock_relay {
 	}
 
 	decl_module! {
-		pub struct Module<T: Trait> for enum Call
+		pub struct Module<T: Config> for enum Call
 		where
 			origin: T::Origin
 		{}
 	}
 
-	impl<T: Trait> Relayable for Module<T> {
+	impl<T: Config> Relayable for Module<T> {
 		type RelayHeaderId = MockRelayBlockNumber;
 		type RelayHeaderParcel = MockRelayHeader;
 		type RelayProofs = ();
@@ -178,7 +178,11 @@ pub mod mock_relay {
 
 			Self {
 				number,
-				hash: GENESIS_TIME.with(|v| v.to_owned()).elapsed().as_nanos(),
+				hash: GENESIS_TIME
+					.with(|v| v.to_owned())
+					.borrow()
+					.elapsed()
+					.as_nanos(),
 				parent_hash,
 				valid,
 			}
@@ -196,7 +200,11 @@ pub mod mock_relay {
 			let mut parent_hash = if continous_valid {
 				0
 			} else {
-				GENESIS_TIME.with(|v| v.to_owned()).elapsed().as_nanos()
+				GENESIS_TIME
+					.with(|v| v.to_owned())
+					.borrow()
+					.elapsed()
+					.as_nanos()
 			};
 			let mut chain = vec![Self::gen(start, parent_hash, validations[0])];
 
@@ -229,7 +237,7 @@ pub mod mock_relay {
 }
 
 // --- std ---
-use std::{cell::RefCell, time::Instant};
+use std::time::Instant;
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
@@ -245,17 +253,10 @@ pub type BlockNumber = u64;
 pub type Balance = u128;
 
 pub type System = frame_system::Module<Test>;
-pub type Etp = hyperspace_balances::Module<Test, EtpInstance>;
 pub type Relay = mock_relay::Module<Test>;
 
 pub type RelayerGameError = Error<Test, DefaultInstance>;
 pub type RelayerGame = Module<Test, DefaultInstance>;
-
-thread_local! {
-	static GENESIS_TIME: Instant = Instant::now();
-	pub static CHALLENGE_TIME: RefCell<BlockNumber> = RefCell::new(6);
-	static ESTIMATE_BOND: RefCell<Balance> = RefCell::new(1);
-}
 
 impl_outer_origin! {
 	pub enum Origin for Test
@@ -264,14 +265,17 @@ impl_outer_origin! {
 	{}
 }
 
-hyperspace_support::impl_test_account_data! {}
+hyperspace_support::impl_test_account_data! { deprecated }
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
 parameter_types! {
 	pub const RelayerGameLockId: LockIdentifier = *b"da/rgame";
+	pub static GenesisTime: Instant = Instant::now();
+	pub static ChallengeTime: BlockNumber = 6;
+	pub static EstimateBond: Balance = 1;
 }
-impl Trait for Test {
+impl Config for Test {
 	type EtpCurrency = Etp;
 	type LockId = RelayerGameLockId;
 	type EtpSlash = ();
@@ -280,8 +284,11 @@ impl Trait for Test {
 	type WeightInfo = ();
 }
 
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
 	type Origin = Origin;
 	type Call = ();
 	type Index = u64;
@@ -293,25 +300,19 @@ impl frame_system::Trait for Test {
 	type Header = sp_runtime::testing::Header;
 	type Event = ();
 	type BlockHashCount = ();
-	type MaximumBlockWeight = ();
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = ();
-	type MaximumBlockLength = ();
-	type AvailableBlockRatio = ();
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
+	type SS58Prefix = ();
 }
 
 parameter_types! {
 	pub const ExistentialDeposit: Balance = 1;
 }
-impl hyperspace_balances::Trait<EtpInstance> for Test {
+impl hyperspace_balances::Config<EtpInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();
@@ -385,7 +386,7 @@ impl ExtBuilder {
 			.build_storage::<Test>()
 			.unwrap();
 
-		hyperspace_balances::GenesisConfig::<Test, EtpInstance> {
+		EtpConfig {
 			balances: (1..10)
 				.map(|i: AccountId| vec![(i, 100 * i as Balance), (10 * i, 1000 * i as Balance)])
 				.flatten()

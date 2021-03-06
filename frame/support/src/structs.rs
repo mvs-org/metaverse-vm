@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -23,7 +23,7 @@ use num_traits::Zero;
 use sp_runtime::{traits::AtLeast32BitUnsigned, RuntimeDebug};
 use sp_std::{ops::BitOr, prelude::*};
 // --- hyperspace ---
-use crate::balance::lock::{LockIdentifier, WithdrawReason, WithdrawReasons};
+use crate::balance::lock::{LockIdentifier, WithdrawReasons};
 
 /// Frozen balance information for an account.
 pub struct FrozenBalance<Balance> {
@@ -68,9 +68,9 @@ pub enum LockReasons {
 }
 impl From<WithdrawReasons> for LockReasons {
 	fn from(r: WithdrawReasons) -> LockReasons {
-		if r == WithdrawReasons::from(WithdrawReason::TransactionPayment) {
+		if r == WithdrawReasons::TRANSACTION_PAYMENT {
 			LockReasons::Fee
-		} else if r.contains(WithdrawReason::TransactionPayment) {
+		} else if r.contains(WithdrawReasons::TRANSACTION_PAYMENT) {
 			LockReasons::All
 		} else {
 			LockReasons::Misc

@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -37,16 +37,16 @@
 //!
 //! ### Digest Item
 //! The is a ```MerkleMountainRangeRoot(Hash)``` digest item pre-subscribed in Digest.
-//! This is implemented in Hyperspace's fork of substrate: https://github.com/hyperspace-network/substrate
-//! The Pull request link is https://github.com/hyperspace-network/substrate/pull/1
+//! This is implemented in Hyperspace's fork of substrate: https://github.com/new-mvs/substrate
+//! The Pull request link is https://github.com/new-mvs/substrate/pull/1
 //!
 //! ## Implementation
 //! We are using the MMR library from https://github.com/nervosnetwork/merkle-mountain-range
-//! Pull request: https://github.com/hyperspace-network/hyperspace/pull/358
+//! Pull request: https://github.com/new-mvs/hyperspace/pull/358
 //!
 //! ## References
 //! Hyperspace Relay's Technical Paper:
-//! https://github.com/hyperspace-network/rfcs/blob/master/paper/Hyperspace_Relay_Sublinear_Optimistic_Relay_for_Interoperable_Blockchains_v0.7.pdf
+//! https://github.com/new-mvs/rfcs/blob/master/paper/Hyperspace_Relay_Sublinear_Optimistic_Relay_for_Interoperable_Blockchains_v0.7.pdf
 //!
 //! https://github.com/mimblewimble/grin/blob/master/doc/mmr.md#structure
 //! https://github.com/mimblewimble/grin/blob/0ff6763ee64e5a14e70ddd4642b99789a1648a32/core/src/core/pmmr.rs#L606
@@ -63,7 +63,9 @@ mod tests;
 use serde::Serialize;
 
 // --- github ---
-use merkle_mountain_range::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRStore, Result, MMR};
+use merkle_mountain_range::{
+	leaf_index_to_mmr_size, leaf_index_to_pos, MMRStore, Result as MMRResult, MMR,
+};
 // --- substrate ---
 use codec::{Decode, Encode};
 use frame_support::{debug::error, decl_module, decl_storage};
@@ -89,10 +91,10 @@ pub struct MerkleMountainRangeRootLog<Hash> {
 	pub parent_mmr_root: Hash,
 }
 
-pub trait Trait: frame_system::Trait {}
+pub trait Config: frame_system::Config {}
 
 decl_storage! {
-	trait Store for Module<T: Trait> as HyperspaceHeaderMMR {
+	trait Store for Module<T: Config> as HyperspaceHeaderMMR {
 		/// MMR struct of the previous blocks, from first(genesis) to parent hash.
 		pub MMRNodeList get(fn mmr_node_list): map hasher(identity) u64 => Option<T::Hash>;
 
@@ -102,11 +104,11 @@ decl_storage! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait> for enum Call
+	pub struct Module<T: Config> for enum Call
 	where
 		origin: T::Origin
 	{
-		fn on_finalize(block_number: T::BlockNumber) {
+		fn on_finalize(_block_number: T::BlockNumber) {
 			let store = <ModuleMMRStore<T>>::default();
 			let parent_hash = <frame_system::Module<T>>::parent_hash();
 			let mut mmr = <MMR<_, MMRMerge<T>, _>>::new(MMRCounter::get(), store);
@@ -133,7 +135,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	impl_rpc! {
 		pub fn gen_proof_rpc(
 			block_number_of_member_leaf: u64,
@@ -183,12 +185,12 @@ impl<T: Trait> Module<T> {
 }
 
 pub struct MMRMerge<T>(PhantomData<T>);
-impl<T: Trait> merkle_mountain_range::Merge for MMRMerge<T> {
-	type Item = <T as frame_system::Trait>::Hash;
+impl<T: Config> merkle_mountain_range::Merge for MMRMerge<T> {
+	type Item = <T as frame_system::Config>::Hash;
 
 	fn merge(lhs: &Self::Item, rhs: &Self::Item) -> Self::Item {
 		let encodable = (lhs, rhs);
-		<T as frame_system::Trait>::Hashing::hash_of(&encodable)
+		<T as frame_system::Config>::Hashing::hash_of(&encodable)
 	}
 }
 
@@ -198,12 +200,12 @@ impl<T> Default for ModuleMMRStore<T> {
 		ModuleMMRStore(sp_std::marker::PhantomData)
 	}
 }
-impl<T: Trait> MMRStore<T::Hash> for ModuleMMRStore<T> {
-	fn get_elem(&self, pos: u64) -> Result<Option<T::Hash>> {
+impl<T: Config> MMRStore<T::Hash> for ModuleMMRStore<T> {
+	fn get_elem(&self, pos: u64) -> MMRResult<Option<T::Hash>> {
 		Ok(<Module<T>>::mmr_node_list(pos))
 	}
 
-	fn append(&mut self, pos: u64, elems: Vec<T::Hash>) -> Result<()> {
+	fn append(&mut self, pos: u64, elems: Vec<T::Hash>) -> MMRResult<()> {
 		let mmr_count = MMRCounter::get();
 		if pos != mmr_count {
 			// Must be append only.
@@ -222,7 +224,7 @@ impl<T: Trait> MMRStore<T::Hash> for ModuleMMRStore<T> {
 	}
 }
 
-impl<T: Trait> MMRT<T::BlockNumber, T::Hash> for Module<T> {
+impl<T: Config> MMRT<T::BlockNumber, T::Hash> for Module<T> {
 	fn get_root(block_number: T::BlockNumber) -> Option<T::Hash> {
 		let store = <ModuleMMRStore<T>>::default();
 		let mmr_size = leaf_index_to_mmr_size(block_number.saturated_into::<u64>() as _);

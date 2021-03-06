@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -19,11 +19,11 @@
 //! Module to relay blocks from Ethereum Network
 //!
 //! In this module,
-//! the offchain worker will keep fetch the next block info and relay to Metaverse.
+//! the offchain worker will keep fetch the next block info and relay to Hyperspace Network.
 //! The worker will fetch the header and the Merkle proof information for blocks from a nonexistent domain,
 //! ie http://eth-resource/, such that it can be connected with shadow service.
 //! Now the shadow service is provided by our another project, hyperspace.js.
-//! https://github.com/hyperspace-network/hyperspace.js
+//! https://github.com/new-mvs/hyperspace.js
 //!
 //!
 //! Here is the basic flow.
@@ -32,18 +32,18 @@
 //! - then the `relay_header` will get ethereum blocks and Merkle proof information from from http://eth-resource/
 //! - After the http response corrected fetched, we will simple validate the format of http response,
 //!   and parse and build Ethereum header and Merkle Proofs.
-//! - After all, the corrected Ethereum header with the proofs will be submit and validate on chain of Metaverse by
+//! - After all, the corrected Ethereum header with the proofs will be submit and validate on chain of Hyperspace Network by
 //!   `submit_header`
 //!
 //! The protocol of shadow service and offchain worker can be scale encoded format or json format,
 //! and the worker will use json format as fail back, such that it may be easier to debug.
 //! If you want to build your own shadow service please refer
-//! https://github.com/hyperspace-network/hyperspace-common/issues/86
+//! https://github.com/new-mvs/darwinia-common/issues/86
 //!
 //! More details about offchain workers in following PRs
-//! https://github.com/hyperspace-network/hyperspace/pull/335
-//! https://github.com/hyperspace-network/hyperspace-common/pull/43
-//! https://github.com/hyperspace-network/hyperspace-common/pull/63
+//! https://github.com/new-mvs/hyperspace/pull/335
+//! https://github.com/new-mvs/darwinia-common/pull/43
+//! https://github.com/new-mvs/darwinia-common/pull/63
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod crypto {
@@ -97,10 +97,10 @@ type EthereumRelayCall<T> = hyperspace_ethereum_linear_relay::Call<T>;
 pub const ETH_OFFCHAIN: KeyTypeId = KeyTypeId(*b"etho");
 
 /// A dummy endpoint, point this to shadow service
-const ETH_RESOURCE: &'static [u8] = b"http://shadow.mvs.org/";
+const ETH_RESOURCE: &'static [u8] = b"http://shadow.hyperspace.network/";
 
-pub trait Trait:
-	CreateSignedTransaction<EthereumRelayCall<Self>> + hyperspace_ethereum_linear_relay::Trait
+pub trait Config:
+	CreateSignedTransaction<EthereumRelayCall<Self>> + hyperspace_ethereum_linear_relay::Config
 {
 	type AuthorityId: AppCrypto<Self::Public, Self::Signature>;
 
@@ -108,7 +108,7 @@ pub trait Trait:
 }
 
 decl_error! {
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// API Response - UNEXPECTED
 		APIRespUnexp,
 
@@ -125,7 +125,7 @@ decl_error! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait> for enum Call
+	pub struct Module<T: Config> for enum Call
 	where
 		origin: T::Origin
 	{
@@ -151,7 +151,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	/// The `relay_header` is try to get Ethereum blocks with merkle proofs from shadow service
 	/// The default communication will transfer data with scale encoding,
 	/// if there are issue to communicate with scale encoding, the failback communication will
@@ -255,7 +255,7 @@ impl<T: Trait> Module<T> {
 		proof_list: Vec<EthashProof>,
 	) {
 		// TODO: test support call ethereum-linear-relay
-		// https://github.com/hyperspace-network/hyperspace-common/issues/137
+		// https://github.com/new-mvs/darwinia-common/issues/137
 		let results = {
 			#[cfg(test)]
 			{

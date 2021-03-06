@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -21,8 +21,6 @@
 #[macro_export]
 macro_rules! decl_tests {
 	() => {
-		// --- std ---
-		use std::cell::RefCell;
 		// --- substrate ---
 		use frame_support::{
 			impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight,
@@ -51,15 +49,8 @@ macro_rules! decl_tests {
 		type Session = pallet_session::Module<Test>;
 		type System = frame_system::Module<Test>;
 		type Timestamp = pallet_timestamp::Module<Test>;
-		type Etp = hyperspace_balances::Module<Test, EtpInstance>;
-		type Dna = hyperspace_balances::Module<Test, DnaInstance>;
 		type Staking = hyperspace_staking::Module<Test>;
 		type EthereumBacking = Module<Test>;
-
-		thread_local! {
-			static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
-			static SLASH_DEFER_DURATION: RefCell<EraIndex> = RefCell::new(0);
-		}
 
 		impl_outer_origin! {
 			pub enum Origin for Test where system = frame_system {}
@@ -72,7 +63,7 @@ macro_rules! decl_tests {
 			}
 		}
 
-		hyperspace_support::impl_test_account_data! {}
+		hyperspace_support::impl_test_account_data! { deprecated }
 
 		#[derive(Clone, PartialEq, Eq, Debug)]
 		pub struct Test;
@@ -97,7 +88,7 @@ macro_rules! decl_tests {
 			pub const DnaLockLimit: Balance = 1000;
 			pub const AdvancedFee: Balance = 1;
 		}
-		impl Trait for Test {
+		impl Config for Test {
 			type ModuleId = EthereumBackingModuleId;
 			type FeeModuleId = EthereumBackingFeeModuleId;
 			type Event = ();
@@ -114,14 +105,11 @@ macro_rules! decl_tests {
 			type WeightInfo = ();
 		}
 
-		parameter_types! {
-			pub const BlockHashCount: u64 = 250;
-			pub const MaximumBlockWeight: Weight = 1024;
-			pub const MaximumBlockLength: u32 = 2 * 1024;
-			pub const AvailableBlockRatio: Perbill = Perbill::one();
-		}
-		impl frame_system::Trait for Test {
+		impl frame_system::Config for Test {
 			type BaseCallFilter = ();
+			type BlockWeights = ();
+			type BlockLength = ();
+			type DbWeight = ();
 			type Origin = Origin;
 			type Call = Call;
 			type Index = u64;
@@ -132,23 +120,17 @@ macro_rules! decl_tests {
 			type Lookup = IdentityLookup<Self::AccountId>;
 			type Header = Header;
 			type Event = ();
-			type BlockHashCount = BlockHashCount;
-			type MaximumBlockWeight = MaximumBlockWeight;
-			type DbWeight = ();
-			type BlockExecutionWeight = ();
-			type ExtrinsicBaseWeight = ();
-			type MaximumExtrinsicWeight = MaximumBlockWeight;
-			type MaximumBlockLength = MaximumBlockLength;
-			type AvailableBlockRatio = AvailableBlockRatio;
+			type BlockHashCount = ();
 			type Version = ();
 			type PalletInfo = ();
 			type AccountData = AccountData<Balance>;
 			type OnNewAccount = ();
 			type OnKilledAccount = ();
 			type SystemWeightInfo = ();
+			type SS58Prefix = ();
 		}
 
-		impl pallet_timestamp::Trait for Test {
+		impl pallet_timestamp::Config for Test {
 			type Moment = u64;
 			type OnTimestampSet = ();
 			type MinimumPeriod = ();
@@ -159,7 +141,7 @@ macro_rules! decl_tests {
 			pub const Period: BlockNumber = 1;
 			pub const Offset: BlockNumber = 0;
 		}
-		impl pallet_session::Trait for Test {
+		impl pallet_session::Config for Test {
 			type Event = ();
 			type ValidatorId = AccountId;
 			type ValidatorIdOf = ();
@@ -172,12 +154,12 @@ macro_rules! decl_tests {
 			type WeightInfo = ();
 		}
 
-		impl pallet_session::historical::Trait for Test {
+		impl pallet_session::historical::Config for Test {
 			type FullIdentification = Exposure<AccountId, Balance, Balance>;
 			type FullIdentificationOf = ExposureOf<Test>;
 		}
 
-		impl hyperspace_balances::Trait<DnaInstance> for Test {
+		impl hyperspace_balances::Config<DnaInstance> for Test {
 			type Balance = Balance;
 			type DustRemoval = ();
 			type Event = ();
@@ -188,7 +170,7 @@ macro_rules! decl_tests {
 			type OtherCurrencies = ();
 			type WeightInfo = ();
 		}
-		impl hyperspace_balances::Trait<EtpInstance> for Test {
+		impl hyperspace_balances::Config<EtpInstance> for Test {
 			type Balance = Balance;
 			type DustRemoval = ();
 			type Event = ();
@@ -203,7 +185,7 @@ macro_rules! decl_tests {
 		parameter_types! {
 			pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
 		}
-		impl hyperspace_staking::Trait for Test {
+		impl hyperspace_staking::Config for Test {
 			type Event = ();
 			type ModuleId = StakingModuleId;
 			type UnixTime = Timestamp;

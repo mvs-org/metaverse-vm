@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -47,7 +47,7 @@ parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
-impl hyperspace_ethereum_relay::Trait for Test {
+impl hyperspace_ethereum_relay::Config for Test {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
 	type EthereumNetwork = EthereumNetwork;
@@ -284,7 +284,7 @@ fn verify_redeem_deposit() {
 	ExtBuilder::default()
 		.build()
 		.execute_with(|| {
-			// 1234ring -> 0.1234dna
+			// 1234 -> 0.1234dna
 
 			// _depositID    2
 			// 0: address: 0xcC5E48BEb33b83b8bD0D9d9A85A8F6a27C51F5C5  _depositor
@@ -417,12 +417,12 @@ fn lock_should_work() {
 		let lock_balance = 10;
 		let _ = Etp::deposit_creating(&account, init_balance);
 		let _ = Dna::deposit_creating(&account, init_balance);
-		let fee_account_id = <Module<Test>>::fee_account_id();
+		let fee_account_id = EthereumBacking::fee_account_id();
 		let fee_account_balance = Etp::free_balance(&fee_account_id);
-		let module_account_id = <Module<Test>>::account_id();
+		let module_account_id = EthereumBacking::account_id();
 		let module_account_etp = Etp::free_balance(&module_account_id);
 		let module_account_dna = Dna::free_balance(&module_account_id);
-		let advanced_fee = <Test as Trait>::AdvancedFee::get();
+		let advanced_fee = <Test as Config>::AdvancedFee::get();
 
 		assert_ok!(EthereumBacking::lock(
 			Origin::signed(account.clone()),
@@ -460,12 +460,12 @@ fn lock_failed_rollback_transaction_should_work() {
 		let lock_dna = DnaLockLimit::get() + 1;
 		let _ = Etp::deposit_creating(&account, init_balance);
 		let _ = Dna::deposit_creating(&account, init_balance);
-		let fee_account_id = <Module<Test>>::fee_account_id();
+		let fee_account_id = EthereumBacking::fee_account_id();
 		let fee_account_balance = Etp::free_balance(&fee_account_id);
-		let module_account_id = <Module<Test>>::account_id();
+		let module_account_id = EthereumBacking::account_id();
 		let module_account_etp = Etp::free_balance(&module_account_id);
 		let module_account_dna = Dna::free_balance(&module_account_id);
-		let advanced_fee = <Test as Trait>::AdvancedFee::get();
+		let advanced_fee = <Test as Config>::AdvancedFee::get();
 
 		assert_noop!(
 			EthereumBacking::lock(
@@ -528,10 +528,10 @@ fn verify_new_authorities() {
 		.build()
 		.execute_with(|| {
 			// transfer：https://ropsten.etherscan.io/tx/0x652528b9421ecb495610a734a4ab70d054b5510dbbf3a9d5c7879c43c7dde4e9
-			// shadow: https://testnet.shadow.mvs.org/ethereum/receipt/0x652528b9421ecb495610a734a4ab70d054b5510dbbf3a9d5c7879c43c7dde4e9/9347302
+			// shadow: https://testnet.shadow.hyperspace.network/ethereum/receipt/0x652528b9421ecb495610a734a4ab70d054b5510dbbf3a9d5c7879c43c7dde4e9/9347302
 			let test_receipt_proof_thing : TestReceiptProofThing =  serde_json::from_str(r#"{"header":{"parent_hash":"0xbe0b0035e8d59d89ebd8b9f96873eecdfb104079a7e6cf7b66c4baa8046a6af1","timestamp":1609137277,"number":9347301,"author":"0x73c37cb411a618914be8953e18ba8ee5e2a5201b","transactions_root":"0xe72eb7f91f7d66fcb13503bca2036a7f0814de697b578dd4aba8cc61d90dc8cc","uncles_hash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","extra_data":"0xd683010914846765746886676f312e3135856c696e7578","state_root":"0xdb4214c17539e7cc33114aeffe81d2d97fb5fb89b1d17f594ca58051c71deaaa","receipts_root":"0x3746f4c68475ddb69adc64839e6346663a6306bffa1b91ceb252c72fcec54aab","log_bloom":"0x00000004000000000000002000410000002000010000000010000000000000000001000000000000400000000000000000000000000000010040000000040008000100002000000000000048080000000008001000041400000100000800008000000000000000000000000000000050100000000000000008000210000000000400000000100000100000100000000080004000000000800000801000000000000100000000000400000080020000002000000008000002000000808408400000000002000000000008220000000000000100004000002000000000004040000800000402000028080000008101080000000000000010080000000000000000","gas_used":2820164,"gas_limit":8000000,"difficulty":34921042,"seal":["0xa0cc290d59c54f06baff608e7c45387f26aface811e45472b27595676c2e1f7717","0x880030cb83e3a11936"],"hash":"0x3b921afa29be2c9ae2e3e31cb5c1a04a48b15d5b254fe34d1d03fa9c681453d3"},"receipt_proof":{"index":17,"proof":"0xf9033ff9033cb873f871a03400047859bb4e6c3bf07c4c133a5c8e7b9c4b33642991c982d8d4cb7edd8ac7a0da2adb936e17f66841cf55b682c7e7bfcb9050a0f21ee19757734aaf25ab4d7b808080808080a0bfc3b1906ab988733b1517e90630b95b19bf30354098e6684b7156501297574d8080808080808080b8b3f8b1a09958f935b9fabe67f402fa82185f61480626450b180df9b6bc188320979ca36da06f1fb447fb0d1f69f851ddee45edeb7af046f82f2c3afe4a2cbe73c993d5f1a6a069987a8a41de40954eda6205bbc2c468f50776c45e3cd7b304cc212f710c3596a000a88eebcd8ec74567fec3679c0cfc586199af70685ba605a2124e683897e7a4a05dca2c8b1ed714c26e6c810feb8349bf70ebd94e438b8b8dae0aa6c2f127db0c808080808080808080808080b9020ff9020c20b90208f90205018322c7b3b9010000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f8fbf8f994e4a2892599ad9527d76ce6e26f93620fa7396d85e1a091d6d149c7e5354d1c671fe15a5a3332c47a38e15e8ac0339b24af3c1090690fb8c000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000060129f002b1c0787ea72c31b2dc986e66911fe1b4d6dc16f83a1127f33e5a74c7d00000000000000000000000000000000000000000000000000000000000000020000000000000000000000006aa70f55e5d770898dd45aa1b7078b8a80aabd6c000000000000000000000000b34ca61ce3202315aae32e70f0101d938c0bd13d","header_hash":"0x3b921afa29be2c9ae2e3e31cb5c1a04a48b15d5b254fe34d1d03fa9c681453d3"},"mmr_proof":{"member_leaf_index":9347301,"last_leaf_index":9347301,"proof":["0x36f3d834cbe12a5a20b063c432b88f5506bdce03b93fa3aa035a5d82fd50177c","0x890e2e9ae29833618ea413dd00b24a5af252a9b45b41a0da5bf8d545b547ceda","0xaf3eaf80145b38d847bd7e6ebe2617ac3ea0b9413f8206d8a580f8921d4c97ef","0x10b640f579ec4db3be9deba7e7f11090a558810aa3b428698b6b6cdbd1056beb","0x87ef0abefc10fab9ec5427f62d5a9100ebd3c7655ddb6f1cc2d93258f586b1e5","0xcca2dae99182514f7042d3724f3eb0a81da3222f8f25b2fe8d850c6b0a0b7679","0xef43e7eccba4bba463dce8b0b511ad5c4ba483ff459121dc07832fb2cdbfd834","0xff6377b2fba6b6e3ba395ce33403a72e3c9478e81710e727b31c0525e7de7920","0xb94d80b26ec47716efe9c944ee3832bf9d9b32e8ffd37a874ce132425b3430df","0xa014d1aa101ddb88b7716c43eebd832f644a3e70a90a9a4c9a79dd4cd926acef","0xbe0b0035e8d59d89ebd8b9f96873eecdfb104079a7e6cf7b66c4baa8046a6af1"]}}"#).unwrap();
 			let test_receipt_proof_thing = (test_receipt_proof_thing.header, test_receipt_proof_thing.receipt_proof, test_receipt_proof_thing.mmr_proof);
-			// shadow: https://testnet.shadow.mvs.org/ethereum/parcel/9347303
+			// shadow: https://testnet.shadow.hyperspace.network/ethereum/parcel/9347303
 			let relay_header_parcel : EthereumRelayHeaderParcel = serde_json::from_str(r#"{"header":{"parent_hash":"0x3b921afa29be2c9ae2e3e31cb5c1a04a48b15d5b254fe34d1d03fa9c681453d3","timestamp":1609137307,"number":9347302,"author":"0x1f403c619f4eec77a6bfe269a08a02232f21711b","transactions_root":"0xc3d56a07fd42e2895a5c2e9c72d20961ff7533ed0498ff39bf127ed24a338c03","uncles_hash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","extra_data":"0xd883010913846765746888676f312e31342e37856c696e7578","state_root":"0xe75a36f1f91659cd68b482fdc16ff1724feda1a2c5f4304a9d6df3b27f3cb91a","receipts_root":"0xf7b961af50fa318daf979701cc586c92d8d38d87ebee92fbeb9a8fe18462e955","log_bloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","gas_used":127735,"gas_limit":8000000,"difficulty":34886942,"seal":["0xa02f71ef591ae265503546ac7ab072263121b8f7be5b311ebf6c747da0eaea7187","0x8828681773bd9ddc49"],"hash":"0xff7fee9fc525b65013fd8c301ef23f5cb0d7db346659779e1c9ca6ff059c477f"},"mmr_root":"0x7dca3788ae8401072026d5406c6e5d011e71baed3fefae1b5fd4cea01a3c3210"}"#).unwrap();
 
 			EthereumRelay::confirm_relay_header_parcel_with_reason(relay_header_parcel, vec![]);

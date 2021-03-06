@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -30,7 +30,7 @@ use hyperspace_cli::{Configuration, HyperspaceCli};
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Hyperspace Runtime Module Library".into()
+		"Hyperspace Node".into()
 	}
 
 	fn impl_version() -> String {
@@ -46,7 +46,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn support_url() -> String {
-		"https://github.com/hyperspace-network/hyperspace-common/issues/new".into()
+		"https://github.com/mvs/Hyperspace/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {
@@ -115,10 +115,13 @@ pub fn run() -> sc_cli::Result<()> {
 
 			runner.run_node_until_exit(|config| async move {
 				match config.role {
-					Role::Light => service::hyperspace_new_light(config),
+					Role::Light => {
+						service::hyperspace_new_light(config).map(|(task_manager, _, _)| task_manager)
+					}
 					_ => service::hyperspace_new_full(config, authority_discovery_disabled)
-						.map(|(components, _)| components),
+						.map(|(task_manager, _, _)| task_manager),
 				}
+				.map_err(sc_cli::Error::Service)
 			})
 		}
 		Some(Subcommand::BuildSpec(cmd)) => {
@@ -184,7 +187,7 @@ pub fn run() -> sc_cli::Result<()> {
 				Ok((cmd.run(client, backend), task_manager))
 			})
 		}
-		Some(Subcommand::Key(cmd)) => cmd.run(),
+		Some(Subcommand::Key(cmd)) => cmd.run(&cli),
 		Some(Subcommand::Sign(cmd)) => cmd.run(),
 		Some(Subcommand::Verify(cmd)) => cmd.run(),
 		Some(Subcommand::Vanity(cmd)) => cmd.run(),

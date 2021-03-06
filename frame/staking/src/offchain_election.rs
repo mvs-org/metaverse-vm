@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -24,17 +24,15 @@ use codec::Decode;
 use frame_support::{traits::Get, weights::Weight, IterableStorageMap};
 use frame_system::offchain::SubmitTransaction;
 use sp_npos_elections::{
-	build_support_map, evaluate_support, reduce, Assignment, ElectionResult, ElectionScore,
-	ExtendedBalance,
+	reduce, to_support_map, Assignment, CompactSolution, ElectionResult, ElectionScore,
+	EvaluateSupport, ExtendedBalance,
 };
-use sp_runtime::{
-	offchain::storage::StorageValueRef, traits::TrailingZeroInput, PerThing, RuntimeDebug,
-};
+use sp_runtime::{offchain::storage::StorageValueRef, traits::TrailingZeroInput, RuntimeDebug};
 use sp_std::{convert::TryInto, prelude::*};
 // --- hyperspace ---
 use crate::{
-	Call, CompactAssignments, ElectionSize, Module, NominatorIndex, Nominators, OffchainAccuracy,
-	Trait, ValidatorIndex, WeightInfo,
+	Call, CompactAssignments, Config, ElectionSize, Module, NominatorIndex, Nominators,
+	OffchainAccuracy, ValidatorIndex, WeightInfo,
 };
 
 /// Error types related to the offchain election machinery.
@@ -75,7 +73,7 @@ pub(crate) const DEFAULT_LONGEVITY: u64 = 25;
 /// don't run twice within a window of length [`OFFCHAIN_REPEAT`].
 ///
 /// Returns `Ok(())` if offchain worker should happen, `Err(reason)` otherwise.
-pub(crate) fn set_check_offchain_execution_status<T: Trait>(
+pub(crate) fn set_check_offchain_execution_status<T: Config>(
 	now: T::BlockNumber,
 ) -> Result<(), &'static str> {
 	let storage = StorageValueRef::persistent(&OFFCHAIN_HEAD_DB);
@@ -112,7 +110,7 @@ pub(crate) fn set_check_offchain_execution_status<T: Trait>(
 /// The internal logic of the offchain worker of this module. This runs the phragmen election,
 /// compacts and reduces the solution, computes the score and submits it back to the chain as an
 /// unsigned transaction, without any signature.
-pub(crate) fn compute_offchain_election<T: Trait>() -> Result<(), OffchainElectionError> {
+pub(crate) fn compute_offchain_election<T: Config>() -> Result<(), OffchainElectionError> {
 	let iters = get_balancing_iters::<T>();
 	// compute raw solution. Note that we use `OffchainAccuracy`.
 	let ElectionResult {
@@ -150,7 +148,7 @@ pub(crate) fn compute_offchain_election<T: Trait>() -> Result<(), OffchainElecti
 /// Get a random number of iterations to run the balancing.
 ///
 /// Uses the offchain seed to generate a random number.
-pub fn get_balancing_iters<T: Trait>() -> usize {
+pub fn get_balancing_iters<T: Config>() -> usize {
 	match T::MaxIterations::get() {
 		0 => 0,
 		max @ _ => {
@@ -258,7 +256,7 @@ pub fn maximum_compact_len<W: crate::WeightInfo>(
 ///
 /// Indeed, the score must be computed **after** this step. If this step reduces the score too much,
 /// then the solution will be discarded.
-pub fn trim_to_weight<T: Trait, FN>(
+pub fn trim_to_weight<T: Config, FN>(
 	maximum_allowed_voters: u32,
 	mut compact: CompactAssignments,
 	nominator_index: FN,
@@ -266,7 +264,10 @@ pub fn trim_to_weight<T: Trait, FN>(
 where
 	for<'r> FN: Fn(&'r T::AccountId) -> Option<NominatorIndex>,
 {
-	match compact.len().checked_sub(maximum_allowed_voters as usize) {
+	match compact
+		.voter_count()
+		.checked_sub(maximum_allowed_voters as usize)
+	{
 		Some(to_remove) if to_remove > 0 => {
 			// grab all voters and sort them by least stake.
 			let mut voters_sorted = <Nominators<T>>::iter()
@@ -300,7 +301,7 @@ where
 					warn,
 					"💸 {} nominators out of {} had to be removed from compact solution due to size limits.",
 					removed,
-					compact.len() + removed,
+					compact.voter_count() + removed,
 				);
 			Ok(compact)
 		}
@@ -318,7 +319,7 @@ where
 /// Takes an election result and spits out some data that can be submitted to the chain.
 ///
 /// This does a lot of stuff; read the inline comments.
-pub fn prepare_submission<T: Trait>(
+pub fn prepare_submission<T: Config>(
 	assignments: Vec<Assignment<T::AccountId, OffchainAccuracy>>,
 	winners: Vec<(T::AccountId, ExtendedBalance)>,
 	do_reduce: bool,
@@ -331,10 +332,7 @@ pub fn prepare_submission<T: Trait>(
 		ElectionSize,
 	),
 	OffchainElectionError,
->
-where
-	ExtendedBalance: From<<OffchainAccuracy as PerThing>::Inner>,
-{
+> {
 	// make sure that the snapshot is available.
 	let snapshot_validators =
 		<Module<T>>::snapshot_validators().ok_or(OffchainElectionError::SnapshotUnavailable)?;
@@ -402,11 +400,11 @@ where
 		T::WeightInfo::submit_solution_better(
 			size.validators.into(),
 			size.nominators.into(),
-			compact.len() as u32,
+			compact.voter_count() as u32,
 			winners.len() as u32,
 		),
 		maximum_allowed_voters,
-		compact.len(),
+		compact.voter_count(),
 	);
 
 	let compact = trim_to_weight::<T, _>(maximum_allowed_voters, compact, &nominator_index)?;
@@ -421,9 +419,9 @@ where
 			<Module<T>>::power_of(s) as _
 		});
 
-		let support_map = build_support_map::<T::AccountId>(&winners, &staked)
+		let support_map = to_support_map::<T::AccountId>(&winners, &staked)
 			.map_err(|_| OffchainElectionError::ElectionFailed)?;
-		evaluate_support::<T::AccountId>(&support_map)
+		support_map.evaluate()
 	};
 
 	// winners to index. Use a simple for loop for a more expressive early exit in case of error.
@@ -519,6 +517,9 @@ mod test {
 		}
 		fn submit_solution_better(v: u32, n: u32, a: u32, w: u32) -> Weight {
 			(0 * v + 0 * n + 1000 * a + 0 * w) as Weight
+		}
+		fn kick(w: u32) -> Weight {
+			unimplemented!()
 		}
 	}
 

@@ -17,12 +17,12 @@
 
 pub mod stack;
 
-use crate::Trait;
+use crate::Config;
 use hyperspace_evm_primitives::{CallInfo, CreateInfo};
 use sp_core::{H160, H256, U256};
 use sp_std::vec::Vec;
 
-pub trait Runner<T: Trait> {
+pub trait Runner<T: Config> {
 	type Error: Into<sp_runtime::DispatchError>;
 
 	fn call(
@@ -30,7 +30,7 @@ pub trait Runner<T: Trait> {
 		target: H160,
 		input: Vec<u8>,
 		value: U256,
-		gas_limit: u32,
+		gas_limit: u64,
 		gas_price: Option<U256>,
 		nonce: Option<U256>,
 		config: &evm::Config,
@@ -40,7 +40,7 @@ pub trait Runner<T: Trait> {
 		source: H160,
 		init: Vec<u8>,
 		value: U256,
-		gas_limit: u32,
+		gas_limit: u64,
 		gas_price: Option<U256>,
 		nonce: Option<U256>,
 		config: &evm::Config,
@@ -51,7 +51,7 @@ pub trait Runner<T: Trait> {
 		init: Vec<u8>,
 		salt: H256,
 		value: U256,
-		gas_limit: u32,
+		gas_limit: u64,
 		gas_price: Option<U256>,
 		nonce: Option<U256>,
 		config: &evm::Config,

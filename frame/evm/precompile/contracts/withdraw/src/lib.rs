@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -26,20 +26,20 @@ use sp_std::prelude::*;
 use sp_std::vec::Vec;
 
 use codec::Decode;
-use hyperspace_evm::{AddressMapping, Trait};
+use hyperspace_evm::{AddressMapping, Config};
 use hyperspace_evm_primitives::Precompile;
 use evm::{Context, ExitError, ExitSucceed};
 
-type AccountId<T> = <T as frame_system::Trait>::AccountId;
+type AccountId<T> = <T as frame_system::Config>::AccountId;
 
 /// WithDraw Precompile Contract, used to withdraw balance from evm account to hyperspace account
 ///
 /// The contract address: 0000000000000000000000000000000000000015
-pub struct WithDraw<T: Trait> {
+pub struct WithDraw<T: Config> {
 	_maker: PhantomData<T>,
 }
 
-impl<T: Trait> Precompile for WithDraw<T> {
+impl<T: Config> Precompile for WithDraw<T> {
 	/// The Withdraw process is divided into two part:
 	/// 1. parse the withdrawal address from the input parameter and get the contract address and value from the context
 	/// 2. transfer from the contract address to withdrawal address
@@ -47,9 +47,9 @@ impl<T: Trait> Precompile for WithDraw<T> {
 	/// Input data: 32-bit substrate withdrawal public key
 	fn execute(
 		input: &[u8],
-		_: Option<usize>,
+		_: Option<u64>,
 		context: &Context,
-	) -> core::result::Result<(ExitSucceed, Vec<u8>, usize), ExitError> {
+	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
 		// Decode input data
 		let input = InputData::<T>::decode(&input)?;
 
@@ -78,24 +78,25 @@ impl<T: Trait> Precompile for WithDraw<T> {
 				sp_runtime::DispatchError::Module { message, .. } => {
 					Err(ExitError::Other(message.unwrap_or("Module Error").into()))
 				}
+				_ => Err(ExitError::Other("Module Error".into())),
 			},
 		}
 	}
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct InputData<T: frame_system::Trait> {
+pub struct InputData<T: frame_system::Config> {
 	pub dest: AccountId<T>,
 }
 
-impl<T: frame_system::Trait> InputData<T> {
+impl<T: frame_system::Config> InputData<T> {
 	pub fn decode(data: &[u8]) -> Result<Self, ExitError> {
 		if data.len() == 32 {
 			let mut dest_bytes = [0u8; 32];
 			dest_bytes.copy_from_slice(&data[0..32]);
 
 			return Ok(InputData {
-				dest: <T as frame_system::Trait>::AccountId::decode(&mut dest_bytes.as_ref())
+				dest: <T as frame_system::Config>::AccountId::decode(&mut dest_bytes.as_ref())
 					.map_err(|_| ExitError::Other("Invalid destination address".into()))?,
 			});
 		}

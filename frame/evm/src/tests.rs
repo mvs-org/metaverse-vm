@@ -7,7 +7,7 @@ use sp_core::{Blake2Hasher, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	Perbill, RuntimeDebug,
+	RuntimeDebug,
 };
 use std::{collections::BTreeMap, str::FromStr};
 
@@ -23,18 +23,16 @@ impl_outer_dispatch! {
 	}
 }
 
-hyperspace_support::impl_test_account_data! {}
+hyperspace_support::impl_test_account_data! { deprecated }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Test;
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = 1024;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
-}
-impl frame_system::Trait for Test {
+
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
 	type Origin = Origin;
 	type Index = u64;
 	type BlockNumber = u64;
@@ -45,26 +43,20 @@ impl frame_system::Trait for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = ();
-	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
+	type BlockHashCount = ();
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
+	type SS58Prefix = ();
 }
 
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
-impl hyperspace_balances::Trait<EtpInstance> for Test {
+impl hyperspace_balances::Config<EtpInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();
@@ -75,7 +67,7 @@ impl hyperspace_balances::Trait<EtpInstance> for Test {
 	type OtherCurrencies = ();
 	type WeightInfo = ();
 }
-impl hyperspace_balances::Trait<DnaInstance> for Test {
+impl hyperspace_balances::Config<DnaInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();
@@ -90,7 +82,7 @@ impl hyperspace_balances::Trait<DnaInstance> for Test {
 parameter_types! {
 	pub const MinimumPeriod: u64 = 1000;
 }
-impl pallet_timestamp::Trait for Test {
+impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
@@ -106,7 +98,7 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
-impl Trait for Test {
+impl Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
@@ -118,14 +110,12 @@ impl Trait for Test {
 
 	type Event = Event<Test>;
 	type Precompiles = ();
-	type ChainId = SystemChainId;
+	type ChainId = ();
 	type Runner = crate::runner::stack::Runner<Self>;
 	type AccountBasicMapping = RawAccountBasicMapping<Test>;
 }
 
 type System = frame_system::Module<Test>;
-type Etp = hyperspace_balances::Module<Test, EtpInstance>;
-type Dna = hyperspace_balances::Module<Test, DnaInstance>;
 type EVM = Module<Test>;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -157,9 +147,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		},
 	);
 
-	hyperspace_balances::GenesisConfig::<Test, EtpInstance>::default()
-		.assimilate_storage(&mut t)
-		.unwrap();
+	EtpConfig::default().assimilate_storage(&mut t).unwrap();
 	GenesisConfig { accounts }
 		.assimilate_storage::<Test>(&mut t)
 		.unwrap();
@@ -196,7 +184,7 @@ fn fail_call_return_ok() {
 #[test]
 fn mutate_account_works() {
 	new_test_ext().execute_with(|| {
-		<Test as Trait>::AccountBasicMapping::mutate_account_basic(
+		<Test as Config>::AccountBasicMapping::mutate_account_basic(
 			&H160::from_str("1000000000000000000000000000000000000001").unwrap(),
 			Account {
 				nonce: U256::from(10),
@@ -205,7 +193,7 @@ fn mutate_account_works() {
 		);
 
 		assert_eq!(
-			<Test as Trait>::AccountBasicMapping::account_basic(
+			<Test as Config>::AccountBasicMapping::account_basic(
 				&H160::from_str("1000000000000000000000000000000000000001").unwrap()
 			),
 			Account {

@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -36,12 +36,14 @@ use sc_finality_grandpa::{
 	LinkHalf, SharedVoterState as GrandpaSharedVoterState,
 	VotingRulesBuilder as GrandpaVotingRulesBuilder,
 };
+use sc_keystore::LocalKeystore;
 use sc_network::NetworkService;
 use sc_service::{
 	config::{KeystoreConfig, PrometheusConfig},
 	BuildNetworkParams, Configuration, Error as ServiceError, NoopRpcExtensionBuilder,
-	PartialComponents, SpawnTasksParams, TaskManager, TelemetryConnectionSinks,
+	PartialComponents, RpcHandlers, SpawnTasksParams, TaskManager,
 };
+use sc_telemetry::{TelemetryConnectionNotifier, TelemetrySpan};
 use sc_transaction_pool::{BasicPool, FullPool};
 use sp_api::ConstructRuntimeApi;
 use sp_consensus::{
@@ -57,7 +59,7 @@ use crate::rpc::{
 	SubscriptionTaskExecutor,
 };
 use hyperspace_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
-use mvm_consensus::FrontierBlockImport;
+use dvm_consensus::FrontierBlockImport;
 
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
@@ -94,7 +96,7 @@ pub trait RuntimeApiCollection:
 	+ hyperspace_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
 	+ hyperspace_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
 	+ hyperspace_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
-	+ mvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>
+	+ dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>
 where
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
@@ -115,7 +117,7 @@ where
 		+ hyperspace_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
 		+ hyperspace_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
 		+ hyperspace_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
-		+ mvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
+		+ dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
 }
@@ -189,10 +191,8 @@ fn new_partial<RuntimeApi, Executor>(
 				LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
 				BabeLink<Block>,
 			),
-			(
-				GrandpaSharedVoterState,
-				Arc<GrandpaFinalityProofProvider<FullBackend, Block>>,
-			),
+			GrandpaSharedVoterState,
+			Option<TelemetrySpan>,
 		),
 	>,
 	ServiceError,
@@ -204,15 +204,22 @@ where
 	RuntimeApi::RuntimeApi:
 		RuntimeApiCollection<StateBackend = StateBackendFor<FullBackend, Block>>,
 {
+	if config.keystore_remote.is_some() {
+		return Err(ServiceError::Other(format!(
+			"Remote Keystores are not supported."
+		)));
+	}
+
 	set_prometheus_registry(config)?;
 
 	let inherent_data_providers = InherentDataProviders::new();
-	let (client, backend, keystore_container, task_manager) =
+	let (client, backend, keystore_container, task_manager, telemetry_span) =
 		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
 	let client = Arc::new(client);
 	let select_chain = LongestChain::new(backend.clone());
 	let transaction_pool = BasicPool::new_full(
 		config.transaction_pool.clone(),
+		config.role.is_authority().into(),
 		config.prometheus_registry(),
 		task_manager.spawn_handle(),
 		client.clone(),
@@ -237,7 +244,6 @@ where
 		babe_link.clone(),
 		babe_import.clone(),
 		Some(Box::new(justification_import)),
-		None,
 		client.clone(),
 		select_chain.clone(),
 		inherent_data_providers.clone(),
@@ -248,14 +254,15 @@ where
 	let justification_stream = grandpa_link.justification_stream();
 	let shared_authority_set = grandpa_link.shared_authority_set().clone();
 	let shared_voter_state = GrandpaSharedVoterState::empty();
-	let finality_proof_provider =
-		GrandpaFinalityProofProvider::new_for_service(backend.clone(), client.clone());
+	let finality_proof_provider = GrandpaFinalityProofProvider::new_for_service(
+		backend.clone(),
+		Some(shared_authority_set.clone()),
+	);
 	let import_setup = (babe_import.clone(), grandpa_link, babe_link.clone());
-	let rpc_setup = (shared_voter_state.clone(), finality_proof_provider.clone());
+	let rpc_setup = shared_voter_state.clone();
 	let babe_config = babe_link.config().clone();
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
-	let subscription_task_executor =
-		sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
+	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let keystore = keystore_container.sync_keystore();
@@ -299,15 +306,34 @@ where
 		import_queue,
 		transaction_pool,
 		inherent_data_providers,
-		other: (rpc_extensions_builder, import_setup, rpc_setup),
+		other: (
+			rpc_extensions_builder,
+			import_setup,
+			rpc_setup,
+			telemetry_span,
+		),
 	})
+}
+
+fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
+	// FIXME: here would the concrete keystore be built,
+	//        must return a concrete type (NOT `LocalKeystore`) that
+	//        implements `CryptoStore` and `SyncCryptoStore`
+	Err("Remote Keystore not supported.")
 }
 
 #[cfg(feature = "full-node")]
 fn new_full<RuntimeApi, Executor>(
 	mut config: Configuration,
 	authority_discovery_disabled: bool,
-) -> Result<(TaskManager, Arc<FullClient<RuntimeApi, Executor>>), ServiceError>
+) -> Result<
+	(
+		TaskManager,
+		Arc<FullClient<RuntimeApi, Executor>>,
+		RpcHandlers,
+	),
+	ServiceError,
+>
 where
 	Executor: 'static + NativeExecutionDispatch,
 	RuntimeApi:
@@ -318,21 +344,51 @@ where
 	let role = config.role.clone();
 	let is_authority = role.is_authority();
 	let force_authoring = config.force_authoring;
+	let backoff_authoring_blocks =
+		Some(sc_consensus_slots::BackoffAuthoringOnFinalizedHeadLagging::default());
 	let disable_grandpa = config.disable_grandpa;
 	let name = config.network.node_name.clone();
 	let PartialComponents {
 		client,
 		backend,
 		mut task_manager,
-		keystore_container,
+		mut keystore_container,
 		select_chain,
 		import_queue,
 		transaction_pool,
 		inherent_data_providers,
-		other: (rpc_extensions_builder, import_setup, rpc_setup),
+		other: (rpc_extensions_builder, import_setup, rpc_setup, telemetry_span),
 	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
+
+	if let Some(url) = &config.keystore_remote {
+		match remote_keystore(url) {
+			Ok(k) => keystore_container.set_remote_keystore(k),
+			Err(e) => {
+				return Err(ServiceError::Other(format!(
+					"Error hooking up remote keystore for {}: {}",
+					url, e
+				)))
+			}
+		};
+	}
+
 	let prometheus_registry = config.prometheus_registry().cloned();
-	let (shared_voter_state, finality_proof_provider) = rpc_setup;
+	let shared_voter_state = rpc_setup;
+
+	config
+		.network
+		.extra_sets
+		.push(sc_finality_grandpa::grandpa_peers_set_config());
+
+	#[cfg(feature = "cli")]
+	config.network.request_response_protocols.push(
+		sc_finality_grandpa_warp_sync::request_response_config_for_chain(
+			&config,
+			task_manager.spawn_handle(),
+			backend.clone(),
+		),
+	);
+
 	let (network, network_status_sinks, system_rpc_tx, network_starter) =
 		sc_service::build_network(BuildNetworkParams {
 			config: &config,
@@ -342,8 +398,6 @@ where
 			import_queue,
 			on_demand: None,
 			block_announce_validator_builder: None,
-			finality_proof_request_builder: None,
-			finality_proof_provider: Some(finality_proof_provider.clone()),
 		})?;
 
 	if config.offchain_worker.enabled {
@@ -356,37 +410,37 @@ where
 		);
 	}
 
-	let telemetry_connection_sinks = TelemetryConnectionSinks::default();
-	sc_service::spawn_tasks(SpawnTasksParams {
-		config,
-		backend: backend.clone(),
-		client: client.clone(),
-		keystore: keystore_container.sync_keystore(),
-		network: network.clone(),
-		rpc_extensions_builder: {
-			let wrap_rpc_extensions_builder = {
-				let network = network.clone();
+	let (rpc_handlers, telemetry_connection_notifier) =
+		sc_service::spawn_tasks(SpawnTasksParams {
+			config,
+			backend: backend.clone(),
+			client: client.clone(),
+			keystore: keystore_container.sync_keystore(),
+			network: network.clone(),
+			rpc_extensions_builder: {
+				let wrap_rpc_extensions_builder = {
+					let network = network.clone();
 
-				move |deny_unsafe, subscription_executor| -> RpcExtension {
-					rpc_extensions_builder(
-						deny_unsafe,
-						is_authority,
-						network.clone(),
-						subscription_executor,
-					)
-				}
-			};
+					move |deny_unsafe, subscription_executor| -> RpcExtension {
+						rpc_extensions_builder(
+							deny_unsafe,
+							is_authority,
+							network.clone(),
+							subscription_executor,
+						)
+					}
+				};
 
-			Box::new(wrap_rpc_extensions_builder)
-		},
-		transaction_pool: transaction_pool.clone(),
-		task_manager: &mut task_manager,
-		on_demand: None,
-		remote_blockchain: None,
-		telemetry_connection_sinks: telemetry_connection_sinks.clone(),
-		network_status_sinks,
-		system_rpc_tx,
-	})?;
+				Box::new(wrap_rpc_extensions_builder)
+			},
+			transaction_pool: transaction_pool.clone(),
+			task_manager: &mut task_manager,
+			on_demand: None,
+			remote_blockchain: None,
+			telemetry_span,
+			network_status_sinks,
+			system_rpc_tx,
+		})?;
 
 	let (block_import, link_half, babe_link) = import_setup;
 
@@ -407,6 +461,7 @@ where
 			sync_oracle: network.clone(),
 			inherent_data_providers: inherent_data_providers.clone(),
 			force_authoring,
+			backoff_authoring_blocks,
 			babe_link,
 			can_author_with,
 		};
@@ -438,7 +493,7 @@ where
 			config: grandpa_config,
 			link: link_half,
 			network: network.clone(),
-			telemetry_on_connect: Some(telemetry_connection_sinks.on_connect_stream()),
+			telemetry_on_connect: telemetry_connection_notifier.map(|x| x.on_connect_stream()),
 			voting_rule: GrandpaVotingRulesBuilder::default().build(),
 			prometheus_registry: prometheus_registry.clone(),
 			shared_voter_state,
@@ -448,8 +503,6 @@ where
 			"grandpa-voter",
 			sc_finality_grandpa::run_grandpa_voter(grandpa_config)?,
 		);
-	} else {
-		sc_finality_grandpa::setup_disabled_grandpa(network.clone())?;
 	}
 
 	if role.is_authority() && !authority_discovery_disabled {
@@ -483,10 +536,19 @@ where
 
 	network_starter.start_network();
 
-	Ok((task_manager, client))
+	Ok((task_manager, client, rpc_handlers))
 }
 
-fn new_light<RuntimeApi, Executor>(mut config: Configuration) -> Result<TaskManager, ServiceError>
+fn new_light<RuntimeApi, Executor>(
+	mut config: Configuration,
+) -> Result<
+	(
+		TaskManager,
+		RpcHandlers,
+		Option<TelemetryConnectionNotifier>,
+	),
+	ServiceError,
+>
 where
 	Executor: 'static + NativeExecutionDispatch,
 	RuntimeApi:
@@ -496,8 +558,14 @@ where
 {
 	set_prometheus_registry(&mut config)?;
 
-	let (client, backend, keystore_container, mut task_manager, on_demand) =
+	let (client, backend, keystore_container, mut task_manager, on_demand, telemetry_span) =
 		sc_service::new_light_parts::<Block, RuntimeApi, Executor>(&config)?;
+
+	config
+		.network
+		.extra_sets
+		.push(sc_finality_grandpa::grandpa_peers_set_config());
+
 	let select_chain = LongestChain::new(backend.clone());
 	let transaction_pool = Arc::new(BasicPool::new_light(
 		config.transaction_pool.clone(),
@@ -506,15 +574,12 @@ where
 		client.clone(),
 		on_demand.clone(),
 	));
-	let grandpa_block_import = sc_finality_grandpa::light_block_import(
+	let (grandpa_block_import, _) = sc_finality_grandpa::block_import(
 		client.clone(),
-		backend.clone(),
 		&(client.clone() as Arc<_>),
-		Arc::new(on_demand.checker().clone()),
+		select_chain.clone(),
 	)?;
-	let finality_proof_import = grandpa_block_import.clone();
-	let finality_proof_request_builder =
-		finality_proof_import.create_finality_proof_request_builder();
+	let justification_import = grandpa_block_import.clone();
 	let (babe_block_import, babe_link) = sc_consensus_babe::block_import(
 		BabeConfig::get_or_compute(&*client)?,
 		grandpa_block_import,
@@ -525,8 +590,7 @@ where
 	let import_queue = sc_consensus_babe::import_queue(
 		babe_link,
 		babe_block_import,
-		None,
-		Some(Box::new(finality_proof_import)),
+		Some(Box::new(justification_import)),
 		client.clone(),
 		select_chain.clone(),
 		inherent_data_providers.clone(),
@@ -534,8 +598,6 @@ where
 		config.prometheus_registry(),
 		NeverCanAuthor,
 	)?;
-	let finality_proof_provider =
-		GrandpaFinalityProofProvider::new_for_service(backend.clone(), client.clone());
 	let (network, network_status_sinks, system_rpc_tx, network_starter) =
 		sc_service::build_network(BuildNetworkParams {
 			config: &config,
@@ -545,8 +607,6 @@ where
 			import_queue,
 			on_demand: Some(on_demand.clone()),
 			block_announce_validator_builder: None,
-			finality_proof_request_builder: Some(finality_proof_request_builder),
-			finality_proof_provider: Some(finality_proof_provider),
 		})?;
 
 	if config.offchain_worker.enabled {
@@ -567,25 +627,26 @@ where
 	};
 	let rpc_extension = rpc::create_light(light_deps);
 
-	sc_service::spawn_tasks(SpawnTasksParams {
-		on_demand: Some(on_demand),
-		remote_blockchain: Some(backend.remote_blockchain()),
-		rpc_extensions_builder: Box::new(NoopRpcExtensionBuilder(rpc_extension)),
-		task_manager: &mut task_manager,
-		telemetry_connection_sinks: TelemetryConnectionSinks::default(),
-		config,
-		keystore: keystore_container.sync_keystore(),
-		backend,
-		transaction_pool,
-		client,
-		network,
-		network_status_sinks,
-		system_rpc_tx,
-	})?;
+	let (rpc_handlers, telemetry_connection_notifier) =
+		sc_service::spawn_tasks(SpawnTasksParams {
+			on_demand: Some(on_demand),
+			remote_blockchain: Some(backend.remote_blockchain()),
+			rpc_extensions_builder: Box::new(NoopRpcExtensionBuilder(rpc_extension)),
+			task_manager: &mut task_manager,
+			config,
+			keystore: keystore_container.sync_keystore(),
+			backend,
+			transaction_pool,
+			client,
+			network,
+			network_status_sinks,
+			system_rpc_tx,
+			telemetry_span,
+		})?;
 
 	network_starter.start_network();
 
-	Ok(task_manager)
+	Ok((task_manager, rpc_handlers, telemetry_connection_notifier))
 }
 
 /// Builds a new object suitable for chain operations.
@@ -628,18 +689,28 @@ pub fn hyperspace_new_full(
 	(
 		TaskManager,
 		Arc<impl DRMLClient<Block, FullBackend, hyperspace_runtime::RuntimeApi>>,
+		RpcHandlers,
 	),
 	ServiceError,
 > {
-	let (components, client) = new_full::<hyperspace_runtime::RuntimeApi, HyperspaceExecutor>(
-		config,
-		authority_discovery_disabled,
-	)?;
+	let (components, client, rpc_handlers) = new_full::<
+		hyperspace_runtime::RuntimeApi,
+		HyperspaceExecutor,
+	>(config, authority_discovery_disabled)?;
 
-	Ok((components, client))
+	Ok((components, client, rpc_handlers))
 }
 
 /// Create a new DRML service for a light client.
-pub fn hyperspace_new_light(config: Configuration) -> Result<TaskManager, ServiceError> {
+pub fn hyperspace_new_light(
+	config: Configuration,
+) -> Result<
+	(
+		TaskManager,
+		RpcHandlers,
+		Option<TelemetryConnectionNotifier>,
+	),
+	ServiceError,
+> {
 	new_light::<hyperspace_runtime::RuntimeApi, HyperspaceExecutor>(config)
 }

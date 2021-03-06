@@ -1,0 +1,63 @@
+[package]
+authors     = ["Hyperspace Network <contact@mvs.org>"]
+description = "Withdraw precompile for EVM pallet."
+edition     = "2018"
+homepage    = "https://mvs.org/"
+license     = "GPL-3.0"
+name        = "hyperspace-evm-precompile-dna"
+readme      = "README.md"
+repository  = "https://github.com/mvs-org/Hyperspace"
+version     = "1.3.0"
+
+[dependencies]
+# crates
+codec                   = { package = "parity-scale-codec", version = "1.3.7", default-features = false }
+hyperspace-evm-primitives = { default-features = false, path = "../../../../../primitives/evm" }
+ethabi                  = { default-features = false, git = "https://github.com/new-mvs/ethabi.git", branch = "with_no_std" }
+ethereum-types          = { default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
+evm                     = { version = "0.22.0", default-features = false, features = ["with-codec"] }
+hex                     = { version = "0.4", default-features = false }
+ripemd160               = { version = "0.9", default-features = false }
+sha3                    = { version = "0.8", default-features = false }
+# hyperspace
+hyperspace-evm = { default-features = false, path = "../../../" }
+# substrate
+frame-support    = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+frame-system     = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-timestamp = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-core          = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-io            = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-runtime       = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-std           = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+
+[features]
+default = ["std"]
+
+std = [
+	"crates-std",
+	"hyperspace-std",
+	"substrate-std",
+]
+
+crates-std = [
+	"codec/std",
+	"hyperspace-evm-primitives/std",
+	"ethabi/std",
+	"ethereum-types/std",
+	"evm/std",
+	"ripemd160/std",
+]
+
+hyperspace-std = [
+	"hyperspace-evm/std",
+]
+
+substrate-std = [
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-timestamp/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]

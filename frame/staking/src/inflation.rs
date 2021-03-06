@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -39,7 +39,7 @@ pub const MILLISECONDS_PER_YEAR: TsInMs = (366 * 24 * 60 * 60) * 1000;
 /// `maximum-payout = max_yearly_inflation * total_tokens / era_per_year`
 ///
 /// `era_duration` is expressed in millisecond.
-pub fn compute_total_payout<T: Trait>(
+pub fn compute_total_payout<T: Config>(
 	era_duration: TsInMs,
 	living_time: TsInMs,
 	total_left: EtpBalance<T>,
@@ -111,10 +111,10 @@ pub fn compute_inflation(maximum: Balance, year: u32) -> Option<u128> {
 
 			return Some(e.floor().to_num());
 		} else {
-			error!(target: "hyperspace-staking", "Compute Inflation Failed at Step 1");
+			error!(target: "darwniia-staking", "Compute Inflation Failed at Step 1");
 		}
 	} else {
-		error!(target: "hyperspace-staking", "Compute Inflation Failed at Step 0");
+		error!(target: "darwniia-staking", "Compute Inflation Failed at Step 0");
 	}
 
 	None
@@ -122,7 +122,7 @@ pub fn compute_inflation(maximum: Balance, year: u32) -> Option<u128> {
 
 // consistent with the formula in smart contract in evolution land which can be found in
 // https://github.com/evolutionlandorg/bank/blob/master/contracts/GringottsBank.sol#L280
-pub fn compute_dna_reward<T: Trait>(value: EtpBalance<T>, months: u8) -> DnaBalance<T> {
+pub fn compute_dna_reward<T: Config>(value: EtpBalance<T>, months: u8) -> DnaBalance<T> {
 	let value: U256 = value.saturated_into::<Balance>().into();
 	let n = U256::from(67).pow(U256::from(months));
 	let d = U256::from(66).pow(U256::from(months));

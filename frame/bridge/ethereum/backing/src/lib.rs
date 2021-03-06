@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -18,10 +18,14 @@
 
 //! Prototype module for cross chain assets backing.
 
-// TODO: https://github.com/hyperspace-network/hyperspace-common/issues/372
+// TODO: https://github.com/new-mvs/darwinia-common/issues/372
 #![allow(unused)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
+
+pub mod weights;
+// --- hyperspace ---
+pub use weights::WeightInfo;
 
 #[cfg(test)]
 mod mock;
@@ -36,12 +40,12 @@ mod types {
 	pub type Balance = u128;
 	pub type DepositId = U256;
 
-	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
-	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
-	pub type EtpBalance<T> = <<T as Trait>::EtpCurrency as Currency<AccountId<T>>>::Balance;
-	pub type DnaBalance<T> = <<T as Trait>::DnaCurrency as Currency<AccountId<T>>>::Balance;
+	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
+	pub type EtpBalance<T> = <<T as Config>::EtpCurrency as Currency<AccountId<T>>>::Balance;
+	pub type DnaBalance<T> = <<T as Config>::DnaCurrency as Currency<AccountId<T>>>::Balance;
 
-	pub type EthereumReceiptProofThing<T> = <<T as Trait>::EthereumRelay as EthereumReceipt<
+	pub type EthereumReceiptProofThing<T> = <<T as Config>::EthereumRelay as EthereumReceipt<
 		AccountId<T>,
 		EtpBalance<T>,
 	>>::EthereumReceiptProofThing;
@@ -83,12 +87,12 @@ use ethereum_primitives::{
 };
 use types::*;
 
-pub trait Trait: frame_system::Trait {
+pub trait Config: frame_system::Config {
 	/// The ethereum backing module id, used for deriving its sovereign account ID.
 	type ModuleId: Get<ModuleId>;
 	type FeeModuleId: Get<ModuleId>;
 
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	type RedeemAccountId: From<[u8; 32]> + Into<Self::AccountId>;
 	type EthereumRelay: EthereumReceipt<Self::AccountId, EtpBalance<Self>>;
@@ -106,10 +110,6 @@ pub trait Trait: frame_system::Trait {
 	/// Weight information for the extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 }
-
-// TODO: https://github.com/hyperspace-network/hyperspace-common/issues/209
-pub trait WeightInfo {}
-impl WeightInfo for () {}
 
 decl_event! {
 	pub enum Event<T>
@@ -132,7 +132,7 @@ decl_event! {
 }
 
 decl_error! {
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// Address Length - MISMATCHED
 		AddrLenMis,
 		/// Pubkey Prefix - MISMATCHED
@@ -172,7 +172,7 @@ decl_error! {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as HyperspaceEthereumBacking {
+	trait Store for Module<T: Config> as HyperspaceEthereumBacking {
 		pub VerifiedProof
 			get(fn verified_proof)
 			: map hasher(blake2_128_concat) EthereumTransactionIndex => bool = false;
@@ -188,7 +188,7 @@ decl_storage! {
 
 		pub LockAssetEvents
 			get(fn lock_asset_events)
-			: Vec<<T as frame_system::Trait>::Event>;
+			: Vec<<T as frame_system::Config>::Event>;
 	}
 	add_extra_genesis {
 		config(etp_locked): EtpBalance<T>;
@@ -212,7 +212,7 @@ decl_storage! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait> for enum Call
+	pub struct Module<T: Config> for enum Call
 	where
 		origin: T::Origin
 	{
@@ -269,7 +269,7 @@ decl_module! {
 			let fee_account = Self::fee_account_id();
 			let locked = utilities::with_transaction_result(|| {
 				// 50 Etp for fee
-				// https://github.com/hyperspace-network/hyperspace-common/pull/377#issuecomment-730369387
+				// https://github.com/new-mvs/darwinia-common/pull/377#issuecomment-730369387
 				T::EtpCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
 
 				let mut locked = false;
@@ -289,8 +289,8 @@ decl_module! {
 						EtpTokenAddress::get(),
 						etp_to_lock
 					);
-					let module_event: <T as Trait>::Event = raw_event.clone().into();
-					let system_event: <T as frame_system::Trait>::Event = module_event.into();
+					let module_event: <T as Config>::Event = raw_event.clone().into();
+					let system_event: <T as frame_system::Config>::Event = module_event.into();
 
 					locked = true;
 
@@ -313,8 +313,8 @@ decl_module! {
 						DnaTokenAddress::get(),
 						dna_to_lock
 					);
-					let module_event: <T as Trait>::Event = raw_event.clone().into();
-					let system_event: <T as frame_system::Trait>::Event = module_event.into();
+					let module_event: <T as Config>::Event = raw_event.clone().into();
+					let system_event: <T as frame_system::Config>::Event = module_event.into();
 
 					locked = true;
 
@@ -367,11 +367,11 @@ decl_module! {
 			}
 		}
 
-		/// Set a new ring redeem address.
+		/// Set a new  redeem address.
 		///
 		/// The dispatch origin of this call must be _Root_.
 		///
-		/// - `new`: The new ring redeem address.
+		/// - `new`: The new  redeem address.
 		///
 		/// # <weight>
 		/// - `O(1)`.
@@ -408,7 +408,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	/// The account ID of the backing pot.
 	///
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
@@ -666,7 +666,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	// event SetAuthritiesEvent(uint32 nonce, address[] authorities, bytes32 benifit);
-	// https://github.com/hyperspace-network/hyperspace-bridge-on-ethereum/blob/51839e614c0575e431eabfd5c70b84f6aa37826a/contracts/Relay.sol#L22
+	// https://github.com/new-mvs/hyperspace-bridge-on-ethereum/blob/51839e614c0575e431eabfd5c70b84f6aa37826a/contracts/Relay.sol#L22
 	// https://ropsten.etherscan.io/tx/0x652528b9421ecb495610a734a4ab70d054b5510dbbf3a9d5c7879c43c7dde4e9#eventlog
 	fn parse_authorities_set_proof(
 		proof_record: &EthereumReceiptProofThing<T>,
@@ -873,7 +873,7 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> Sign<BlockNumber<T>> for Module<T> {
+impl<T: Config> Sign<BlockNumber<T>> for Module<T> {
 	type Signature = EcdsaSignature;
 	type Message = EcdsaMessage;
 	type Signer = EthereumAddress;

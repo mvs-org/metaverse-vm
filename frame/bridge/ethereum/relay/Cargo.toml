@@ -1,5 +1,5 @@
 [package]
-authors     = ["Metaverse <hello@mvs.org>"]
+authors     = ["Hyperspace Network <contact@mvs.org>"]
 build       = "build.rs"
 description = "FRAME pallet to relay Ethereum headers"
 edition     = "2018"
@@ -7,15 +7,15 @@ homepage    = "https://mvs.org/"
 license     = "GPL-3.0"
 name        = "hyperspace-ethereum-relay"
 readme      = "README.md"
-repository  = "https://github.com/hyperspace-network/hyperspace-common/"
+repository  = "https://github.com/mvs-org/Hyperspace"
 version     = "1.3.0"
 
 [dependencies]
 # crates
 blake2-rfc = { version = "0.2.18", default-features = false }
-codec      = { package = "parity-scale-codec", version = "1.3.5", default-features = false }
-serde      = { version = "1.0.118", optional = true }
-serde_json = { version = "1.0.61", optional = true }
+codec      = { package = "parity-scale-codec", version = "1.3.7", default-features = false }
+serde      = { version = "1.0.123", optional = true }
+serde_json = { version = "1.0.62", optional = true }
 # hyperspace
 array-bytes               = { default-features = false, path = "../../../../primitives/array-bytes" }
 hyperspace-relay-primitives = { default-features = false, path = "../../../../primitives/relay" }
@@ -23,23 +23,23 @@ hyperspace-relayer-game     = { default-features = false, path = "../../../bridg
 hyperspace-support          = { default-features = false, path = "../../../support" }
 ethereum-primitives       = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # github
-ckb-merkle-mountain-range = { default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range.git" }
-ethereum-types            = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
-rlp                       = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
+ckb-merkle-mountain-range = { default-features = false, git = "https://github.com/new-mvs/merkle-mountain-range.git" }
+ethereum-types            = { default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
+rlp                       = { default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-core       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-std        = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+frame-system  = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-core       = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-runtime    = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-std        = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [dev-dependencies]
 # hyperspace
 hyperspace-balances   = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
-sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-io   = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-io   = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [features]
 default = ["std"]

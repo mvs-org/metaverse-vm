@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -20,7 +20,7 @@
 //!
 //! The Staking module is used to manage funds at stake by network maintainers.
 //!
-//! - [`staking::Trait`](./trait.Trait.html)
+//! - [`staking::Config`](./trait.Config.html)
 //! - [`Call`](./enum.Call.html)
 //! - [`Module`](./struct.Module.html)
 //!
@@ -107,7 +107,7 @@
 //! valid behavior_ while _punishing any misbehavior or lack of availability_.
 //!
 //! `payout_stakers` call. Any account can call `payout_stakers`, which pays the reward to the
-//! validator as well as its nominators. Only the [`Trait::MaxNominatorRewardedPerValidator`]
+//! validator as well as its nominators. Only the [`Config::MaxNominatorRewardedPerValidator`]
 //! biggest stakers can claim their reward. This is to limit the i/o cost to mutate storage for each
 //! nominator's account.
 //!
@@ -154,10 +154,10 @@
 //! use frame_system::ensure_signed;
 //! use hyperspace_staking as staking;
 //!
-//! pub trait Trait: staking::Trait {}
+//! pub trait Config: staking::Config {}
 //!
 //! decl_module! {
-//! 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+//! 	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 //! 		/// Reward a validator.
 //! 		#[weight = 0]
 //! 		pub fn reward_myself(origin) -> dispatch::DispatchResult {
@@ -175,7 +175,7 @@
 //! ### Era payout
 //!
 //! The era payout is computed using yearly inflation curve defined at
-//! [`T::RewardCurve`](./trait.Trait.html#associatedtype.RewardCurve) as such:
+//! [`T::RewardCurve`](./trait.Config.html#associatedtype.RewardCurve) as such:
 //!
 //! ```nocompile
 //! staker_payout = yearly_inflation(npos_token_staked / total_tokens) * total_tokens / era_per_year
@@ -186,7 +186,7 @@
 //! remaining_payout = max_yearly_inflation * total_tokens / era_per_year - staker_payout
 //! ```
 //! The remaining reward is send to the configurable end-point
-//! [`T::RewardRemainder`](./trait.Trait.html#associatedtype.RewardRemainder).
+//! [`T::RewardRemainder`](./trait.Config.html#associatedtype.RewardRemainder).
 //!
 //! ### Reward Calculation
 //!
@@ -232,10 +232,11 @@
 //!
 //! The controller account can free a portion (or all) of the funds using the
 //! [`unbond`](enum.Call.html#variant.unbond) call. Note that the funds are not immediately
-//! accessible. Instead, a duration denoted by [`BondingDurationInEra`](./struct.BondingDurationInEra.html)
-//! (in number of eras) must pass until the funds can actually be removed. Once the
-//! `BondingDurationInEra` is over, the [`withdraw_unbonded`](./enum.Call.html#variant.withdraw_unbonded)
-//! call can be used to actually withdraw the funds.
+//! accessible. Instead, a duration denoted by
+//! [`BondingDuration`](./trait.Config.html#associatedtype.BondingDuration) (in number of eras) must
+//! pass until the funds can actually be removed. Once the `BondingDuration` is over, the
+//! [`withdraw_unbonded`](./enum.Call.html#variant.withdraw_unbonded) call can be used to actually
+//! withdraw the funds.
 //!
 //! Note that there is a limitation to the number of fund-chunks that can be scheduled to be
 //! unlocked in the future via [`unbond`](enum.Call.html#variant.unbond). In case this maximum
@@ -265,18 +266,12 @@
 //!   validators is stored in the Session module's `Validators` at the end of each era.
 
 #![cfg_attr(not(feature = "std"), no_std)]
-//#![feature(drain_filter)]
+#![feature(drain_filter)]
 #![recursion_limit = "128"]
 
-// TODO: offchain phragmen test https://github.com/hyperspace-network/hyperspace-common/issues/97
+// TODO: offchain phragmen test https://github.com/new-mvs/darwinia-common/issues/97
 // #[cfg(features = "testing-utils")]
 // pub mod testing_utils;
-
-pub mod default_weights;
-pub mod inflation;
-pub mod offchain_election;
-pub mod slashing;
-
 #[cfg(test)]
 mod hyperspace_tests;
 #[cfg(test)]
@@ -285,6 +280,37 @@ mod inflation_tests;
 mod mock;
 #[cfg(test)]
 mod substrate_tests;
+
+pub mod weights;
+// --- hyperspace ---
+pub use weights::WeightInfo;
+
+pub mod inflation;
+pub mod offchain_election;
+pub mod slashing;
+
+pub mod migrations {
+	use super::*;
+
+	#[derive(Decode)]
+	struct OldValidatorPrefs {
+		#[codec(compact)]
+		pub commission: Perbill,
+	}
+	impl OldValidatorPrefs {
+		fn upgraded(self) -> ValidatorPrefs {
+			ValidatorPrefs {
+				commission: self.commission,
+				..Default::default()
+			}
+		}
+	}
+	pub fn migrate_to_blockable<T: Config>() -> frame_support::weights::Weight {
+		<Validators<T>>::translate::<OldValidatorPrefs, _>(|_, p| Some(p.upgraded()));
+		<ErasValidatorPrefs<T>>::translate::<OldValidatorPrefs, _>(|_, _, p| Some(p.upgraded()));
+		T::BlockWeights::get().max_block
+	}
+}
 
 mod types {
 	// --- hyperspace ---
@@ -324,8 +350,8 @@ mod types {
 	/// time scale is milliseconds.
 	pub type TsInMs = u64;
 
-	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
-	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
+	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
 
 	/// The balance type of this module.
 	pub type EtpBalance<T> = <EtpCurrency<T> as Currency<AccountId<T>>>::Balance;
@@ -348,8 +374,8 @@ mod types {
 	pub type ExposureT<T> = Exposure<AccountId<T>, EtpBalance<T>, DnaBalance<T>>;
 	pub type ElectionResultT<T> = ElectionResult<AccountId<T>, EtpBalance<T>, DnaBalance<T>>;
 
-	type EtpCurrency<T> = <T as Trait>::EtpCurrency;
-	type DnaCurrency<T> = <T as Trait>::DnaCurrency;
+	type EtpCurrency<T> = <T as Config>::EtpCurrency;
+	type DnaCurrency<T> = <T as Config>::DnaCurrency;
 }
 
 // --- hyperspace ---
@@ -374,9 +400,9 @@ use frame_support::{
 };
 use frame_system::{ensure_none, ensure_root, ensure_signed, offchain::SendTransactionTypes};
 use sp_npos_elections::{
-	build_support_map, evaluate_support, generate_solution_type, is_score_better, seq_phragmen,
-	Assignment, ElectionResult as PrimitiveElectionResult, ElectionScore, ExtendedBalance,
-	SupportMap, VoteWeight, VotingLimit,
+	generate_solution_type, is_score_better, seq_phragmen, to_support_map, Assignment,
+	CompactSolution, ElectionResult as PrimitiveElectionResult, ElectionScore, EvaluateSupport,
+	ExtendedBalance, PerThing128, SupportMap, VoteWeight,
 };
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
@@ -388,8 +414,7 @@ use sp_runtime::{
 		InvalidTransaction, TransactionPriority, TransactionSource, TransactionValidity,
 		TransactionValidityError, ValidTransaction,
 	},
-	DispatchError, DispatchResult, InnerOf, ModuleId, PerThing, PerU16, Perbill, Percent,
-	Perquintill, RuntimeDebug,
+	DispatchError, DispatchResult, ModuleId, PerU16, Perbill, Percent, Perquintill, RuntimeDebug,
 };
 #[cfg(feature = "std")]
 use sp_runtime::{Deserialize, Serialize};
@@ -425,7 +450,7 @@ macro_rules! log {
 	};
 }
 
-pub const MAX_NOMINATIONS: usize = <CompactAssignments as VotingLimit>::LIMIT;
+pub const MAX_NOMINATIONS: usize = <CompactAssignments as CompactSolution>::LIMIT;
 
 pub(crate) const MAX_UNLOCKING_CHUNKS: usize = 32;
 /// Maximum number of stakers that can be stored in a snapshot.
@@ -436,9 +461,9 @@ const MONTH_IN_MINUTES: TsInMs = 30 * 24 * 60;
 const MONTH_IN_MILLISECONDS: TsInMs = MONTH_IN_MINUTES * 60 * 1000;
 const STAKING_ID: LockIdentifier = *b"da/staki";
 
-pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
+pub trait Config: frame_system::Config + SendTransactionTypes<Call<Self>> {
 	/// The overarching event type.
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	type ModuleId: Get<ModuleId>;
 
@@ -539,8 +564,8 @@ pub trait Trait: frame_system::Trait + SendTransactionTypes<Call<Self>> {
 
 /// Means for interacting with a specialized version of the `session` trait.
 ///
-/// This is needed because `Staking` sets the `ValidatorIdOf` of the `pallet_session::Trait`
-pub trait SessionInterface<AccountId>: frame_system::Trait {
+/// This is needed because `Staking` sets the `ValidatorIdOf` of the `pallet_session::Config`
+pub trait SessionInterface<AccountId>: frame_system::Config {
 	/// Disable a given validator by stash ID.
 	///
 	/// Returns `true` if new era should be forced at the end of this session.
@@ -552,10 +577,10 @@ pub trait SessionInterface<AccountId>: frame_system::Trait {
 	/// Prune historical session tries up to but not including the given index.
 	fn prune_historical_up_to(up_to: SessionIndex);
 }
-impl<T: Trait> SessionInterface<AccountId<T>> for T
+impl<T: Config> SessionInterface<AccountId<T>> for T
 where
-	T: pallet_session::Trait<ValidatorId = AccountId<T>>,
-	T: pallet_session::historical::Trait<
+	T: pallet_session::Config<ValidatorId = AccountId<T>>,
+	T: pallet_session::historical::Config<
 		FullIdentification = Exposure<AccountId<T>, EtpBalance<T>, DnaBalance<T>>,
 		FullIdentificationOf = ExposureOf<T>,
 	>,
@@ -576,35 +601,142 @@ where
 	}
 }
 
-pub trait WeightInfo {
-	fn bond() -> Weight;
-	fn bond_extra() -> Weight;
-	fn deposit_extra() -> Weight;
-	fn unbond() -> Weight;
-	fn validate() -> Weight;
-	fn nominate(n: u32) -> Weight;
-	fn chill() -> Weight;
-	fn set_payee() -> Weight;
-	fn set_controller() -> Weight;
-	fn set_validator_count() -> Weight;
-	fn force_no_eras() -> Weight;
-	fn force_new_era() -> Weight;
-	fn force_new_era_always() -> Weight;
-	fn set_invulnerables(v: u32) -> Weight;
-	fn force_unstake(s: u32) -> Weight;
-	fn cancel_deferred_slash(s: u32) -> Weight;
-	fn payout_stakers_alive_staked(n: u32) -> Weight;
-	fn payout_stakers_dead_controller(n: u32) -> Weight;
+decl_event!(
+	pub enum Event<T>
+	where
+		AccountId = AccountId<T>,
+		BlockNumber = BlockNumber<T>,
+		EtpBalance = EtpBalance<T>,
+		DnaBalance = DnaBalance<T>,
+	{
+		/// The era payout has been set; the first balance is the validator-payout; the second is
+		/// the remainder from the maximum amount of reward.
+		/// [era_index, validator_payout, remainder]
+		EraPayout(EraIndex, EtpBalance, EtpBalance),
 
-	fn rebond(l: u32) -> Weight;
-	fn set_history_depth(e: u32) -> Weight;
-	fn reap_stash(s: u32) -> Weight;
-	fn new_era(v: u32, n: u32) -> Weight;
-	fn submit_solution_better(v: u32, n: u32, a: u32, w: u32) -> Weight;
+		/// The staker has been rewarded by this amount. [stash, amount]
+		Reward(AccountId, EtpBalance),
+
+		/// One validator (and its nominators) has been slashed by the given amount.
+		/// [validator, amount, amount]
+		Slash(AccountId, EtpBalance, DnaBalance),
+		/// An old slashing report from a prior era was discarded because it could
+		/// not be processed. [session_index]
+		OldSlashingReportDiscarded(SessionIndex),
+
+		/// A new set of stakers was elected with the given [compute].
+		StakingElection(ElectionCompute),
+
+		/// A new solution for the upcoming election has been stored. [compute]
+		SolutionStored(ElectionCompute),
+
+		/// An account has bonded this amount. [amount, start, end]
+		///
+		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
+		/// it will not be emitted for staking rewards when they are added to stake.
+		BondEtp(EtpBalance, TsInMs, TsInMs),
+		/// An account has bonded this amount. [amount, start, end]
+		///
+		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
+		/// it will not be emitted for staking rewards when they are added to stake.
+		BondDna(DnaBalance),
+
+		/// An account has unbonded this amount. [amount, now]
+		UnbondEtp(EtpBalance, BlockNumber),
+		/// An account has unbonded this amount. [amount, now]
+		UnbondDna(DnaBalance, BlockNumber),
+
+		/// A nominator has been kicked from a validator. \[nominator, stash\]
+		Kicked(AccountId, AccountId),
+
+		/// Someone claimed his deposits. [stash]
+		DepositsClaimed(AccountId),
+		/// Someone claimed his deposits with some *DNA*s punishment. [stash, forfeit]
+		DepositsClaimedWithPunish(AccountId, DnaBalance),
+	}
+);
+
+decl_error! {
+	/// Error for the staking module.
+	pub enum Error for Module<T: Config> {
+		/// Not a controller account.
+		NotController,
+		/// Not a stash account.
+		NotStash,
+		/// Stash is already bonded.
+		AlreadyBonded,
+		/// Controller is already paired.
+		AlreadyPaired,
+		/// Targets cannot be empty.
+		EmptyTargets,
+		/// Duplicate index.
+		DuplicateIndex,
+		/// Slash record index out of bounds.
+		InvalidSlashIndex,
+		/// Can not bond with value less than minimum balance.
+		InsufficientValue,
+		/// Can not schedule more unlock chunks.
+		NoMoreChunks,
+		/// Can not rebond without unlocking chunks.
+		NoUnlockChunk,
+		/// Attempting to target a stash that still has funds.
+		FundedTarget,
+		/// Invalid era to reward.
+		InvalidEraToReward,
+		/// Invalid number of nominations.
+		InvalidNumberOfNominations,
+		/// Items are not sorted and unique.
+		NotSortedAndUnique,
+		/// Rewards for this era have already been claimed for this validator.
+		AlreadyClaimed,
+		/// The submitted result is received out of the open window.
+		OffchainElectionEarlySubmission,
+		/// The submitted result is not as good as the one stored on chain.
+		OffchainElectionWeakSubmission,
+		/// The snapshot data of the current window is missing.
+		SnapshotUnavailable,
+		/// Incorrect number of winners were presented.
+		OffchainElectionBogusWinnerCount,
+		/// One of the submitted winners is not an active candidate on chain (index is out of range
+		/// in snapshot).
+		OffchainElectionBogusWinner,
+		/// Error while building the assignment type from the compact. This can happen if an index
+		/// is invalid, or if the weights _overflow_.
+		OffchainElectionBogusCompact,
+		/// One of the submitted nominators is not an active nominator on chain.
+		OffchainElectionBogusNominator,
+		/// One of the submitted nominators has an edge to which they have not voted on chain.
+		OffchainElectionBogusNomination,
+		/// One of the submitted nominators has an edge which is submitted before the last non-zero
+		/// slash of the target.
+		OffchainElectionSlashedNomination,
+		/// A self vote must only be originated from a validator to ONLY themselves.
+		OffchainElectionBogusSelfVote,
+		/// The submitted result has unknown edges that are not among the presented winners.
+		OffchainElectionBogusEdge,
+		/// The claimed score does not match with the one computed from the data.
+		OffchainElectionBogusScore,
+		/// The election size is invalid.
+		OffchainElectionBogusElectionSize,
+		/// The call is not allowed at the given time due to restrictions of election period.
+		CallNotAllowed,
+		/// Incorrect previous history depth input provided.
+		IncorrectHistoryDepth,
+		/// Incorrect number of slashing spans provided.
+		IncorrectSlashingSpans,
+		/// Internal state has become somehow corrupted and the operation cannot continue.
+		BadState,
+		/// Too many nomination targets supplied.
+		TooManyTargets,
+		/// A nomination target was supplied that was blocked or otherwise not a validator.
+		BadTarget,
+		/// Payout - INSUFFICIENT
+		PayoutIns,
+	}
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as HyperspaceStaking {
+	trait Store for Module<T: Config> as HyperspaceStaking {
 		/// Number of eras to keep in history.
 		///
 		/// Information is kept for eras in `[current_era - history_depth; current_era]`.
@@ -652,11 +784,14 @@ decl_storage! {
 
 		/// The active era information, it holds index and start.
 		///
-		/// The active era is the era currently rewarded.
-		/// Validator set of this era must be equal to `SessionInterface::validators`.
+		/// The active era is the era being currently rewarded. Validator set of this era must be
+		/// equal to [`SessionInterface::validators`].
 		pub ActiveEra get(fn active_era): Option<ActiveEraInfo>;
 
 		/// The session index at which the era start for the last `HISTORY_DEPTH` eras.
+		///
+		/// Note: This tracks the starting session (i.e. session index when era start being active)
+		/// for the eras in `[CurrentEra - HISTORY_DEPTH, CurrentEra]`.
 		pub ErasStartSessionIndex
 			get(fn eras_start_session_index)
 			: map hasher(twox_64_concat) EraIndex => Option<SessionIndex>;
@@ -790,6 +925,9 @@ decl_storage! {
 		/// forcing into account.
 		pub IsCurrentSessionFinal get(fn is_current_session_final): bool = false;
 
+		/// This is set to v5.0.0 for new networks.
+		StorageVersion build(|_: &GenesisConfig<T>| Releases::V5_0_0): Releases;
+
 		/// The chain's running time form genesis in milliseconds,
 		/// use for calculate hyperspace era payout
 		pub LivingTime get(fn living_time): TsInMs;
@@ -847,133 +985,8 @@ decl_storage! {
 	}
 }
 
-decl_event!(
-	pub enum Event<T>
-	where
-		AccountId = AccountId<T>,
-		BlockNumber = BlockNumber<T>,
-		EtpBalance = EtpBalance<T>,
-		DnaBalance = DnaBalance<T>,
-	{
-		/// The era payout has been set; the first balance is the validator-payout; the second is
-		/// the remainder from the maximum amount of reward.
-		/// [era_index, validator_payout, remainder]
-		EraPayout(EraIndex, EtpBalance, EtpBalance),
-
-		/// The staker has been rewarded by this amount. [stash, amount]
-		Reward(AccountId, EtpBalance),
-
-		/// One validator (and its nominators) has been slashed by the given amount.
-		/// [validator, amount, amount]
-		Slash(AccountId, EtpBalance, DnaBalance),
-		/// An old slashing report from a prior era was discarded because it could
-		/// not be processed. [session_index]
-		OldSlashingReportDiscarded(SessionIndex),
-
-		/// A new set of stakers was elected with the given [compute].
-		StakingElection(ElectionCompute),
-
-		/// A new solution for the upcoming election has been stored. [compute]
-		SolutionStored(ElectionCompute),
-
-		/// An account has bonded this amount. [amount, start, end]
-		///
-		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
-		/// it will not be emitted for staking rewards when they are added to stake.
-		BondEtp(EtpBalance, TsInMs, TsInMs),
-		/// An account has bonded this amount. [amount, start, end]
-		///
-		/// NOTE: This event is only emitted when funds are bonded via a dispatchable. Notably,
-		/// it will not be emitted for staking rewards when they are added to stake.
-		BondDna(DnaBalance),
-
-		/// An account has unbonded this amount. [amount, now]
-		UnbondEtp(EtpBalance, BlockNumber),
-		/// An account has unbonded this amount. [amount, now]
-		UnbondDna(DnaBalance, BlockNumber),
-
-		/// Someone claimed his deposits. [stash]
-		DepositsClaimed(AccountId),
-		/// Someone claimed his deposits with some *DNA*s punishment. [stash, forfeit]
-		DepositsClaimedWithPunish(AccountId, DnaBalance),
-	}
-);
-
-decl_error! {
-	/// Error for the staking module.
-	pub enum Error for Module<T: Trait> {
-		/// Not a controller account.
-		NotController,
-		/// Not a stash account.
-		NotStash,
-		/// Stash is already bonded.
-		AlreadyBonded,
-		/// Controller is already paired.
-		AlreadyPaired,
-		/// Targets cannot be empty.
-		EmptyTargets,
-		/// Duplicate index.
-		DuplicateIndex,
-		/// Slash record index out of bounds.
-		InvalidSlashIndex,
-		/// Can not bond with value less than minimum balance.
-		InsufficientValue,
-		/// Can not schedule more unlock chunks.
-		NoMoreChunks,
-		/// Can not rebond without unlocking chunks.
-		NoUnlockChunk,
-		/// Attempting to target a stash that still has funds.
-		FundedTarget,
-		/// Invalid era to reward.
-		InvalidEraToReward,
-		/// Invalid number of nominations.
-		InvalidNumberOfNominations,
-		/// Items are not sorted and unique.
-		NotSortedAndUnique,
-		/// Rewards for this era have already been claimed for this validator.
-		AlreadyClaimed,
-		/// The submitted result is received out of the open window.
-		OffchainElectionEarlySubmission,
-		/// The submitted result is not as good as the one stored on chain.
-		OffchainElectionWeakSubmission,
-		/// The snapshot data of the current window is missing.
-		SnapshotUnavailable,
-		/// Incorrect number of winners were presented.
-		OffchainElectionBogusWinnerCount,
-		/// One of the submitted winners is not an active candidate on chain (index is out of range
-		/// in snapshot).
-		OffchainElectionBogusWinner,
-		/// Error while building the assignment type from the compact. This can happen if an index
-		/// is invalid, or if the weights _overflow_.
-		OffchainElectionBogusCompact,
-		/// One of the submitted nominators is not an active nominator on chain.
-		OffchainElectionBogusNominator,
-		/// One of the submitted nominators has an edge to which they have not voted on chain.
-		OffchainElectionBogusNomination,
-		/// One of the submitted nominators has an edge which is submitted before the last non-zero
-		/// slash of the target.
-		OffchainElectionSlashedNomination,
-		/// A self vote must only be originated from a validator to ONLY themselves.
-		OffchainElectionBogusSelfVote,
-		/// The submitted result has unknown edges that are not among the presented winners.
-		OffchainElectionBogusEdge,
-		/// The claimed score does not match with the one computed from the data.
-		OffchainElectionBogusScore,
-		/// The election size is invalid.
-		OffchainElectionBogusElectionSize,
-		/// The call is not allowed at the given time due to restrictions of election period.
-		CallNotAllowed,
-		/// Incorrect previous history depth input provided.
-		IncorrectHistoryDepth,
-		/// Incorrect number of slashing spans provided.
-		IncorrectSlashingSpans,
-		/// Payout - INSUFFICIENT
-		PayoutIns,
-	}
-}
-
 decl_module! {
-	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
 		const ModuleId: ModuleId = T::ModuleId::get();
@@ -1023,6 +1036,15 @@ decl_module! {
 		const TotalPower: Power = T::TotalPower::get();
 
 		fn deposit_event() = default;
+
+		fn on_runtime_upgrade() -> frame_support::weights::Weight {
+			if StorageVersion::get() == Releases::V4_0_0 {
+				StorageVersion::put(Releases::V5_0_0);
+				migrations::migrate_to_blockable::<T>()
+			} else {
+				0
+			}
+		}
 
 		/// sets `ElectionStatus` to `Open(now)` where `now` is the block number at which the
 		/// election window has opened, if we are at the last session and less blocks than
@@ -1199,12 +1221,12 @@ decl_module! {
 				}
 			}
 
+			<frame_system::Module<T>>::inc_consumers(&stash).map_err(|_| Error::<T>::BadState)?;
+
 			// You're auto-bonded forever, here. We might improve this by only bonding when
 			// you actually validate/nominate and remove once you unbond __everything__.
 			<Bonded<T>>::insert(&stash, &controller);
 			<Payee<T>>::insert(&stash, payee);
-
-			<frame_system::Module<T>>::inc_ref(&stash);
 
 			let ledger = StakingLedger {
 				stash: stash.clone(),
@@ -1227,7 +1249,7 @@ decl_module! {
 						value,
 						promise_month,
 						ledger,
-					);
+					)?;
 
 					Self::deposit_event(RawEvent::BondEtp(value, start_time, expire_time));
 				},
@@ -1235,7 +1257,7 @@ decl_module! {
 					let stash_balance = T::DnaCurrency::free_balance(&stash);
 					let value = value.min(stash_balance);
 
-					Self::bond_dna(&controller, value, ledger);
+					Self::bond_dna(&controller, value, ledger)?;
 					Self::deposit_event(RawEvent::BondDna(value));
 				},
 			}
@@ -1285,7 +1307,7 @@ decl_module! {
 							extra,
 							promise_month,
 							ledger,
-						);
+						)?;
 
 						Self::deposit_event(RawEvent::BondEtp(extra, start_time, expire_time));
 					}
@@ -1298,7 +1320,7 @@ decl_module! {
 					) {
 						let extra = extra.min(max_additional);
 
-						Self::bond_dna(&controller, extra, ledger);
+						Self::bond_dna(&controller, extra, ledger)?;
 						Self::deposit_event(RawEvent::BondDna(extra));
 					}
 				},
@@ -1503,8 +1525,8 @@ decl_module! {
 
 			Self::update_ledger(&controller, &mut ledger);
 
-			// TODO: https://github.com/hyperspace-network/hyperspace-common/issues/96
-			// FIXME: https://github.com/hyperspace-network/hyperspace-common/issues/121
+			// TODO: https://github.com/new-mvs/darwinia-common/issues/96
+			// FIXME: https://github.com/new-mvs/darwinia-common/issues/121
 			// let StakingLedger {
 			// 	active_etp,
 			// 	active_dna,
@@ -1560,7 +1582,7 @@ decl_module! {
 		/// Claim deposits while the depositing time has not been exceeded, the ring
 		/// will not be slashed, but the account is required to pay DNA as punish.
 		///
-		/// Refer to https://talk.mvs.org/topics/55
+		/// Refer to https://talk.hyperspace.network/topics/55
 		///
 		/// Assume the `expire_time` is a unique ID for the deposit
 		///
@@ -1709,10 +1731,17 @@ decl_module! {
 			let stash = &ledger.stash;
 
 			ensure!(!targets.is_empty(), <Error<T>>::EmptyTargets);
+			ensure!(targets.len() <= MAX_NOMINATIONS, Error::<T>::TooManyTargets);
 
-			let targets = targets.into_iter()
-				.take(MAX_NOMINATIONS)
-				.map(|t| T::Lookup::lookup(t))
+			let old = <Nominators<T>>::get(stash).map_or_else(Vec::new, |x| x.targets);
+			let targets = targets
+				.into_iter()
+				.map(|t| T::Lookup::lookup(t).map_err(DispatchError::from))
+				.map(|n| n.and_then(|n| if old.contains(&n) || !<Validators<T>>::get(&n).blocked {
+					Ok(n)
+				} else {
+					Err(<Error<T>>::BadTarget.into())
+				}))
 				.collect::<Result<Vec<T::AccountId>, _>>()?;
 			let nominations = Nominations {
 				targets,
@@ -2040,6 +2069,13 @@ decl_module! {
 
 			ledger.rebond(plan_to_rebond_etp, plan_to_rebond_dna);
 
+			// last check: the new active amount of ledger must be more than ED.
+			ensure!(
+				ledger.active_etp >= T::EtpCurrency::minimum_balance()
+					|| ledger.active_dna >= T::DnaCurrency::minimum_balance(),
+				<Error<T>>::InsufficientValue
+			);
+
 			Self::update_ledger(&controller, &mut ledger);
 
 			let rebond_etp = ledger.active_etp.saturating_sub(origin_active_etp);
@@ -2104,9 +2140,9 @@ decl_module! {
 			}
 		}
 
-		/// Remove all data structure concerning a staker/stash once its balance is zero.
+		/// Remove all data structure concerning a staker/stash once its balance is at the minimum.
 		/// This is essentially equivalent to `withdraw_unbonded` except it can be called by anyone
-		/// and the target `stash` must have no funds left.
+		/// and the target `stash` must have no funds left beyond the ED.
 		///
 		/// This can be called from any origin.
 		///
@@ -2121,8 +2157,21 @@ decl_module! {
 		/// # </weight>
 		#[weight = T::WeightInfo::reap_stash(*num_slashing_spans)]
 		fn reap_stash(_origin, stash: T::AccountId, num_slashing_spans: u32) {
-			ensure!(T::EtpCurrency::total_balance(&stash).is_zero(), <Error<T>>::FundedTarget);
-			ensure!(T::DnaCurrency::total_balance(&stash).is_zero(), <Error<T>>::FundedTarget);
+			let total_etp = T::EtpCurrency::total_balance(&stash);
+			let minimum_etp = T::EtpCurrency::minimum_balance();
+			let total_dna = T::DnaCurrency::total_balance(&stash);
+			let minimum_dna = T::DnaCurrency::minimum_balance();
+			let at_minimum = (
+				total_etp == minimum_etp
+				&&
+				total_dna <= minimum_dna
+			) || (
+				total_dna == minimum_dna
+				&&
+				total_etp <= minimum_etp
+			);
+
+			ensure!(at_minimum, <Error<T>>::FundedTarget);
 
 			Self::kill_stash(&stash, num_slashing_spans)?;
 			T::EtpCurrency::remove_lock(STAKING_ID, &stash);
@@ -2181,7 +2230,7 @@ decl_module! {
 		#[weight = T::WeightInfo::submit_solution_better(
 			size.validators.into(),
 			size.nominators.into(),
-			compact.len() as u32,
+			compact.voter_count() as u32,
 			winners.len() as u32,
 		)]
 		pub fn submit_election_solution(
@@ -2215,7 +2264,7 @@ decl_module! {
 		#[weight = T::WeightInfo::submit_solution_better(
 			size.validators.into(),
 			size.nominators.into(),
-			compact.len() as u32,
+			compact.voter_count() as u32,
 			winners.len() as u32,
 		)]
 		pub fn submit_election_solution_unsigned(
@@ -2243,10 +2292,46 @@ decl_module! {
 
 			Ok(adjustments)
 		}
+
+		/// Remove the given nominations from the calling validator.
+		///
+		/// Effects will be felt at the beginning of the next era.
+		///
+		/// The dispatch origin for this call must be _Signed_ by the controller, not the stash.
+		/// And, it can be only called when [`EraElectionStatus`] is `Closed`. The controller
+		/// account should represent a validator.
+		///
+		/// - `who`: A list of nominator stash accounts who are nominating this validator which
+		///   should no longer be nominating this validator.
+		///
+		/// Note: Making this call only makes sense if you first set the validator preferences to
+		/// block any further nominations.
+		#[weight = T::WeightInfo::kick(who.len() as u32)]
+		pub fn kick(origin, who: Vec<<T::Lookup as StaticLookup>::Source>) -> DispatchResult {
+			let controller = ensure_signed(origin)?;
+			ensure!(Self::era_election_status().is_closed(), <Error<T>>::CallNotAllowed);
+			let ledger = Self::ledger(&controller).ok_or(<Error<T>>::NotController)?;
+			let stash = &ledger.stash;
+
+			for nom_stash in who.into_iter()
+				.map(T::Lookup::lookup)
+				.collect::<Result<Vec<T::AccountId>, _>>()?
+				.into_iter()
+			{
+				<Nominators<T>>::mutate(&nom_stash, |maybe_nom| if let Some(ref mut nom) = maybe_nom {
+					if let Some(pos) = nom.targets.iter().position(|v| v == stash) {
+						nom.targets.swap_remove(pos);
+						Self::deposit_event(RawEvent::Kicked(nom_stash.clone(), stash.clone()));
+					}
+				});
+			}
+
+			Ok(())
+		}
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	pub fn account_id() -> T::AccountId {
 		T::ModuleId::get().into_account()
 	}
@@ -2258,11 +2343,12 @@ impl<T: Trait> Module<T> {
 		value: EtpBalance<T>,
 		promise_month: u8,
 		mut ledger: StakingLedgerT<T>,
-	) -> (TsInMs, TsInMs) {
+	) -> Result<(TsInMs, TsInMs), DispatchError> {
 		let StakingLedger {
 			active_etp,
 			active_deposit_etp,
 			deposit_items,
+			active_dna,
 			..
 		} = &mut ledger;
 
@@ -2270,6 +2356,14 @@ impl<T: Trait> Module<T> {
 		let mut expire_time = start_time;
 
 		*active_etp = active_etp.saturating_add(value);
+
+		// last check: the new active amount of ledger must be more than ED.
+		ensure!(
+			*active_etp >= T::EtpCurrency::minimum_balance()
+				|| *active_dna >= T::DnaCurrency::minimum_balance(),
+			<Error<T>>::InsufficientValue
+		);
+
 		// if stash promise to an extra-lock
 		// there will be extra reward (*DNA*), which can also be used for staking
 		if promise_month > 0 {
@@ -2289,14 +2383,27 @@ impl<T: Trait> Module<T> {
 
 		Self::update_ledger(&controller, &mut ledger);
 
-		(start_time, expire_time)
+		Ok((start_time, expire_time))
 	}
 
 	/// Update the ledger while bonding controller with *DNA*
-	fn bond_dna(controller: &T::AccountId, value: DnaBalance<T>, mut ledger: StakingLedgerT<T>) {
-		ledger.active_dna += value;
+	fn bond_dna(
+		controller: &T::AccountId,
+		value: DnaBalance<T>,
+		mut ledger: StakingLedgerT<T>,
+	) -> DispatchResult {
+		ledger.active_dna = ledger.active_dna.saturating_add(value);
+
+		// last check: the new active amount of ledger must be more than ED.
+		ensure!(
+			ledger.active_etp >= T::EtpCurrency::minimum_balance()
+				|| ledger.active_dna >= T::DnaCurrency::minimum_balance(),
+			<Error<T>>::InsufficientValue
+		);
 
 		Self::update_ledger(&controller, &mut ledger);
+
+		Ok(())
 	}
 
 	/// Turn the expired deposit items into normal bond
@@ -2862,11 +2969,11 @@ impl<T: Trait> Module<T> {
 			sp_npos_elections::assignment_ratio_to_staked(assignments, |s| Self::power_of(s) as _);
 
 		// build the support map thereof in order to evaluate.
-		let supports = build_support_map::<T::AccountId>(&winners, &staked_assignments)
+		let supports = to_support_map::<T::AccountId>(&winners, &staked_assignments)
 			.map_err(|_| <Error<T>>::OffchainElectionBogusEdge)?;
 
 		// Check if the score is the same as the claimed one.
-		let submitted_score = evaluate_support(&supports);
+		let submitted_score = (&supports).evaluate();
 		ensure!(
 			submitted_score == claimed_score,
 			<Error<T>>::OffchainElectionBogusScore
@@ -2898,14 +3005,17 @@ impl<T: Trait> Module<T> {
 	/// Start a session potentially starting an era.
 	fn start_session(start_session: SessionIndex) {
 		let next_active_era = Self::active_era().map(|e| e.index + 1).unwrap_or(0);
+		// This is only `Some` when current era has already progressed to the next era, while the
+		// active era is one behind (i.e. in the *last session of the active era*, or *first session
+		// of the new current era*, depending on how you look at it).
 		if let Some(next_active_era_start_session_index) =
 			Self::eras_start_session_index(next_active_era)
 		{
 			if next_active_era_start_session_index == start_session {
 				Self::start_era(start_session);
 			} else if next_active_era_start_session_index < start_session {
-				// This arm should never happen, but better handle it than to stall the
-				// staking pallet.
+				// This arm should never happen, but better handle it than to stall the staking
+				// pallet.
 				frame_support::print("Warning: A session appears to have been skipped.");
 				Self::start_era(start_session);
 			}
@@ -3136,7 +3246,7 @@ impl<T: Trait> Module<T> {
 					Self::power_of(s) as _
 				});
 
-			let supports = build_support_map::<T::AccountId>(&elected_stashes, &staked_assignments)
+			let supports = to_support_map::<T::AccountId>(&elected_stashes, &staked_assignments)
 				.map_err(|_| {
 					log!(
 						error,
@@ -3172,12 +3282,9 @@ impl<T: Trait> Module<T> {
 	/// Self votes are added and nominations before the most recent slashing span are ignored.
 	///
 	/// No storage item is updated.
-	pub fn do_phragmen<Accuracy: PerThing>(
+	pub fn do_phragmen<Accuracy: PerThing128>(
 		iterations: usize,
-	) -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>>
-	where
-		ExtendedBalance: From<InnerOf<Accuracy>>,
-	{
+	) -> Option<PrimitiveElectionResult<T::AccountId, Accuracy>> {
 		let mut all_nominators: Vec<(T::AccountId, VoteWeight, Vec<T::AccountId>)> = vec![];
 		let mut all_validators = vec![];
 		for (validator, _) in <Validators<T>>::iter() {
@@ -3227,7 +3334,7 @@ impl<T: Trait> Module<T> {
 				all_nominators,
 				Some((iterations, 0)), // exactly run `iterations` rounds.
 			)
-			.map_err(|err| log!(error, "Call to seq-phragmen failed due to {}", err))
+			.map_err(|err| log!(error, "Call to seq-phragmen failed due to {:?}", err))
 			.ok()
 		}
 	}
@@ -3328,7 +3435,7 @@ impl<T: Trait> Module<T> {
 		<Validators<T>>::remove(stash);
 		<Nominators<T>>::remove(stash);
 
-		<frame_system::Module<T>>::dec_ref(stash);
+		<frame_system::Module<T>>::dec_consumers(stash);
 
 		Ok(())
 	}
@@ -3420,19 +3527,37 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> pallet_session::SessionManager<T::AccountId> for Module<T> {
+impl<T: Config> pallet_session::SessionManager<T::AccountId> for Module<T> {
 	fn new_session(new_index: SessionIndex) -> Option<Vec<T::AccountId>> {
+		frame_support::debug::native::trace!(
+			target: LOG_TARGET,
+			"[{}] planning new_session({})",
+			<frame_system::Module<T>>::block_number(),
+			new_index
+		);
 		Self::new_session(new_index)
 	}
 	fn end_session(end_index: SessionIndex) {
+		frame_support::debug::native::trace!(
+			target: LOG_TARGET,
+			"[{}] ending end_session({})",
+			<frame_system::Module<T>>::block_number(),
+			end_index
+		);
 		Self::end_session(end_index)
 	}
 	fn start_session(start_index: SessionIndex) {
+		frame_support::debug::native::trace!(
+			target: LOG_TARGET,
+			"[{}] starting start_session({})",
+			<frame_system::Module<T>>::block_number(),
+			start_index
+		);
 		Self::start_session(start_index)
 	}
 }
 
-impl<T: Trait> pallet_session::historical::SessionManager<T::AccountId, ExposureT<T>>
+impl<T: Config> pallet_session::historical::SessionManager<T::AccountId, ExposureT<T>>
 	for Module<T>
 {
 	fn new_session(new_index: SessionIndex) -> Option<Vec<(T::AccountId, ExposureT<T>)>> {
@@ -3459,12 +3584,12 @@ impl<T: Trait> pallet_session::historical::SessionManager<T::AccountId, Exposure
 }
 
 /// This is intended to be used with `FilterHistoricalOffences`.
-impl<T: Trait>
+impl<T: Config>
 	OnOffenceHandler<T::AccountId, pallet_session::historical::IdentificationTuple<T>, Weight>
 	for Module<T>
 where
-	T: pallet_session::Trait<ValidatorId = AccountId<T>>,
-	T: pallet_session::historical::Trait<
+	T: pallet_session::Config<ValidatorId = AccountId<T>>,
+	T: pallet_session::historical::Config<
 		FullIdentification = ExposureT<T>,
 		FullIdentificationOf = ExposureOf<T>,
 	>,
@@ -3602,7 +3727,7 @@ where
 	}
 }
 
-impl<T: Trait> OnDepositRedeem<T::AccountId, EtpBalance<T>> for Module<T> {
+impl<T: Config> OnDepositRedeem<T::AccountId, EtpBalance<T>> for Module<T> {
 	fn on_deposit_redeem(
 		backing: &T::AccountId,
 		stash: &T::AccountId,
@@ -3655,7 +3780,7 @@ impl<T: Trait> OnDepositRedeem<T::AccountId, EtpBalance<T>> for Module<T> {
 			<Bonded<T>>::insert(&stash, controller);
 			<Payee<T>>::insert(&stash, RewardDestination::Stash);
 
-			<frame_system::Module<T>>::inc_ref(&stash);
+			<frame_system::Module<T>>::inc_consumers(&stash).map_err(|_| Error::<T>::BadState)?;
 
 			let mut ledger = StakingLedger {
 				stash: stash.clone(),
@@ -3684,7 +3809,7 @@ impl<T: Trait> OnDepositRedeem<T::AccountId, EtpBalance<T>> for Module<T> {
 }
 
 #[allow(deprecated)]
-impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
+impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
 	type Call = Call<T>;
 	fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 		if let Call::submit_election_solution_unsigned(_, _, score, era, _) = call {
@@ -3768,7 +3893,7 @@ impl<T: Trait> frame_support::unsigned::ValidateUnsigned for Module<T> {
 /// * 1 point to the producer of each referenced uncle block.
 impl<T> pallet_authorship::EventHandler<T::AccountId, T::BlockNumber> for Module<T>
 where
-	T: Trait + pallet_authorship::Trait + pallet_session::Trait,
+	T: Config + pallet_authorship::Config + pallet_session::Config,
 {
 	fn note_author(author: T::AccountId) {
 		Self::reward_by_ids(vec![(author, 20)]);
@@ -3784,7 +3909,7 @@ where
 /// A `Convert` implementation that finds the stash of the given controller account,
 /// if any.
 pub struct StashOf<T>(PhantomData<T>);
-impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
+impl<T: Config> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
 	fn convert(controller: T::AccountId) -> Option<T::AccountId> {
 		<Module<T>>::ledger(&controller).map(|l| l.stash)
 	}
@@ -3796,7 +3921,7 @@ impl<T: Trait> Convert<T::AccountId, Option<T::AccountId>> for StashOf<T> {
 /// Active exposure is the exposure of the validator set currently validating, i.e. in
 /// `active_era`. It can differ from the latest planned exposure in `current_era`.
 pub struct ExposureOf<T>(PhantomData<T>);
-impl<T: Trait> Convert<T::AccountId, Option<ExposureT<T>>> for ExposureOf<T> {
+impl<T: Config> Convert<T::AccountId, Option<ExposureT<T>>> for ExposureOf<T> {
 	fn convert(validator: T::AccountId) -> Option<ExposureT<T>> {
 		if let Some(active_era) = <Module<T>>::active_era() {
 			Some(<Module<T>>::eras_stakers(active_era.index, &validator))
@@ -3813,7 +3938,7 @@ pub struct FilterHistoricalOffences<T, R> {
 impl<T, Reporter, Offender, R, O> ReportOffence<Reporter, Offender, O>
 	for FilterHistoricalOffences<Module<T>, R>
 where
-	T: Trait,
+	T: Config,
 	R: ReportOffence<Reporter, Offender, O>,
 	O: Offence<Offender>,
 {
@@ -3836,6 +3961,23 @@ where
 
 	fn is_known_offence(offenders: &[Offender], time_slot: &O::TimeSlot) -> bool {
 		R::is_known_offence(offenders, time_slot)
+	}
+}
+
+// A value placed in storage that represents the current version of the Staking storage. This value
+// is used by the `on_runtime_upgrade` logic to determine whether we run storage migration logic.
+// This should match directly with the semantic versions of the Rust crate.
+#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug)]
+enum Releases {
+	V1_0_0Ancient,
+	V2_0_0,
+	V3_0_0,
+	V4_0_0,
+	V5_0_0,
+}
+impl Default for Releases {
+	fn default() -> Self {
+		Releases::V5_0_0
 	}
 }
 
@@ -3980,11 +4122,16 @@ pub struct ValidatorPrefs {
 	/// nominators.
 	#[codec(compact)]
 	pub commission: Perbill,
+	/// Whether or not this validator is accepting more nominations. If `true`, then no nominator
+	/// who is not already nominating this validator may nominate them. By default, validators
+	/// are accepting nominations.
+	pub blocked: bool,
 }
 impl Default for ValidatorPrefs {
 	fn default() -> Self {
 		ValidatorPrefs {
 			commission: Perbill::zero(),
+			blocked: false,
 		}
 	}
 }
@@ -4115,7 +4262,28 @@ where
 				{
 					*active_deposit_etp -= slashable_deposit_etp;
 
-					
+					deposit_item.drain_filter(|item| {
+						if ts >= item.expire_time {
+							true
+						} else {
+							if slashable_deposit_etp.is_zero() {
+								false
+							} else {
+								if let Some(new_slashable_deposit_etp) =
+									slashable_deposit_etp.checked_sub(&item.value)
+								{
+									slashable_deposit_etp = new_slashable_deposit_etp;
+									true
+								} else {
+									item.value -= sp_std::mem::replace(
+										&mut slashable_deposit_etp,
+										Zero::zero(),
+									);
+									false
+								}
+							}
+						}
+					});
 				}
 
 				*active_etp -= slashable_active_etp;
@@ -4149,10 +4317,45 @@ where
 		);
 
 		if !apply_slash_etp.is_zero() {
-
+			etp_staking_lock.unbondings.drain_filter(|lock| {
+				if bn >= lock.until {
+					true
+				} else {
+					if apply_slash_etp.is_zero() {
+						false
+					} else {
+						if apply_slash_etp >= lock.amount {
+							apply_slash_etp -= lock.amount;
+							true
+						} else {
+							lock.amount -=
+								sp_std::mem::replace(&mut apply_slash_etp, Zero::zero());
+							false
+						}
+					}
+				}
+			});
 		}
 		if !apply_slash_dna.is_zero() {
-	
+			dna_staking_lock.unbondings.drain_filter(|lock| {
+				if bn >= lock.until {
+					true
+				} else {
+					if apply_slash_dna.is_zero() {
+						false
+					} else {
+						if apply_slash_dna > lock.amount {
+							apply_slash_dna -= lock.amount;
+
+							true
+						} else {
+							lock.amount -=
+								sp_std::mem::replace(&mut apply_slash_dna, Zero::zero());
+							false
+						}
+					}
+				}
+			});
 		}
 
 		(slash_etp - apply_slash_etp, slash_dna - apply_slash_dna)

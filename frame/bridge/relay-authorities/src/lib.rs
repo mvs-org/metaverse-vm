@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -19,6 +19,10 @@
 //! # Relay Authorities Module
 
 #![cfg_attr(not(feature = "std"), no_std)]
+
+pub mod weights;
+// --- hyperspace ---
+pub use weights::WeightInfo;
 
 #[cfg(test)]
 mod mock;
@@ -29,16 +33,17 @@ mod types {
 	// --- hyperspace ---
 	use crate::*;
 
-	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
-	pub type BlockNumber<T> = <T as frame_system::Trait>::BlockNumber;
-	pub type MMRRoot<T> = <T as frame_system::Trait>::Hash;
+	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+	pub type BlockNumber<T> = <T as frame_system::Config>::BlockNumber;
+	pub type MMRRoot<T> = <T as frame_system::Config>::Hash;
 	pub type EtpBalance<T, I> = <EtpCurrency<T, I> as Currency<AccountId<T>>>::Balance;
-	pub type EtpCurrency<T, I> = <T as Trait<I>>::EtpCurrency;
+	pub type EtpCurrency<T, I> = <T as Config<I>>::EtpCurrency;
 
-	pub type RelayAuthoritySigner<T, I> = <<T as Trait<I>>::Sign as Sign<BlockNumber<T>>>::Signer;
-	pub type RelayAuthorityMessage<T, I> = <<T as Trait<I>>::Sign as Sign<BlockNumber<T>>>::Message;
+	pub type RelayAuthoritySigner<T, I> = <<T as Config<I>>::Sign as Sign<BlockNumber<T>>>::Signer;
+	pub type RelayAuthorityMessage<T, I> =
+		<<T as Config<I>>::Sign as Sign<BlockNumber<T>>>::Message;
 	pub type RelayAuthoritySignature<T, I> =
-		<<T as Trait<I>>::Sign as Sign<BlockNumber<T>>>::Signature;
+		<<T as Config<I>>::Sign as Sign<BlockNumber<T>>>::Signature;
 	pub type RelayAuthorityT<T, I> =
 		RelayAuthority<AccountId<T>, RelayAuthoritySigner<T, I>, EtpBalance<T, I>, BlockNumber<T>>;
 	pub type ScheduledAuthoritiesChangeT<T, I> = ScheduledAuthoritiesChange<
@@ -71,8 +76,8 @@ use hyperspace_relay_primitives::relay_authorities::*;
 use hyperspace_support::balance::lock::*;
 use types::*;
 
-pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
-	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Trait>::Event>;
+pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
+	type Event: From<Event<Self, I>> + Into<<Self as frame_system::Config>::Event>;
 	type EtpCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 	type LockId: Get<LockIdentifier>;
 	type TermDuration: Get<Self::BlockNumber>;
@@ -87,9 +92,6 @@ pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 	type SubmitDuration: Get<Self::BlockNumber>;
 	type WeightInfo: WeightInfo;
 }
-
-pub trait WeightInfo {}
-impl WeightInfo for () {}
 
 decl_event! {
 	pub enum Event<T, I: Instance = DefaultInstance>
@@ -116,7 +118,7 @@ decl_event! {
 }
 
 decl_error! {
-	pub enum Error for Module<T: Trait<I>, I: Instance> {
+	pub enum Error for Module<T: Config<I>, I: Instance> {
 		/// Candidate - ALREADY EXISTED
 		CandidateAE,
 		/// Candidate - NOT EXISTED
@@ -149,7 +151,7 @@ decl_error! {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as HyperspaceRelayAuthorities {
+	trait Store for Module<T: Config<I>, I: Instance = DefaultInstance> as HyperspaceRelayAuthorities {
 		/// Anyone can request to be an authority with some stake
 		/// Also submit your signer at the same time (for ethereum: your ethereum address in H160 format)
 		///
@@ -231,7 +233,7 @@ decl_storage! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait<I>, I: Instance = DefaultInstance> for enum Call
+	pub struct Module<T: Config<I>, I: Instance = DefaultInstance> for enum Call
 	where
 		origin: T::Origin
 	{
@@ -608,7 +610,7 @@ decl_module! {
 
 impl<T, I> Module<T, I>
 where
-	T: Trait<I>,
+	T: Config<I>,
 	I: Instance,
 {
 	pub fn remove_candidate_by_id_with<F>(
@@ -843,7 +845,7 @@ where
 
 impl<T, I> RelayAuthorityProtocol<BlockNumber<T>> for Module<T, I>
 where
-	T: Trait<I>,
+	T: Config<I>,
 	I: Instance,
 {
 	type Signer = RelayAuthoritySigner<T, I>;
@@ -905,7 +907,7 @@ pub fn find_authority_position<T, I>(
 	account_id: &AccountId<T>,
 ) -> Option<usize>
 where
-	T: Trait<I>,
+	T: Config<I>,
 	I: Instance,
 {
 	authorities
@@ -918,7 +920,7 @@ pub fn find_signer<T, I>(
 	account_id: &AccountId<T>,
 ) -> Option<RelayAuthoritySigner<T, I>>
 where
-	T: Trait<I>,
+	T: Config<I>,
 	I: Instance,
 {
 	if let Some(position) = authorities

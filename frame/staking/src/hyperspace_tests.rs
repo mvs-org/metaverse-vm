@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -55,12 +55,12 @@ macro_rules! gen_paired_account {
 			StakingBalance::EtpBalance(50 * COIN),
 			RewardDestination::Stash,
 			$how_long,
-			));
+		));
 		assert_ok!(Staking::bond_extra(
 			Origin::signed($stash),
 			StakingBalance::DnaBalance(50 * COIN),
 			$how_long
-			));
+		));
 	};
 	($stash:ident($stash_id:expr), $controller:ident($controller_id:expr), $how_long:expr) => {
 		#[allow(non_snake_case, unused)]
@@ -76,12 +76,12 @@ macro_rules! gen_paired_account {
 			StakingBalance::EtpBalance(50 * COIN),
 			RewardDestination::Stash,
 			$how_long,
-			));
+		));
 		assert_ok!(Staking::bond_extra(
 			Origin::signed($stash),
 			StakingBalance::DnaBalance(50 * COIN),
 			$how_long,
-			));
+		));
 	};
 	($stash:ident($stash_id:expr), $controller:ident($controller_id:expr)) => {
 		#[allow(non_snake_case, unused)]
@@ -101,7 +101,7 @@ fn slash_ledger_should_work() {
 		.validator_count(1)
 		.build()
 		.execute_with(|| {
-			start_era(0);
+			start_active_era(0);
 
 			assert_eq_uvec!(validator_controllers(), vec![20]);
 
@@ -125,16 +125,13 @@ fn slash_ledger_should_work() {
 				ValidatorPrefs::default()
 			));
 
-			start_era(1);
+			start_active_era(1);
 
 			assert_eq_uvec!(validator_controllers(), vec![777]);
 
 			on_offence_now(
 				&[OffenceDetails {
-					offender: (
-						account_id,
-						Staking::eras_stakers(Staking::active_era().unwrap().index, account_id),
-					),
+					offender: (account_id, Staking::eras_stakers(active_era(), account_id)),
 					reporters: vec![],
 				}],
 				&[Perbill::from_percent(90)],
@@ -189,7 +186,7 @@ fn dna_should_reward_even_does_not_own_dna_before() {
 	// Tests that validator storage items are cleaned up when stash is empty
 	// Tests that storage items are untouched when controller is empty
 	ExtBuilder::default()
-		.init_etp(false)
+		.has_stakers(false)
 		.build()
 		.execute_with(|| {
 			let account_id = 777;
@@ -703,7 +700,7 @@ fn slash_also_slash_unbondings() {
 		.validator_count(1)
 		.build()
 		.execute_with(|| {
-			start_era(0);
+			start_active_era(0);
 
 			let (account_id, bond) = (777, COIN);
 			let _ = Etp::deposit_creating(&account_id, bond);
@@ -725,7 +722,7 @@ fn slash_also_slash_unbondings() {
 				.etp_staking_lock
 				.clone();
 
-			start_era(1);
+			start_active_era(1);
 
 			assert_ok!(Staking::unbond(
 				Origin::signed(account_id),
@@ -736,10 +733,7 @@ fn slash_also_slash_unbondings() {
 
 			on_offence_now(
 				&[OffenceDetails {
-					offender: (
-						account_id,
-						Staking::eras_stakers(Staking::active_era().unwrap().index, account_id),
-					),
+					offender: (account_id, Staking::eras_stakers(active_era(), account_id)),
 					reporters: vec![],
 				}],
 				&[Perbill::from_percent(100)],
@@ -786,7 +780,7 @@ fn check_stash_already_bonded_and_controller_already_paired() {
 #[test]
 fn pool_should_be_increased_and_decreased_correctly() {
 	ExtBuilder::default().build().execute_with(|| {
-		start_era(0);
+		start_active_era(0);
 
 		let mut etp_pool = Staking::etp_pool();
 		let mut dna_pool = Staking::dna_pool();
@@ -847,27 +841,21 @@ fn pool_should_be_increased_and_decreased_correctly() {
 			ValidatorPrefs::default()
 		));
 
-		start_era(1);
+		start_active_era(1);
 
 		assert_eq_uvec!(validator_controllers(), vec![controller_1, controller_2]);
 
 		// slash: 37.5Etp 50Dna
 		on_offence_now(
 			&[OffenceDetails {
-				offender: (
-					stash_1,
-					Staking::eras_stakers(Staking::active_era().unwrap().index, stash_1),
-				),
+				offender: (stash_1, Staking::eras_stakers(active_era(), stash_1)),
 				reporters: vec![],
 			}],
 			&[Perbill::from_percent(100)],
 		);
 		on_offence_now(
 			&[OffenceDetails {
-				offender: (
-					stash_2,
-					Staking::eras_stakers(Staking::active_era().unwrap().index, stash_2),
-				),
+				offender: (stash_2, Staking::eras_stakers(active_era(), stash_2)),
 				reporters: vec![],
 			}],
 			&[Perbill::from_percent(100)],
@@ -888,13 +876,13 @@ fn pool_should_be_increased_and_decreased_correctly() {
 				RewardDestination::Staked
 			));
 
-			start_era(1);
+			start_active_era(1);
 
 			Staking::reward_by_ids(vec![(11, 1)]);
-			let payout = current_total_payout_for_duration(3 * 1000);
+			let payout = current_total_payout_for_duration(reward_time_per_era());
 			assert!(payout > 100);
 
-			start_era(2);
+			start_active_era(2);
 
 			let etp_pool = Staking::etp_pool();
 			assert_ok!(Staking::payout_stakers(Origin::signed(10), 11, 1));
@@ -1016,7 +1004,7 @@ fn on_deposit_redeem_should_work() {
 				RewardDestination::default(),
 			);
 			assert!(Staking::ledger(unbonded_account).is_none());
-			assert!(System::account(unbonded_account).refcount == 0);
+			assert!(System::account(unbonded_account).providers == 0);
 
 			assert_ok!(Staking::on_deposit_redeem(
 				&backing_account,
@@ -1055,7 +1043,7 @@ fn on_deposit_redeem_should_work() {
 				}
 			);
 			assert_eq!(Staking::etp_pool(), etp_pool + deposit_amount);
-			assert!(System::account(unbonded_account).refcount != 0);
+			assert!(System::account(unbonded_account).providers != 0);
 		}
 
 		// Already bonded
@@ -1237,7 +1225,7 @@ fn staking_with_dna_with_unbondings() {
 
 		assert_err!(
 			Dna::transfer(Origin::signed(stash), controller, 1),
-			EtpError::LiquidityRestrictions,
+			DnaError::LiquidityRestrictions,
 		);
 
 		System::set_block_number(unbond_start + BondingDurationInBlockNumber::get());
@@ -1525,7 +1513,7 @@ fn unbound_values_in_twice() {
 
 		assert_err!(
 			Dna::transfer(Origin::signed(stash), controller, unbond_value_1),
-			EtpError::LiquidityRestrictions,
+			DnaError::LiquidityRestrictions,
 		);
 		assert_ok!(Dna::transfer(
 			Origin::signed(stash),
@@ -1536,7 +1524,7 @@ fn unbound_values_in_twice() {
 
 		assert_err!(
 			Dna::transfer(Origin::signed(stash), controller, unbond_value_1 + 1),
-			EtpError::LiquidityRestrictions,
+			DnaError::LiquidityRestrictions,
 		);
 		System::set_block_number(BondingDurationInBlockNumber::get() + unbond_start_1);
 		assert_ok!(Dna::transfer(
@@ -1828,7 +1816,8 @@ fn unbound_values_in_twice() {
 	});
 }
 
-
+// Original testcase name is `xavier_q3`
+//
 // The values(DNA, ETP) are unbond in the moment that there are values unbonding
 #[test]
 fn bond_values_when_some_value_unbonding() {
@@ -2010,7 +1999,7 @@ fn rebond_event_should_work() {
 
 			let _ = Etp::make_free_balance_be(&11, 1000000);
 
-			start_era(1);
+			run_to_block(5);
 
 			assert_eq!(
 				Staking::ledger(&10),
@@ -2025,7 +2014,7 @@ fn rebond_event_should_work() {
 				})
 			);
 
-			start_era(2);
+			run_to_block(6);
 
 			Staking::unbond(Origin::signed(10), StakingBalance::EtpBalance(400)).unwrap();
 			assert_eq!(
@@ -2037,7 +2026,7 @@ fn rebond_event_should_work() {
 						staking_amount: 600,
 						unbondings: vec![Unbonding {
 							amount: 400,
-							until: 6 + BondingDurationInBlockNumber::get(),
+							until: 6 + bonding_duration_in_blocks(),
 						}]
 					},
 					..Default::default()

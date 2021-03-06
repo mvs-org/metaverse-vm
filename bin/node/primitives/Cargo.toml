@@ -1,18 +1,18 @@
 [package]
-authors     = ["Metaverse <hello@mvs.org>"]
+authors     = ["Hyperspace Network <contact@mvs.org>"]
 description = "DRML node runtime primitives"
 edition     = "2018"
 homepage    = "https://mvs.org/"
 license     = "GPL-3.0"
 name        = "hyperspace-primitives"
 readme      = "README.md"
-repository  = "https://github.com/hyperspace-network/hyperspace-common/"
+repository  = "https://github.com/mvs-org/Hyperspace"
 version     = "1.0.12"
 
 [dependencies]
 # substrate
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core    = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-runtime = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [features]
 default = ["std"]

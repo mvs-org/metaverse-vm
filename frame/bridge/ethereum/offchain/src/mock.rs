@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -34,7 +34,6 @@ type Balance = u128;
 type Extrinsic = TestXt<Call, ()>;
 
 pub type System = frame_system::Module<Test>;
-pub type Etp = hyperspace_balances::Module<Test, EtpInstance>;
 pub type EthereumRelay = hyperspace_ethereum_linear_relay::Module<Test>;
 
 pub type EthOffchain = Module<Test>;
@@ -59,7 +58,7 @@ pub struct Test;
 parameter_types! {
 	pub const FetchInterval: u64 = 3;
 }
-impl Trait for Test {
+impl Config for Test {
 	type AuthorityId = crypto::AuthorityId;
 	type FetchInterval = FetchInterval;
 }
@@ -70,7 +69,7 @@ parameter_types! {
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 }
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
 	type Origin = Origin;
 	type Call = Call;
@@ -96,9 +95,10 @@ impl frame_system::Trait for Test {
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
+	type SS58Prefix = ();
 }
 
-impl hyperspace_balances::Trait<EtpInstance> for Test {
+impl hyperspace_balances::Config<EtpInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();
@@ -114,7 +114,7 @@ parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
-impl hyperspace_ethereum_linear_relay::Trait for Test {
+impl hyperspace_ethereum_linear_relay::Config for Test {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
 	type EthereumNetwork = EthereumNetwork;

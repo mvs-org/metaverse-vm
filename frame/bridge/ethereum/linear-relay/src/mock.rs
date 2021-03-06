@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -19,13 +19,13 @@
 //! Mock file for ethereum-linear-relay.
 
 // --- std ---
-use std::{cell::RefCell, fs::File};
+use std::fs::File;
 // --- crates ---
 use serde::Deserialize;
 // --- substrate ---
-use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types};
 use sp_core::H256;
-use sp_runtime::{testing::Header, traits::IdentityLookup, Perbill, RuntimeDebug};
+use sp_runtime::{testing::Header, traits::IdentityLookup, RuntimeDebug};
 // --- hyperspace ---
 use crate::*;
 use array_bytes::{fixed_hex_bytes_unchecked, hex_bytes_unchecked};
@@ -37,14 +37,7 @@ type BlockNumber = u64;
 type Balance = u128;
 
 pub type System = frame_system::Module<Test>;
-pub type Etp = hyperspace_balances::Module<Test, EtpInstance>;
 pub type EthereumRelay = Module<Test>;
-
-pub(crate) type EtpError = hyperspace_balances::Error<Test, EtpInstance>;
-
-thread_local! {
-	static ETH_NETWORK: RefCell<EthereumNetworkType> = RefCell::new(EthereumNetworkType::Ropsten);
-}
 
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
@@ -57,15 +50,16 @@ impl_outer_dispatch! {
 	}
 }
 
-hyperspace_support::impl_test_account_data! {}
+hyperspace_support::impl_test_account_data! { deprecated }
 
 // Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Test;
 parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
+	pub static EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
-impl Trait for Test {
+impl Config for Test {
 	type ModuleId = EthereumRelayModuleId;
 	type Event = ();
 	type EthereumNetwork = EthereumNetwork;
@@ -74,14 +68,11 @@ impl Trait for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const BlockHashCount: BlockNumber = 250;
-	pub const MaximumBlockWeight: Weight = 1024;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
-}
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u64;
@@ -92,23 +83,17 @@ impl frame_system::Trait for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = ();
-	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
+	type BlockHashCount = ();
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
+	type SS58Prefix = ();
 }
 
-impl hyperspace_balances::Trait<EtpInstance> for Test {
+impl hyperspace_balances::Config<EtpInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = ();
@@ -249,13 +234,6 @@ impl HeaderWithProof {
 	}
 }
 
-pub struct EthereumNetwork;
-impl Get<EthereumNetworkType> for EthereumNetwork {
-	fn get() -> EthereumNetworkType {
-		ETH_NETWORK.with(|v| v.borrow().to_owned())
-	}
-}
-
 pub struct ExtBuilder {
 	eth_network: EthereumNetworkType,
 }
@@ -272,7 +250,7 @@ impl ExtBuilder {
 		self
 	}
 	pub fn set_associated_constants(&self) {
-		ETH_NETWORK.with(|v| v.replace(self.eth_network.clone()));
+		ETHEREUM_NETWORK.with(|v| v.replace(self.eth_network.clone()));
 	}
 
 	pub fn build(self) -> sp_io::TestExternalities {

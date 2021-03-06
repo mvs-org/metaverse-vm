@@ -1,6 +1,6 @@
 //! # Vesting Module
 //!
-//! - [`vesting::Trait`](./trait.Trait.html)
+//! - [`vesting::Config`](./trait.Config.html)
 //! - [`Call`](./enum.Call.html)
 //!
 //! ## Overview
@@ -26,7 +26,7 @@
 //!   "vested" so far.
 //!
 //! [`Call`]: ./enum.Call.html
-//! [`Trait`]: ./trait.Trait.html
+//! [`Config`]: ./trait.Config.html
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -47,9 +47,9 @@ use sp_std::{fmt::Debug, prelude::*};
 use hyperspace_support::balance::lock::*;
 
 type BalanceOf<T> =
-	<<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
+	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 type MaxLocksOf<T> =
-	<<T as Trait>::Currency as LockableCurrency<<T as frame_system::Trait>::AccountId>>::MaxLocks;
+	<<T as Config>::Currency as LockableCurrency<<T as frame_system::Config>::AccountId>>::MaxLocks;
 
 pub trait WeightInfo {
 	fn vest_locked(l: u32) -> Weight;
@@ -60,9 +60,9 @@ pub trait WeightInfo {
 	fn force_vested_transfer(l: u32) -> Weight;
 }
 
-pub trait Trait: frame_system::Trait {
+pub trait Config: frame_system::Config {
 	/// The overarching event type.
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	/// The currency trait.
 	type Currency: LockableCurrency<Self::AccountId>;
@@ -113,7 +113,7 @@ impl<Balance: AtLeast32BitUnsigned + Copy, BlockNumber: AtLeast32BitUnsigned + C
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as Vesting {
+	trait Store for Module<T: Config> as Vesting {
 		/// Information regarding the vesting of a given account.
 		pub Vesting get(fn vesting):
 			map hasher(blake2_128_concat) T::AccountId
@@ -141,7 +141,7 @@ decl_storage! {
 					per_block: per_block,
 					starting_block: begin
 				});
-				let reasons = WithdrawReason::Transfer | WithdrawReason::Reserve;
+				let reasons = WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE;
 				T::Currency::set_lock(VESTING_ID, who, LockFor::Common { amount: locked }, reasons);
 			}
 		})
@@ -151,7 +151,7 @@ decl_storage! {
 decl_event!(
 	pub enum Event<T>
 	where
-		AccountId = <T as frame_system::Trait>::AccountId,
+		AccountId = <T as frame_system::Config>::AccountId,
 		Balance = BalanceOf<T>,
 	{
 		/// The amount vested has been updated. This could indicate more funds are available. The
@@ -165,7 +165,7 @@ decl_event!(
 
 decl_error! {
 	/// Error for the vesting module.
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// The account given is not vesting.
 		NotVesting,
 		/// An existing vesting schedule already exists for this account that cannot be clobbered.
@@ -177,7 +177,7 @@ decl_error! {
 
 decl_module! {
 	/// Vesting module declaration.
-	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
 		/// The minimum amount to be transferred to create a new vesting schedule.
@@ -306,7 +306,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	/// (Re)set or remove the module's currency lock on `who`'s account in accordance with their
 	/// current unvested amount.
 	fn update_lock(who: T::AccountId) -> DispatchResult {
@@ -319,7 +319,7 @@ impl<T: Trait> Module<T> {
 			Vesting::<T>::remove(&who);
 			Self::deposit_event(RawEvent::VestingCompleted(who));
 		} else {
-			let reasons = WithdrawReason::Transfer | WithdrawReason::Reserve;
+			let reasons = WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE;
 			T::Currency::set_lock(
 				VESTING_ID,
 				&who,
@@ -332,7 +332,7 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> VestingSchedule<T::AccountId> for Module<T>
+impl<T: Config> VestingSchedule<T::AccountId> for Module<T>
 where
 	BalanceOf<T>: MaybeSerializeDeserialize + Debug,
 {
@@ -393,74 +393,55 @@ where
 
 #[cfg(test)]
 mod tests {
-	use super::*;
+	use crate::{self as hyperspace_vesting, *};
 
-	use frame_support::{
-		assert_noop, assert_ok, impl_outer_origin, parameter_types, traits::Get, weights::Weight,
-	};
-	use frame_system::RawOrigin;
+	use frame_support::{assert_noop, assert_ok, parameter_types};
+	use frame_system::{mocking::*, RawOrigin};
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
 		traits::{BadOrigin, BlakeTwo256, Identity, IdentityLookup},
-		Perbill,
 	};
-	use std::cell::RefCell;
 
 	type Balance = u64;
 
-	type Etp = hyperspace_balances::Module<Test, EtpInstance>;
-
-	type EtpError = hyperspace_balances::Error<Test, EtpInstance>;
-
-	impl_outer_origin! {
-		pub enum Origin for Test where system = frame_system {}
-	}
+	type Block = MockBlock<Test>;
+	type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 	hyperspace_support::impl_test_account_data! {}
 
-	#[derive(Clone, Eq, PartialEq)]
-	pub struct Test;
-	parameter_types! {
-		pub const BlockHashCount: u64 = 250;
-		pub const MaximumBlockWeight: Weight = 1024;
-		pub const MaximumBlockLength: u32 = 2 * 1024;
-		pub const AvailableBlockRatio: Perbill = Perbill::one();
-	}
-	impl frame_system::Trait for Test {
+	impl frame_system::Config for Test {
 		type BaseCallFilter = ();
+		type BlockWeights = ();
+		type BlockLength = ();
+		type DbWeight = ();
 		type Origin = Origin;
 		type Index = u64;
 		type BlockNumber = u64;
 		type Hash = H256;
-		type Call = ();
+		type Call = Call;
 		type Hashing = BlakeTwo256;
 		type AccountId = u64;
 		type Lookup = IdentityLookup<Self::AccountId>;
 		type Header = Header;
-		type Event = ();
-		type BlockHashCount = BlockHashCount;
-		type MaximumBlockWeight = MaximumBlockWeight;
-		type DbWeight = ();
-		type BlockExecutionWeight = ();
-		type ExtrinsicBaseWeight = ();
-		type MaximumExtrinsicWeight = MaximumBlockWeight;
-		type MaximumBlockLength = MaximumBlockLength;
-		type AvailableBlockRatio = AvailableBlockRatio;
+		type Event = Event;
+		type BlockHashCount = ();
 		type Version = ();
-		type PalletInfo = ();
+		type PalletInfo = PalletInfo;
 		type AccountData = AccountData<Balance>;
 		type OnNewAccount = ();
 		type OnKilledAccount = ();
 		type SystemWeightInfo = ();
+		type SS58Prefix = ();
 	}
+
 	parameter_types! {
 		pub const MaxLocks: u32 = 10;
 	}
-	impl hyperspace_balances::Trait<EtpInstance> for Test {
+	impl hyperspace_balances::Config<EtpInstance> for Test {
 		type Balance = Balance;
 		type DustRemoval = ();
-		type Event = ();
+		type Event = Event;
 		type ExistentialDeposit = ExistentialDeposit;
 		type BalanceInfo = AccountData<Balance>;
 		type AccountStore = System;
@@ -468,26 +449,29 @@ mod tests {
 		type OtherCurrencies = ();
 		type WeightInfo = ();
 	}
+
 	parameter_types! {
 		pub const MinVestedTransfer: u64 = 256 * 2;
+		pub static ExistentialDeposit: u64 = 0;
 	}
-	impl Trait for Test {
-		type Event = ();
+	impl Config for Test {
+		type Event = Event;
 		type Currency = Etp;
 		type BlockNumberToBalance = Identity;
 		type MinVestedTransfer = MinVestedTransfer;
 		type WeightInfo = ();
 	}
-	type System = frame_system::Module<Test>;
-	type Vesting = Module<Test>;
 
-	thread_local! {
-		static EXISTENTIAL_DEPOSIT: RefCell<u64> = RefCell::new(0);
-	}
-	pub struct ExistentialDeposit;
-	impl Get<u64> for ExistentialDeposit {
-		fn get() -> u64 {
-			EXISTENTIAL_DEPOSIT.with(|v| *v.borrow())
+	frame_support::construct_runtime! {
+		pub enum Test
+		where
+			Block = Block,
+			NodeBlock = Block,
+			UncheckedExtrinsic = UncheckedExtrinsic,
+		{
+			System: frame_system::{Module, Call, Storage, Config, Event<T>},
+			Etp: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+			Vesting: hyperspace_vesting::{Module, Call, Storage, Event<T>, Config<T>},
 		}
 	}
 
@@ -511,7 +495,7 @@ mod tests {
 			let mut t = frame_system::GenesisConfig::default()
 				.build_storage::<Test>()
 				.unwrap();
-			hyperspace_balances::GenesisConfig::<Test, EtpInstance> {
+			EtpConfig {
 				balances: vec![
 					(1, 10 * self.existential_deposit),
 					(2, 20 * self.existential_deposit),
@@ -522,7 +506,7 @@ mod tests {
 			}
 			.assimilate_storage(&mut t)
 			.unwrap();
-			GenesisConfig::<Test> {
+			hyperspace_vesting::GenesisConfig::<Test> {
 				vesting: vec![
 					(1, 0, 10, 5 * self.existential_deposit),
 					(2, 10, 20, 0),

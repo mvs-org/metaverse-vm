@@ -49,10 +49,10 @@ fn read_point(input: &[u8], start_inx: usize) -> Result<bn::G1, ExitError> {
 pub struct Bn128Add;
 
 impl LinearCostPrecompile for Bn128Add {
-	const BASE: usize = 15;
-	const WORD: usize = 3;
+	const BASE: u64 = 15;
+	const WORD: u64 = 3;
 
-	fn execute(input: &[u8], _: usize) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError> {
+	fn execute(input: &[u8], _: u64) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError> {
 		use bn::AffineG1;
 
 		let p1 = read_point(input, 0)?;
@@ -77,10 +77,10 @@ impl LinearCostPrecompile for Bn128Add {
 pub struct Bn128Mul;
 
 impl LinearCostPrecompile for Bn128Mul {
-	const BASE: usize = 15;
-	const WORD: usize = 3;
+	const BASE: u64 = 15;
+	const WORD: u64 = 3;
 
-	fn execute(input: &[u8], _: usize) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError> {
+	fn execute(input: &[u8], _: u64) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError> {
 		use bn::AffineG1;
 
 		let p = read_point(input, 0)?;
@@ -105,10 +105,10 @@ impl LinearCostPrecompile for Bn128Mul {
 pub struct Bn128Pairing;
 
 impl LinearCostPrecompile for Bn128Pairing {
-	const BASE: usize = 15;
-	const WORD: usize = 3;
+	const BASE: u64 = 15;
+	const WORD: u64 = 3;
 
-	fn execute(input: &[u8], _: usize) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError> {
+	fn execute(input: &[u8], _: u64) -> core::result::Result<(ExitSucceed, Vec<u8>), ExitError> {
 		use bn::{pairing_batch, AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 
 		let ret_val = if input.is_empty() {

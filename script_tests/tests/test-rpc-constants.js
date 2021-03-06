@@ -21,7 +21,7 @@ describe("Test RPC Constants", function () {
 	});
 
 	it("should gas price is 0x0", async function () {
-		expect(await web3.eth.getGasPrice()).to.equal("0");
+		expect(await web3.eth.getGasPrice()).to.equal("1");
 	});
 
 	it("should protocal version is 1", async function () {

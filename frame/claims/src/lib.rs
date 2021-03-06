@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -33,8 +33,8 @@ mod types {
 
 	pub type EtpBalance<T> = <EtpCurrency<T> as Currency<AccountId<T>>>::Balance;
 
-	type AccountId<T> = <T as frame_system::Trait>::AccountId;
-	type EtpCurrency<T> = <T as Trait>::EtpCurrency;
+	type AccountId<T> = <T as frame_system::Config>::AccountId;
+	type EtpCurrency<T> = <T as Config>::EtpCurrency;
 }
 
 // --- crates ---
@@ -65,8 +65,8 @@ use sp_std::prelude::*;
 use hyperspace_support::balance::lock::*;
 use types::*;
 
-pub trait Trait: frame_system::Trait {
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+pub trait Config: frame_system::Config {
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
 	type ModuleId: Get<ModuleId>;
 
@@ -81,7 +81,7 @@ pub trait Trait: frame_system::Trait {
 decl_event!(
 	pub enum Event<T>
 	where
-		<T as frame_system::Trait>::AccountId,
+		<T as frame_system::Config>::AccountId,
 		EtpBalance = EtpBalance<T>,
 	{
 		/// Someone claimed some *ETP*s. [account, address, amount]
@@ -90,7 +90,7 @@ decl_event!(
 );
 
 decl_error! {
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// Invalid Ethereum signature.
 		InvalidSignature,
 		/// Ethereum address has no claim.
@@ -106,12 +106,12 @@ decl_error! {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as HyperspaceClaims {
+	trait Store for Module<T: Config> as HyperspaceClaims {
 		ClaimsFromEth
 			get(fn claims_from_eth)
 			: map hasher(identity) AddressT => Option<EtpBalance<T>>;
-		ClaimsFromTron
-			get(fn claims_from_oldtestnet)
+		ClaimsFromOldetp
+			get(fn claims_from_oldetp)
 			: map hasher(identity) AddressT => Option<EtpBalance<T>>;
 	}
 	add_extra_genesis {
@@ -120,11 +120,11 @@ decl_storage! {
 			let ClaimsList {
 				dot,
 				eth,
-				oldtestnet,
+				oldetp,
 			} = &config.claims_list;
 			let mut total = <EtpBalance<T>>::zero();
 
-			if dot.is_empty() && eth.is_empty() && oldtestnet.is_empty() {
+			if dot.is_empty() && eth.is_empty() && oldetp.is_empty() {
 				error!("[hyperspace-claims] Genesis Claims List is Set to EMPTY");
 			} else {
 				// Eth Address
@@ -140,10 +140,10 @@ decl_storage! {
 					total += backed_etp;
 				}
 
-				// Tron Address
-				for Account { address, backed_etp } in oldtestnet {
+				// Oldetp Address
+				for Account { address, backed_etp } in oldetp {
 					let backed_etp = (*backed_etp).saturated_into();
-					<ClaimsFromTron<T>>::insert(address.0, backed_etp);
+					<ClaimsFromOldetp<T>>::insert(address.0, backed_etp);
 					total += backed_etp;
 				}
 			}
@@ -164,7 +164,7 @@ decl_storage! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
 		const ModuleId: ModuleId = T::ModuleId::get();
@@ -241,10 +241,10 @@ decl_module! {
 
 					Self::deposit_event(RawEvent::Claimed(dest, signer, balance_due));
 				}
-				OtherSignature::Tron(signature) => {
-					let signer = Self::oldtestnet_recover(&signature, &data)
+				OtherSignature::Oldetp(signature) => {
+					let signer = Self::oldetp_recover(&signature, &data)
 						.ok_or(<Error<T>>::InvalidSignature)?;
-					let balance_due = <ClaimsFromTron<T>>::get(&signer)
+					let balance_due = <ClaimsFromOldetp<T>>::get(&signer)
 						.ok_or(<Error<T>>::SignerHasNoClaim)?;
 
 					ensure!(
@@ -258,7 +258,7 @@ decl_module! {
 						KeepAlive,
 					)?;
 
-					<ClaimsFromTron<T>>::remove(&signer);
+					<ClaimsFromOldetp<T>>::remove(&signer);
 
 					Self::deposit_event(RawEvent::Claimed(dest, signer, balance_due));
 				}
@@ -300,9 +300,9 @@ decl_module! {
 					T::EtpCurrency::deposit_creating(&Self::account_id(), value);
 					<ClaimsFromEth<T>>::insert(who, value);
 				}
-				OtherAddress::Tron(who) => {
+				OtherAddress::Oldetp(who) => {
 					T::EtpCurrency::deposit_creating(&Self::account_id(), value);
-					<ClaimsFromTron<T>>::insert(who, value);
+					<ClaimsFromOldetp<T>>::insert(who, value);
 				}
 			}
 		}
@@ -329,13 +329,13 @@ decl_module! {
 				} else {
 					Err(<Error<T>>::NewAddressTypeMis)?;
 				},
-				OtherAddress::Tron(old) => if let OtherAddress::Tron(new) = new {
+				OtherAddress::Oldetp(old) => if let OtherAddress::Oldetp(new) = new {
 					ensure!(
-						!<ClaimsFromTron<T>>::contains_key(&new),
+						!<ClaimsFromOldetp<T>>::contains_key(&new),
 						<Error<T>>::MoveToExistedAddress
 					);
 
-					<ClaimsFromTron<T>>::take(&old).map(|c| <ClaimsFromTron<T>>::insert(&new, c));
+					<ClaimsFromOldetp<T>>::take(&old).map(|c| <ClaimsFromOldetp<T>>::insert(&new, c));
 				} else {
 					Err(<Error<T>>::NewAddressTypeMis)?;
 				}
@@ -344,7 +344,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	fn account_id() -> T::AccountId {
 		T::ModuleId::get().into_account()
 	}
@@ -371,8 +371,8 @@ impl<T: Trait> Module<T> {
 	}
 
 	// Constructs the message that RPC's `personal_sign` and `sign` would sign.
-	// Tron have different signing specs: https://github.com/oldtestnetprotocol/tips/issues/104
-	fn oldtestnet_signable_message(what: &[u8], signed_message: &[u8]) -> Vec<u8> {
+	// Oldetp have different signing specs: https://github.com/oldetpprotocol/tips/issues/104
+	fn oldetp_signable_message(what: &[u8], signed_message: &[u8]) -> Vec<u8> {
 		let prefix = T::Prefix::get();
 		let mut l = 32;
 		let mut rev = Vec::new();
@@ -399,12 +399,12 @@ impl<T: Trait> Module<T> {
 		Some(res)
 	}
 
-	// Attempts to recover the Tron address from a message signature signed by using
-	// the Tron RPC's `personal_sign` and `oldtestnet_sign`.
-	fn oldtestnet_recover(s: &EcdsaSignature, what: &[u8]) -> Option<AddressT> {
-		let msg = keccak_256(&Self::oldtestnet_signable_message(
+	// Attempts to recover the Oldetp address from a message signature signed by using
+	// the Oldetp RPC's `personal_sign` and `oldetp_sign`.
+	fn oldetp_recover(s: &EcdsaSignature, what: &[u8]) -> Option<AddressT> {
+		let msg = keccak_256(&Self::oldetp_signable_message(
 			what,
-			b"\x19TRON Signed Message:\n",
+			b"\x19OLDETP Signed Message:\n",
 		));
 		let mut res = AddressT::default();
 		res.copy_from_slice(&keccak_256(&secp256k1_ecdsa_recover(&s.0, &msg).ok()?[..])[12..]);
@@ -412,7 +412,7 @@ impl<T: Trait> Module<T> {
 	}
 }
 
-impl<T: Trait> sp_runtime::traits::ValidateUnsigned for Module<T> {
+impl<T: Config> sp_runtime::traits::ValidateUnsigned for Module<T> {
 	type Call = Call<T>;
 
 	fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
@@ -449,8 +449,8 @@ impl<T: Trait> sp_runtime::traits::ValidateUnsigned for Module<T> {
 							propagate: true,
 						})
 					}
-					OtherSignature::Tron(signature) => {
-						let maybe_signer = Self::oldtestnet_recover(&signature, &data);
+					OtherSignature::Oldetp(signature) => {
+						let maybe_signer = Self::oldetp_recover(&signature, &data);
 						let signer = if let Some(s) = maybe_signer {
 							s
 						} else {
@@ -460,7 +460,7 @@ impl<T: Trait> sp_runtime::traits::ValidateUnsigned for Module<T> {
 							.into();
 						};
 
-						if !<ClaimsFromTron<T>>::contains_key(&signer) {
+						if !<ClaimsFromOldetp<T>>::contains_key(&signer) {
 							return Err(InvalidTransaction::Custom(
 								ValidityError::SignerHasNoClaim as _,
 							)
@@ -493,13 +493,13 @@ enum ValidityError {
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub enum OtherSignature {
 	Eth(EcdsaSignature),
-	Tron(EcdsaSignature),
+	Oldetp(EcdsaSignature),
 }
 
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub enum OtherAddress {
 	Eth(AddressT),
-	Tron(AddressT),
+	Oldetp(AddressT),
 }
 
 #[derive(Clone, Encode, Decode)]
@@ -543,7 +543,7 @@ mod secp_utils {
 		res
 	}
 
-	pub fn eth_sig<T: Trait>(
+	pub fn eth_sig<T: Config>(
 		secret: &secp256k1::SecretKey,
 		what: &[u8],
 		signed_message: &[u8],
@@ -559,12 +559,12 @@ mod secp_utils {
 		EcdsaSignature(r)
 	}
 
-	pub fn oldtestnet_sig<T: Trait>(
+	pub fn oldetp_sig<T: Config>(
 		secret: &secp256k1::SecretKey,
 		what: &[u8],
 		signed_message: &[u8],
 	) -> EcdsaSignature {
-		let msg = keccak_256(&<super::Module<T>>::oldtestnet_signable_message(
+		let msg = keccak_256(&<super::Module<T>>::oldetp_signable_message(
 			&to_ascii_hex(what)[..],
 			signed_message,
 		));
@@ -582,91 +582,58 @@ mod tests {
 	use codec::Encode;
 	// --- substrate ---
 	use frame_support::{
-		assert_err, assert_noop, assert_ok, dispatch::DispatchError::BadOrigin, impl_outer_origin,
+		assert_err, assert_noop, assert_ok, dispatch::DispatchError::BadOrigin,
 		ord_parameter_types, parameter_types,
 	};
+	use frame_system::mocking::*;
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
 		traits::{BlakeTwo256, IdentityLookup},
-		Perbill,
 	};
 	// --- hyperspace ---
-	use crate::{secp_utils::*, *};
+	use crate::{self as hyperspace_claims, secp_utils::*, *};
 	use array_bytes::fixed_hex_bytes_unchecked;
 
 	type Balance = u64;
 
-	type Etp = hyperspace_balances::Module<Test, EtpInstance>;
-	type System = frame_system::Module<Test>;
-	type Claims = Module<Test>;
+	type Block = MockBlock<Test>;
+	type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 	const ETHEREUM_SIGNED_MESSAGE: &'static [u8] = b"\x19Ethereum Signed Message:\n";
-	const TRON_SIGNED_MESSAGE: &'static [u8] = b"\x19TRON Signed Message:\n";
-
-	impl_outer_origin! {
-		pub enum Origin for Test {}
-	}
+	const OLDETP_SIGNED_MESSAGE: &'static [u8] = b"\x19OLDETP Signed Message:\n";
 
 	hyperspace_support::impl_test_account_data! {}
 
-	#[derive(Clone, Eq, PartialEq)]
-	pub struct Test;
-	parameter_types! {
-		pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
-		pub Prefix: &'static [u8] = b"Pay RUSTs to the TEST account:";
-	}
-	ord_parameter_types! {
-		pub const Six: u64 = 6;
-	}
-	impl Trait for Test {
-		type Event = ();
-		type ModuleId = ClaimsModuleId;
-		type Prefix = Prefix;
-		type EtpCurrency = Etp;
-		type MoveClaimOrigin = frame_system::EnsureSignedBy<Six, u64>;
-	}
-
-	parameter_types! {
-		pub const BlockHashCount: u32 = 250;
-		pub const MaximumBlockWeight: u32 = 4 * 1024 * 1024;
-		pub const MaximumBlockLength: u32 = 4 * 1024 * 1024;
-		pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
-	}
-	impl frame_system::Trait for Test {
+	impl frame_system::Config for Test {
 		type BaseCallFilter = ();
+		type BlockWeights = ();
+		type BlockLength = ();
+		type DbWeight = ();
 		type Origin = Origin;
-		type Call = ();
+		type Call = Call;
 		type Index = u64;
 		type BlockNumber = u64;
 		type Hash = H256;
 		type Hashing = BlakeTwo256;
-		// The testing primitives are very useful for avoiding having to work with signatures
-		// or public keys. `u64` is used as the `AccountId` and no `Signature`s are required.
 		type AccountId = u64;
 		type Lookup = IdentityLookup<Self::AccountId>;
 		type Header = Header;
 		type Event = ();
-		type BlockHashCount = BlockHashCount;
-		type MaximumBlockWeight = MaximumBlockWeight;
-		type DbWeight = ();
-		type BlockExecutionWeight = ();
-		type ExtrinsicBaseWeight = ();
-		type MaximumExtrinsicWeight = MaximumBlockWeight;
-		type MaximumBlockLength = MaximumBlockLength;
-		type AvailableBlockRatio = AvailableBlockRatio;
+		type BlockHashCount = ();
 		type Version = ();
-		type PalletInfo = ();
+		type PalletInfo = PalletInfo;
 		type AccountData = AccountData<Balance>;
 		type OnNewAccount = ();
 		type OnKilledAccount = ();
 		type SystemWeightInfo = ();
+		type SS58Prefix = ();
 	}
 
 	parameter_types! {
 		pub const ExistentialDeposit: Balance = 1;
 	}
-	impl hyperspace_balances::Trait<EtpInstance> for Test {
+	impl hyperspace_balances::Config<EtpInstance> for Test {
 		type Balance = Balance;
 		type DustRemoval = ();
 		type Event = ();
@@ -676,6 +643,34 @@ mod tests {
 		type MaxLocks = ();
 		type WeightInfo = ();
 		type OtherCurrencies = ();
+	}
+
+	parameter_types! {
+		pub const ClaimsModuleId: ModuleId = ModuleId(*b"da/claim");
+		pub Prefix: &'static [u8] = b"Pay RUSTs to the TEST account:";
+	}
+	ord_parameter_types! {
+		pub const Six: u64 = 6;
+	}
+	impl Config for Test {
+		type Event = ();
+		type ModuleId = ClaimsModuleId;
+		type Prefix = Prefix;
+		type EtpCurrency = Etp;
+		type MoveClaimOrigin = frame_system::EnsureSignedBy<Six, u64>;
+	}
+
+	frame_support::construct_runtime! {
+		pub enum Test
+		where
+			Block = Block,
+			NodeBlock = Block,
+			UncheckedExtrinsic = UncheckedExtrinsic
+		{
+			System: frame_system::{Module, Call, Storage, Config},
+			Etp: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>},
+			Claims: hyperspace_claims::{Module, Call, Storage, Config}
+		}
 	}
 
 	fn alice() -> secp256k1::SecretKey {
@@ -695,10 +690,10 @@ mod tests {
 			.build_storage::<Test>()
 			.unwrap();
 		// We use default for brevity, but you can configure as desired if needed.
-		hyperspace_balances::GenesisConfig::<Test, EtpInstance>::default()
+		<hyperspace_balances::GenesisConfig<Test, EtpInstance>>::default()
 			.assimilate_storage(&mut t)
 			.unwrap();
-		GenesisConfig {
+		hyperspace_claims::GenesisConfig {
 			claims_list: ClaimsList {
 				dot: vec![Account {
 					address: EthereumAddress(addr(&alice())),
@@ -708,8 +703,8 @@ mod tests {
 					address: EthereumAddress(addr(&bob())),
 					backed_etp: 200,
 				}],
-				oldtestnet: vec![Account {
-					address: TronAddress(addr(&carol())),
+				oldetp: vec![Account {
+					address: OldetpAddress(addr(&carol())),
 					backed_etp: 300,
 				}],
 			},
@@ -729,13 +724,13 @@ mod tests {
 			assert_eq!(Etp::usable_balance(&Claims::account_id()), 600);
 
 			assert_eq!(Claims::claims_from_eth(&addr(&alice())), Some(100));
-			assert_eq!(Claims::claims_from_oldtestnet(&addr(&alice())), None);
+			assert_eq!(Claims::claims_from_oldetp(&addr(&alice())), None);
 
 			assert_eq!(Claims::claims_from_eth(&addr(&bob())), Some(200));
-			assert_eq!(Claims::claims_from_oldtestnet(&addr(&bob())), None);
+			assert_eq!(Claims::claims_from_oldetp(&addr(&bob())), None);
 
 			assert_eq!(Claims::claims_from_eth(&addr(&carol())), None);
-			assert_eq!(Claims::claims_from_oldtestnet(&addr(&carol())), Some(300));
+			assert_eq!(Claims::claims_from_oldetp(&addr(&carol())), Some(300));
 		});
 	}
 
@@ -750,13 +745,13 @@ mod tests {
 		let z: EthereumAddress = serde_json::from_str(&y).unwrap();
 		assert_eq!(x.0, z.0);
 
-		let x = TronAddress(fixed_hex_bytes_unchecked!(
+		let x = OldetpAddress(fixed_hex_bytes_unchecked!(
 			"0x0123456789abcdef0123456789abcdef01234567",
 			20
 		));
 		let y = serde_json::to_string(&x).unwrap();
 		assert_eq!(y, "\"410123456789abcdef0123456789abcdef01234567\"");
-		let z: TronAddress = serde_json::from_str(&y).unwrap();
+		let z: OldetpAddress = serde_json::from_str(&y).unwrap();
 		assert_eq!(x.0, z.0);
 	}
 
@@ -793,10 +788,10 @@ mod tests {
 			assert_ok!(Claims::claim(
 				Origin::none(),
 				3,
-				OtherSignature::Tron(oldtestnet_sig::<Test>(
+				OtherSignature::Oldetp(oldetp_sig::<Test>(
 					&carol(),
 					&3u64.encode(),
-					TRON_SIGNED_MESSAGE
+					OLDETP_SIGNED_MESSAGE
 				)),
 			));
 			assert_eq!(Etp::free_balance(&3), 300);
@@ -820,7 +815,7 @@ mod tests {
 				Claims::move_claim(
 					Origin::signed(6),
 					OtherAddress::Eth(addr(&alice())),
-					OtherAddress::Tron(addr(&carol())),
+					OtherAddress::Oldetp(addr(&carol())),
 				),
 				<Error<Test>>::NewAddressTypeMis
 			);
@@ -1004,13 +999,13 @@ mod tests {
 	}
 
 	#[test]
-	fn real_oldtestnet_sig_works() {
+	fn real_oldetp_sig_works() {
 		new_test_ext().execute_with(|| {
 			// "Pay RUSTs to the TEST account:0c0529c66a44e1861e5e1502b4a87009f23c792518a7a2091363f5a0e38abd57"
 			let sig = fixed_hex_bytes_unchecked!("0x34c3d5afc7f8fa08f9d00a1ec4ac274c63ebce99460b556de85258c94f41ab2f52ad5188bd9fc51251cf5dcdd53751b1bd577828db3f2e8fe8ef77907d7f3f6a1b", 65);
 			let sig = EcdsaSignature(sig);
 			let who = fixed_hex_bytes_unchecked!("0x0c0529c66a44e1861e5e1502b4a87009f23c792518a7a2091363f5a0e38abd57", 32).using_encoded(to_ascii_hex);
-			let signer = Claims::oldtestnet_recover(&sig, &who).unwrap();
+			let signer = Claims::oldetp_recover(&sig, &who).unwrap();
 			assert_eq!(signer, fixed_hex_bytes_unchecked!("0x11974bce18a43243ede78beec2fd8e0ba4fe17ae", 20));
 		});
 	}
@@ -1026,7 +1021,7 @@ mod tests {
 			assert_eq!(
 				Claims::validate_unsigned(
 					source,
-					&Call::claim(
+					&hyperspace_claims::Call::claim(
 						1,
 						OtherSignature::Eth(eth_sig::<Test>(
 							&alice(),
@@ -1046,14 +1041,14 @@ mod tests {
 			assert_eq!(
 				Claims::validate_unsigned(
 					source,
-					&Call::claim(0, OtherSignature::Eth(EcdsaSignature([0; 65])))
+					&hyperspace_claims::Call::claim(0, OtherSignature::Eth(EcdsaSignature([0; 65])))
 				),
 				InvalidTransaction::Custom(ValidityError::InvalidSignature as _).into(),
 			);
 			assert_eq!(
 				Claims::validate_unsigned(
 					source,
-					&Call::claim(
+					&hyperspace_claims::Call::claim(
 						1,
 						OtherSignature::Eth(eth_sig::<Test>(
 							&carol(),
@@ -1067,7 +1062,7 @@ mod tests {
 			assert_eq!(
 				Claims::validate_unsigned(
 					source,
-					&Call::claim(
+					&hyperspace_claims::Call::claim(
 						0,
 						OtherSignature::Eth(eth_sig::<Test>(
 							&carol(),

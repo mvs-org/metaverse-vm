@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -437,12 +437,12 @@ fn inexistent_account_works() {
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
-	hyperspace_balances::GenesisConfig::<Test, EtpInstance> {
+	EtpConfig {
 		balances: vec![(0, 100), (1, 99), (2, 1)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	hyperspace_balances::GenesisConfig::<Test, DnaInstance> {
+	DnaConfig {
 		balances: vec![(0, 100), (1, 99), (2, 1)],
 	}
 	.assimilate_storage(&mut t)
@@ -1367,13 +1367,13 @@ fn genesis_funding_works() {
 		.build_storage::<Test>()
 		.unwrap();
 	let initial_funding = 100;
-	hyperspace_balances::GenesisConfig::<Test, EtpInstance> {
+	EtpConfig {
 		// Total issuance will be 200 with treasury account initialized with 100.
 		balances: vec![(0, 100), (Treasury::account_id(), initial_funding)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	hyperspace_balances::GenesisConfig::<Test, DnaInstance> {
+	DnaConfig {
 		// Total issuance will be 200 with treasury account initialized with 100.
 		balances: vec![(0, 100), (Treasury::account_id(), initial_funding)],
 	}

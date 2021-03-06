@@ -32,7 +32,7 @@ pub use evm::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
 
 #[cfg(feature = "std")]
 use codec::{Decode, Encode};
-use evm::Config;
+use evm::Config as EvmConfig;
 use frame_support::dispatch::DispatchResultWithPostInfo;
 use frame_support::traits::{Currency, Get};
 use frame_support::weights::{Pays, PostDispatchInfo, Weight};
@@ -49,9 +49,9 @@ use sp_std::vec::Vec;
 
 /// Type alias for currency balance.
 pub type BalanceOf<T> =
-	<<T as Trait>::EtpCurrency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
+	<<T as Config>::EtpCurrency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-/// Trait that outputs the current transaction gas price.
+/// Config that outputs the current transaction gas price.
 pub trait FeeCalculator {
 	/// Return the minimal required gas price.
 	fn min_gas_price() -> U256;
@@ -179,13 +179,13 @@ pub struct ConcatAddressMapping;
 
 /// The ConcatAddressMapping used for transfer from evm 20-length to substrate 32-length address
 /// The concat rule inclued three parts:
-/// 1. AccountId Prefix: concat("mvm", "0x00000000000000"), length: 11 byetes
+/// 1. AccountId Prefix: concat("dvm", "0x00000000000000"), length: 11 byetes
 /// 2. Evm address: the original evm address, length: 20 bytes
 /// 3. CheckSum:  byte_xor(AccountId Prefix + Evm address), length: 1 bytes
 impl AddressMapping<AccountId32> for ConcatAddressMapping {
 	fn into_account_id(address: H160) -> AccountId32 {
 		let mut data = [0u8; 32];
-		data[0..4].copy_from_slice(b"mvm:");
+		data[0..4].copy_from_slice(b"dvm:");
 		data[11..31].copy_from_slice(&address[..]);
 		let checksum: u8 = data[1..31].iter().fold(data[0], |sum, &byte| sum ^ byte);
 		data[31] = checksum;
@@ -200,7 +200,7 @@ pub trait AccountBasicMapping {
 
 pub struct RawAccountBasicMapping<T>(sp_std::marker::PhantomData<T>);
 
-impl<T: Trait> AccountBasicMapping for RawAccountBasicMapping<T> {
+impl<T: Config> AccountBasicMapping for RawAccountBasicMapping<T> {
 	/// Get the account basic in EVM format.
 	fn account_basic(address: &H160) -> Account {
 		let account_id = T::AddressMapping::into_account_id(*address);
@@ -238,31 +238,22 @@ impl<T: Trait> AccountBasicMapping for RawAccountBasicMapping<T> {
 
 /// A mapping function that converts Ethereum gas to Substrate weight
 pub trait GasWeightMapping {
-	fn gas_to_weight(gas: usize) -> Weight;
-	fn weight_to_gas(weight: Weight) -> usize;
+	fn gas_to_weight(gas: u64) -> Weight;
+	fn weight_to_gas(weight: Weight) -> u64;
 }
 impl GasWeightMapping for () {
-	fn gas_to_weight(gas: usize) -> Weight {
+	fn gas_to_weight(gas: u64) -> Weight {
 		gas as Weight
 	}
-	fn weight_to_gas(weight: Weight) -> usize {
-		weight as usize
+	fn weight_to_gas(weight: Weight) -> u64 {
+		weight
 	}
 }
 
-/// Substrate system chain ID.
-pub struct SystemChainId;
-
-impl Get<u64> for SystemChainId {
-	fn get() -> u64 {
-		sp_io::misc::chain_id()
-	}
-}
-
-static ISTANBUL_CONFIG: Config = Config::istanbul();
+static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
 
 /// EVM module trait
-pub trait Trait: frame_system::Trait + pallet_timestamp::Trait {
+pub trait Config: frame_system::Config + pallet_timestamp::Config {
 	/// Calculator for current gas price.
 	type FeeCalculator: FeeCalculator;
 	/// Maps Ethereum gas to Substrate weight.
@@ -281,7 +272,7 @@ pub trait Trait: frame_system::Trait + pallet_timestamp::Trait {
 	type DnaCurrency: Currency<Self::AccountId>;
 
 	/// The overarching event type.
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 	/// Precompiles associated with this EVM engine.
 	type Precompiles: PrecompileSet;
 	/// Chain ID of EVM.
@@ -292,7 +283,7 @@ pub trait Trait: frame_system::Trait + pallet_timestamp::Trait {
 	type AccountBasicMapping: AccountBasicMapping;
 
 	/// EVM config used in the module.
-	fn config() -> &'static Config {
+	fn config() -> &'static EvmConfig {
 		&ISTANBUL_CONFIG
 	}
 }
@@ -312,7 +303,7 @@ pub struct GenesisAccount {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as HyperspaceEVM {
+	trait Store for Module<T: Config> as HyperspaceEVM {
 		AccountCodes get(fn account_codes): map hasher(blake2_128_concat) H160 => Vec<u8>;
 		AccountStorages get(fn account_storages):
 			double_map hasher(blake2_128_concat) H160, hasher(blake2_128_concat) H256 => H256;
@@ -339,7 +330,7 @@ decl_storage! {
 decl_event! {
 	/// EVM events
 	pub enum Event<T> where
-		<T as frame_system::Trait>::AccountId,
+		<T as frame_system::Config>::AccountId,
 	{
 		/// Ethereum events from contracts.
 		Log(Log),
@@ -359,7 +350,7 @@ decl_event! {
 }
 
 decl_error! {
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// Not enough balance to perform action
 		BalanceLow,
 		/// Calculating total fee overflowed
@@ -376,20 +367,20 @@ decl_error! {
 }
 
 decl_module! {
-	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		type Error = Error<T>;
 
 		fn deposit_event() = default;
 
 		/// Issue an EVM call operation. This is similar to a message call transaction in Ethereum.
-		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit as usize)]
+		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit)]
 		fn call(
 			origin,
 			source: H160,
 			target: H160,
 			input: Vec<u8>,
 			value: U256,
-			gas_limit: u32,
+			gas_limit: u64,
 			gas_price: U256,
 			nonce: Option<U256>,
 		) -> DispatchResultWithPostInfo {
@@ -423,13 +414,13 @@ decl_module! {
 
 		/// Issue an EVM create operation. This is similar to a contract creation transaction in
 		/// Ethereum.
-		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit as usize)]
+		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit)]
 		fn create(
 			origin,
 			source: H160,
 			init: Vec<u8>,
 			value: U256,
-			gas_limit: u32,
+			gas_limit: u64,
 			gas_price: U256,
 			nonce: Option<U256>,
 		) -> DispatchResultWithPostInfo {
@@ -468,14 +459,14 @@ decl_module! {
 		}
 
 		/// Issue an EVM create2 operation.
-		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit as usize)]
+		#[weight = T::GasWeightMapping::gas_to_weight(*gas_limit)]
 		fn create2(
 			origin,
 			source: H160,
 			init: Vec<u8>,
 			salt: H256,
 			value: U256,
-			gas_limit: u32,
+			gas_limit: u64,
 			gas_price: U256,
 			nonce: Option<U256>,
 		) -> DispatchResultWithPostInfo {
@@ -516,7 +507,7 @@ decl_module! {
 	}
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
 	fn remove_account(address: &H160) {
 		AccountCodes::remove(address);
 		AccountStorages::remove_prefix(address);

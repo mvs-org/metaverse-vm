@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -378,7 +378,7 @@ fn lock_should_work() {
 					assert_eq!(
 						Etp::locks(relayer),
 						vec![BalanceLock {
-							id: <Test as Trait>::LockId::get(),
+							id: <Test as Config>::LockId::get(),
 							lock_for: LockFor::Common { amount: stakes },
 							lock_reasons: LockReasons::All
 						}]

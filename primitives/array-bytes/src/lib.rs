@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -30,16 +30,16 @@ macro_rules! fixed_hex_bytes_unchecked {
 		let slice = $crate::hex_bytes_unchecked($str);
 		if slice.len() == $len {
 			bytes.copy_from_slice(&slice);
-			};
+		};
 		bytes
-		}};
+	}};
 }
 
 #[macro_export]
 macro_rules! array_unchecked {
 	($source:expr, $offset:expr, $len:expr) => {{
 		unsafe { (*($source[$offset..$offset + $len].as_ptr() as *const [_; $len])) }
-		}};
+	}};
 }
 
 /// convert number to bytes base on radix `n`
@@ -68,7 +68,7 @@ pub fn base_n_bytes_unchecked(mut x: u64, radix: u64) -> Vec<u8> {
 }
 
 /// convert bytes to hex string
-pub fn hex_string_unchecked<B: AsRef<[u8]>>(b: B, prefix: &str) -> Vec<char> {
+pub fn hex_stetp_unchecked<B: AsRef<[u8]>>(b: B, prefix: &str) -> Vec<char> {
 	let b = b.as_ref();
 	let mut v = Vec::with_capacity(prefix.len() + b.len() * 2);
 

@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,19 +10,18 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
 // along with Hyperspace. If not, see <https://www.gnu.org/licenses/>.
 
 // --- substrate ---
-use wasm_builder_runner::WasmBuilder;
+use substrate_wasm_builder::WasmBuilder;
 
 fn main() {
 	WasmBuilder::new()
 		.with_current_project()
-		.with_wasm_builder_from_crates("2.0.1")
 		.export_heap_base()
 		.import_memory()
 		.build()

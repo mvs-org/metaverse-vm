@@ -36,7 +36,7 @@ cargo build --release
 ```
 The first build takes a long time, as it compiles all the necessary libraries.
 
-# To start the node you just compiled
+# To start the full node you just compiled
 ```
 ./target/release/hyperspace --chain=hyperspace.json --name MyNode1
 ```

@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -22,7 +22,7 @@
 //! about the modules used inside the runtime, so do
 //! RPC methods defined in `sc-rpc` crate.
 //! It means that `client/rpc` can't have any methods that
-//! need some soldtestnetg assumptions about the particular runtime.
+//! need some soldetpg assumptions about the particular runtime.
 //!
 //! The RPCs available in this crate however can make some assumptions
 //! about how the runtime is constructed and what FRAME pallets
@@ -123,7 +123,7 @@ where
 	C::Api: hyperspace_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
 	C::Api: hyperspace_header_mmr_rpc::HeaderMMRRuntimeApi<Block, Hash>,
 	C::Api: hyperspace_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
-	C::Api: mvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
+	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	<C::Api as sp_api::ApiErrorExt>::Error: std::fmt::Debug,
 	P: 'static + Sync + Send + sp_transaction_pool::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
@@ -142,7 +142,7 @@ where
 	use hyperspace_balances_rpc::{Balances, BalancesApi};
 	use hyperspace_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use hyperspace_staking_rpc::{Staking, StakingApi};
-	use mvm_rpc::{
+	use dvm_rpc::{
 		EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider, NetApi,
 		NetApiServer, Web3Api, Web3ApiServer,
 	};

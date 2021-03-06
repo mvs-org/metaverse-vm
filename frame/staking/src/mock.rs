@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -20,20 +20,17 @@
 
 #![allow(unused)]
 
-mod staking {
-	pub use crate::Event;
-}
-
 // --- std ---
 use std::{cell::RefCell, collections::HashSet};
 // --- substrate ---
 use frame_support::{
-	assert_ok, impl_outer_dispatch, impl_outer_event, impl_outer_origin, parameter_types,
+	assert_ok, parameter_types,
 	storage::IterableStorageMap,
 	traits::{Currency, FindAuthor, Get, OnFinalize, OnInitialize},
 	weights::{constants::RocksDbWeight, Weight},
 	StorageValue,
 };
+use frame_system::mocking::*;
 use sp_core::H256;
 use sp_npos_elections::{reduce, StakedAssignment};
 use sp_runtime::{
@@ -46,23 +43,17 @@ use sp_staking::{
 	SessionIndex,
 };
 // --- hyperspace ---
-use crate::*;
+use crate::{self as hyperspace_staking, *};
 
 pub(crate) type AccountId = u64;
 pub(crate) type AccountIndex = u64;
 pub(crate) type BlockNumber = u64;
 pub(crate) type Balance = u128;
 
-pub(crate) type Extrinsic = TestXt<Call, ()>;
+type Block = MockBlock<Test>;
+type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+type Extrinsic = TestXt<Call, ()>;
 
-pub(crate) type System = frame_system::Module<Test>;
-pub(crate) type Session = pallet_session::Module<Test>;
-pub(crate) type Timestamp = pallet_timestamp::Module<Test>;
-pub(crate) type Etp = hyperspace_balances::Module<Test, EtpInstance>;
-pub(crate) type Dna = hyperspace_balances::Module<Test, DnaInstance>;
-pub(crate) type Staking = Module<Test>;
-
-pub(crate) type EtpError = hyperspace_balances::Error<Test, EtpInstance>;
 pub(crate) type StakingError = Error<Test>;
 
 pub(crate) const NANO: Balance = 1;
@@ -74,37 +65,7 @@ pub(crate) const CAP: Balance = 10_000_000_000 * COIN;
 pub(crate) const TOTAL_POWER: Power = 1_000_000_000;
 
 pub const INIT_TIMESTAMP: TsInMs = 30_000;
-
-thread_local! {
-	static SESSION: RefCell<(Vec<AccountId>, HashSet<AccountId>)> = RefCell::new(Default::default());
-	static SESSION_PER_ERA: RefCell<SessionIndex> = RefCell::new(3);
-	static EXISTENTIAL_DEPOSIT: RefCell<Balance> = RefCell::new(0);
-	static SLASH_DEFER_DURATION: RefCell<EraIndex> = RefCell::new(0);
-	static ELECTION_LOOKAHEAD: RefCell<BlockNumber> = RefCell::new(0);
-	static PERIOD: RefCell<BlockNumber> = RefCell::new(1);
-	static MAX_ITERATIONS: RefCell<u32> = RefCell::new(0);
-	pub static ETP_REWARD_REMAINDER_UNBALANCED: RefCell<Balance> = RefCell::new(0);
-}
-
-impl_outer_dispatch! {
-	pub enum Call for Test where origin: Origin {
-		staking::Staking,
-	}
-}
-
-impl_outer_event! {
-	pub enum MetaEvent for Test {
-		frame_system <T>,
-		pallet_session,
-		hyperspace_balances Instance0<T>,
-		hyperspace_balances Instance1<T>,
-		staking <T>,
-	}
-}
-
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
+pub const BLOCK_TIME: u64 = 1_000;
 
 hyperspace_support::impl_test_account_data! {}
 
@@ -125,13 +86,13 @@ impl pallet_session::OneSessionHandler<AccountId> for OtherSessionHandler {
 		I: Iterator<Item = (&'a AccountId, Self::Key)>,
 		AccountId: 'a,
 	{
-		SESSION.with(|x| {
+		SESSION_VALIDATORS.with(|x| {
 			*x.borrow_mut() = (validators.map(|x| x.0.clone()).collect(), HashSet::new())
 		});
 	}
 
 	fn on_disabled(validator_index: usize) {
-		SESSION.with(|d| {
+		SESSION_VALIDATORS.with(|d| {
 			let mut d = d.borrow_mut();
 			let value = d.0[validator_index];
 			d.1.insert(value);
@@ -144,25 +105,134 @@ impl sp_runtime::BoundToRuntimeAppPublic for OtherSessionHandler {
 
 pub fn is_disabled(controller: AccountId) -> bool {
 	let stash = Staking::ledger(&controller).unwrap().stash;
-	SESSION.with(|d| d.borrow().1.contains(&stash))
+	SESSION_VALIDATORS.with(|d| d.borrow().1.contains(&stash))
 }
 
-// Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Test;
+parameter_types! {
+	pub BlockWeights: frame_system::limits::BlockWeights =
+		frame_system::limits::BlockWeights::simple_max(
+			frame_support::weights::constants::WEIGHT_PER_SECOND * 2
+		);
+}
+impl frame_system::Config for Test {
+	type BaseCallFilter = ();
+	type BlockWeights = BlockWeights;
+	type BlockLength = ();
+	type DbWeight = RocksDbWeight;
+	type Origin = Origin;
+	type Call = Call;
+	type Index = AccountIndex;
+	type BlockNumber = BlockNumber;
+	type Hash = H256;
+	type Hashing = ::sp_runtime::traits::BlakeTwo256;
+	type AccountId = AccountId;
+	type Lookup = IdentityLookup<Self::AccountId>;
+	type Header = Header;
+	type Event = Event;
+	type BlockHashCount = ();
+	type Version = ();
+	type PalletInfo = PalletInfo;
+	type AccountData = AccountData<Balance>;
+	type OnNewAccount = ();
+	type OnKilledAccount = ();
+	type SystemWeightInfo = ();
+	type SS58Prefix = ();
+}
+
+sp_runtime::impl_opaque_keys! {
+	pub struct SessionKeys {
+		pub other: OtherSessionHandler,
+	}
+}
+parameter_types! {
+	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(25);
+	pub static Period: BlockNumber = 5;
+	pub static Offset: BlockNumber = 0;
+}
+impl pallet_session::Config for Test {
+	type Event = Event;
+	type ValidatorId = AccountId;
+	type ValidatorIdOf = StashOf<Test>;
+	type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
+	type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
+	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Test, Staking>;
+	type SessionHandler = (OtherSessionHandler,);
+	type Keys = SessionKeys;
+	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
+	type WeightInfo = ();
+}
+
+impl pallet_session::historical::Config for Test {
+	type FullIdentification = Exposure<AccountId, Balance, Balance>;
+	type FullIdentificationOf = ExposureOf<Test>;
+}
+
+parameter_types! {
+	pub const UncleGenerations: u64 = 0;
+}
+impl pallet_authorship::Config for Test {
+	type FindAuthor = Author11;
+	type UncleGenerations = UncleGenerations;
+	type FilterUncle = ();
+	type EventHandler = Module<Test>;
+}
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = 5;
+}
+impl pallet_timestamp::Config for Test {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const MaxLocks: u32 = 1024;
+}
+impl hyperspace_balances::Config<EtpInstance> for Test {
+	type Balance = Balance;
+	type DustRemoval = ();
+	type Event = Event;
+	type ExistentialDeposit = ExistentialDeposit;
+	type BalanceInfo = AccountData<Balance>;
+	type AccountStore = System;
+	type MaxLocks = MaxLocks;
+	type OtherCurrencies = ();
+	type WeightInfo = ();
+}
+impl hyperspace_balances::Config<DnaInstance> for Test {
+	type Balance = Balance;
+	type DustRemoval = ();
+	type Event = Event;
+	type ExistentialDeposit = ExistentialDeposit;
+	type BalanceInfo = AccountData<Balance>;
+	type AccountStore = System;
+	type MaxLocks = MaxLocks;
+	type OtherCurrencies = ();
+	type WeightInfo = ();
+}
+
 parameter_types! {
 	pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
 	pub const BondingDurationInEra: EraIndex = 3;
-	pub const BondingDurationInBlockNumber: BlockNumber = 9;
 	pub const MaxNominatorRewardedPerValidator: u32 = 64;
 	pub const UnsignedPriority: u64 = 1 << 20;
 	pub const MinSolutionScoreBump: Perbill = Perbill::zero();
-	pub const OffchainSolutionWeightLimit: Weight = MaximumBlockWeight::get();
+	pub OffchainSolutionWeightLimit: Weight = BlockWeights::get().max_block;
 	pub const Cap: Balance = CAP;
 	pub const TotalPower: Power = TOTAL_POWER;
+	pub static SessionsPerEra: SessionIndex = 3;
+	pub static BondingDurationInBlockNumber: BlockNumber = bonding_duration_in_blocks();
+	pub static ExistentialDeposit: Balance = 1;
+	pub static SlashDeferDuration: EraIndex = 0;
+	pub static ElectionLookahead: BlockNumber = 0;
+	pub static MaxIterations: u32 = 0;
+	pub static SessionValidators: (Vec<AccountId>, HashSet<AccountId>) = Default::default();
+	pub static EtpRewardRemainderUnbalanced: Balance = 0;
 }
-impl Trait for Test {
-	type Event = MetaEvent;
+impl Config for Test {
+	type Event = Event;
 	type ModuleId = StakingModuleId;
 	type UnixTime = SuppressUnixTimeWarning;
 	type SessionsPerEra = SessionsPerEra;
@@ -191,113 +261,6 @@ impl Trait for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = frame_support::weights::constants::WEIGHT_PER_SECOND * 2;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
-}
-impl frame_system::Trait for Test {
-	type BaseCallFilter = ();
-	type Origin = Origin;
-	type Call = Call;
-	type Index = AccountIndex;
-	type BlockNumber = BlockNumber;
-	type Hash = H256;
-	type Hashing = ::sp_runtime::traits::BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
-	type Event = MetaEvent;
-	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = RocksDbWeight;
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
-	type Version = ();
-	type PalletInfo = ();
-	type AccountData = AccountData<Balance>;
-	type OnNewAccount = ();
-	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-}
-
-sp_runtime::impl_opaque_keys! {
-	pub struct SessionKeys {
-		pub other: OtherSessionHandler,
-	}
-}
-parameter_types! {
-	pub const Offset: BlockNumber = 0;
-	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(25);
-}
-impl pallet_session::Trait for Test {
-	type Event = MetaEvent;
-	type ValidatorId = AccountId;
-	type ValidatorIdOf = StashOf<Test>;
-	type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
-	type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
-	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Test, Staking>;
-	type SessionHandler = (OtherSessionHandler,);
-	type Keys = SessionKeys;
-	type DisabledValidatorsThreshold = DisabledValidatorsThreshold;
-	type WeightInfo = ();
-}
-
-impl pallet_session::historical::Trait for Test {
-	type FullIdentification = Exposure<AccountId, Balance, Balance>;
-	type FullIdentificationOf = ExposureOf<Test>;
-}
-
-parameter_types! {
-	pub const UncleGenerations: u64 = 0;
-}
-impl pallet_authorship::Trait for Test {
-	type FindAuthor = Author11;
-	type UncleGenerations = UncleGenerations;
-	type FilterUncle = ();
-	type EventHandler = Module<Test>;
-}
-
-parameter_types! {
-	pub const MinimumPeriod: u64 = 5;
-}
-impl pallet_timestamp::Trait for Test {
-	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub const MaxLocks: u32 = 1024;
-}
-impl hyperspace_balances::Trait<EtpInstance> for Test {
-	type Balance = Balance;
-	type DustRemoval = ();
-	type Event = MetaEvent;
-	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
-	type AccountStore = System;
-	type MaxLocks = MaxLocks;
-	type OtherCurrencies = ();
-	type WeightInfo = ();
-}
-impl hyperspace_balances::Trait<DnaInstance> for Test {
-	type Balance = Balance;
-	type DustRemoval = ();
-	type Event = MetaEvent;
-	type ExistentialDeposit = ExistentialDeposit;
-	type BalanceInfo = AccountData<Balance>;
-	type AccountStore = System;
-	type MaxLocks = MaxLocks;
-	type OtherCurrencies = ();
-	type WeightInfo = ();
-}
-
 impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Test
 where
 	Call: From<LocalCall>,
@@ -306,63 +269,49 @@ where
 	type OverarchingCall = Call;
 }
 
+frame_support::construct_runtime! {
+	pub enum Test
+	where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Module, Call, Storage, Config, Event<T>},
+		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
+		Etp: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+		Dna: hyperspace_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
+		Staking: hyperspace_staking::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned},
+		Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
+	}
+}
+
 pub struct ExtBuilder {
-	session_length: BlockNumber,
-	election_lookahead: BlockNumber,
-	session_per_era: SessionIndex,
-	existential_deposit: Balance,
 	validator_pool: bool,
 	nominate: bool,
 	validator_count: u32,
 	minimum_validator_count: u32,
-	slash_defer_duration: EraIndex,
 	fair: bool,
 	num_validators: Option<u32>,
 	invulnerables: Vec<AccountId>,
 	has_stakers: bool,
-	max_offchain_iterations: u32,
-	init_etp: bool,
+	initialize_first_session: bool,
 	init_dna: bool,
 }
-
-impl Default for ExtBuilder {
-	fn default() -> Self {
-		Self {
-			session_length: 1,
-			election_lookahead: 0,
-			session_per_era: 3,
-			existential_deposit: 1,
-			validator_pool: false,
-			nominate: true,
-			validator_count: 2,
-			minimum_validator_count: 0,
-			slash_defer_duration: 0,
-			fair: true,
-			num_validators: None,
-			invulnerables: vec![],
-			has_stakers: true,
-			max_offchain_iterations: 0,
-			init_etp: true,
-			init_dna: false,
-		}
-	}
-}
-
 impl ExtBuilder {
-	pub fn session_per_era(mut self, length: SessionIndex) -> Self {
-		self.session_per_era = length;
+	pub fn sessions_per_era(self, length: SessionIndex) -> Self {
+		SESSIONS_PER_ERA.with(|v| *v.borrow_mut() = length);
 		self
 	}
-	pub fn election_lookahead(mut self, look: BlockNumber) -> Self {
-		self.election_lookahead = look;
+	pub fn election_lookahead(self, look: BlockNumber) -> Self {
+		ELECTION_LOOKAHEAD.with(|v| *v.borrow_mut() = look);
 		self
 	}
-	pub fn session_length(mut self, length: BlockNumber) -> Self {
-		self.session_length = length;
+	pub fn period(self, length: BlockNumber) -> Self {
+		PERIOD.with(|v| *v.borrow_mut() = length);
 		self
 	}
-	pub fn existential_deposit(mut self, existential_deposit: Balance) -> Self {
-		self.existential_deposit = existential_deposit;
+	pub fn existential_deposit(self, existential_deposit: Balance) -> Self {
+		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow_mut() = existential_deposit);
 		self
 	}
 	pub fn validator_pool(mut self, validator_pool: bool) -> Self {
@@ -382,7 +331,7 @@ impl ExtBuilder {
 		self
 	}
 	pub fn slash_defer_duration(mut self, eras: EraIndex) -> Self {
-		self.slash_defer_duration = eras;
+		SLASH_DEFER_DURATION.with(|v| *v.borrow_mut() = eras);
 		self
 	}
 	pub fn fair(mut self, is_fair: bool) -> Self {
@@ -399,72 +348,75 @@ impl ExtBuilder {
 	}
 	pub fn has_stakers(mut self, has: bool) -> Self {
 		self.has_stakers = has;
-		self.init_etp = has;
 		self
 	}
-	pub fn max_offchain_iterations(mut self, iterations: u32) -> Self {
-		self.max_offchain_iterations = iterations;
+	pub fn max_offchain_iterations(self, iterations: u32) -> Self {
+		MAX_ITERATIONS.with(|v| *v.borrow_mut() = iterations);
 		self
 	}
-	pub fn init_etp(mut self, init_etp: bool) -> Self {
-		self.init_etp = init_etp;
-		self.has_stakers = init_etp;
-		self
-	}
-	pub fn init_dna(mut self, init_dna: bool) -> Self {
-		self.init_dna = init_dna;
+	pub fn init_dna(mut self, init: bool) -> Self {
+		self.init_dna = init;
 		self
 	}
 	pub fn offchain_election_ext(self) -> Self {
-		self.session_per_era(4)
-			.session_length(5)
-			.election_lookahead(3)
+		self.sessions_per_era(4).period(5).election_lookahead(3)
 	}
-	pub fn set_associated_constants(&self) {
-		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow_mut() = self.existential_deposit);
-		SLASH_DEFER_DURATION.with(|v| *v.borrow_mut() = self.slash_defer_duration);
-		SESSION_PER_ERA.with(|v| *v.borrow_mut() = self.session_per_era);
-		ELECTION_LOOKAHEAD.with(|v| *v.borrow_mut() = self.election_lookahead);
-		PERIOD.with(|v| *v.borrow_mut() = self.session_length);
-		MAX_ITERATIONS.with(|v| *v.borrow_mut() = self.max_offchain_iterations);
+	pub fn initialize_first_session(mut self, init: bool) -> Self {
+		self.initialize_first_session = init;
+		self
+	}
+	pub fn offset(self, offset: BlockNumber) -> Self {
+		OFFSET.with(|v| *v.borrow_mut() = offset);
+		self
 	}
 	pub fn build(self) -> sp_io::TestExternalities {
 		sp_tracing::try_init_simple();
-		self.set_associated_constants();
 		let mut storage = frame_system::GenesisConfig::default()
 			.build_storage::<Test>()
 			.unwrap();
 
-		let balance_factor = if self.existential_deposit > 1 { 256 } else { 1 };
+		let balance_factor = if ExistentialDeposit::get() > 1 {
+			256
+		} else {
+			1
+		};
 
 		let num_validators = self.num_validators.unwrap_or(self.validator_count);
+		// Check that the number of validators is sensible.
+		assert!(num_validators <= 8);
 		let validators = (0..num_validators)
 			.map(|x| ((x + 1) * 10 + 1) as AccountId)
 			.collect::<Vec<_>>();
 
-		if self.init_etp {
-			let _ = hyperspace_balances::GenesisConfig::<Test, EtpInstance> {
-				balances: vec![
-					(1, 10 * balance_factor),
-					(2, 20 * balance_factor),
-					(3, 300 * balance_factor),
-					(4, 400 * balance_factor),
-					(10, balance_factor),
-					(11, balance_factor * 1000),
-					(20, balance_factor),
-					(21, balance_factor * 2000),
-					(30, balance_factor),
-					(31, balance_factor * 2000),
-					(40, balance_factor),
-					(41, balance_factor * 2000),
-					(100, 2000 * balance_factor),
-					(101, 2000 * balance_factor),
-					// This allows us to have a total_payout different from 0.
-					(999, 1_000_000_000_000),
-				],
-			}
-			.assimilate_storage(&mut storage);
+		let _ = hyperspace_balances::GenesisConfig::<Test, EtpInstance> {
+			balances: vec![
+				(1, 10 * balance_factor),
+				(2, 20 * balance_factor),
+				(3, 300 * balance_factor),
+				(4, 400 * balance_factor),
+				(10, balance_factor),
+				(11, balance_factor * 1000),
+				(20, balance_factor),
+				(21, balance_factor * 2000),
+				(30, balance_factor),
+				(31, balance_factor * 2000),
+				(40, balance_factor),
+				(41, balance_factor * 2000),
+				(50, balance_factor),
+				(51, balance_factor * 2000),
+				(60, balance_factor),
+				(61, balance_factor * 2000),
+				(70, balance_factor),
+				(71, balance_factor * 2000),
+				(80, balance_factor),
+				(81, balance_factor * 2000),
+				(100, 2000 * balance_factor),
+				(101, 2000 * balance_factor),
+				// This allows us to have a total_payout different from 0.
+				(999, 1_000_000_000_000),
+			],
 		}
+		.assimilate_storage(&mut storage);
 		if self.init_dna {
 			let _ = hyperspace_balances::GenesisConfig::<Test, DnaInstance> {
 				balances: vec![
@@ -523,7 +475,7 @@ impl ExtBuilder {
 				),
 			];
 		}
-		let _ = GenesisConfig::<Test> {
+		let _ = hyperspace_staking::GenesisConfig::<Test> {
 			history_depth: 84,
 			stakers,
 			validator_count: self.validator_count,
@@ -554,15 +506,20 @@ impl ExtBuilder {
 		let mut ext = sp_io::TestExternalities::from(storage);
 		ext.execute_with(|| {
 			let validators = Session::validators();
-			SESSION.with(|x| *x.borrow_mut() = (validators.clone(), HashSet::new()));
+			SESSION_VALIDATORS.with(|x| *x.borrow_mut() = (validators.clone(), HashSet::new()));
 		});
-		// We consider all test to start after timestamp is initialized
-		// This must be ensured by having `timestamp::on_initialize` called before
-		// `staking::on_initialize`
-		ext.execute_with(|| {
-			System::set_block_number(1);
-			Timestamp::set_timestamp(INIT_TIMESTAMP);
-		});
+
+		if self.initialize_first_session {
+			// We consider all test to start after timestamp is initialized This must be ensured by
+			// having `timestamp::on_initialize` called before `staking::on_initialize`. Also, if
+			// session length is 1, then it is already triggered.
+			ext.execute_with(|| {
+				System::set_block_number(1);
+				Session::on_initialize(1);
+				Staking::on_initialize(1);
+				Timestamp::set_timestamp(INIT_TIMESTAMP);
+			});
+		}
 
 		ext
 	}
@@ -572,51 +529,20 @@ impl ExtBuilder {
 		ext.execute_with(post_conditions);
 	}
 }
-
-pub struct ExistentialDeposit;
-impl Get<Balance> for ExistentialDeposit {
-	fn get() -> Balance {
-		EXISTENTIAL_DEPOSIT.with(|v| *v.borrow())
-	}
-}
-
-pub struct SessionsPerEra;
-impl Get<SessionIndex> for SessionsPerEra {
-	fn get() -> SessionIndex {
-		SESSION_PER_ERA.with(|v| *v.borrow())
-	}
-}
-impl Get<BlockNumber> for SessionsPerEra {
-	fn get() -> BlockNumber {
-		SESSION_PER_ERA.with(|v| *v.borrow() as BlockNumber)
-	}
-}
-
-pub struct ElectionLookahead;
-impl Get<BlockNumber> for ElectionLookahead {
-	fn get() -> BlockNumber {
-		ELECTION_LOOKAHEAD.with(|v| *v.borrow())
-	}
-}
-
-pub struct Period;
-impl Get<BlockNumber> for Period {
-	fn get() -> BlockNumber {
-		PERIOD.with(|v| *v.borrow())
-	}
-}
-
-pub struct SlashDeferDuration;
-impl Get<EraIndex> for SlashDeferDuration {
-	fn get() -> EraIndex {
-		SLASH_DEFER_DURATION.with(|v| *v.borrow())
-	}
-}
-
-pub struct MaxIterations;
-impl Get<u32> for MaxIterations {
-	fn get() -> u32 {
-		MAX_ITERATIONS.with(|v| *v.borrow())
+impl Default for ExtBuilder {
+	fn default() -> Self {
+		Self {
+			validator_pool: false,
+			nominate: true,
+			validator_count: 2,
+			minimum_validator_count: 0,
+			fair: true,
+			num_validators: None,
+			invulnerables: vec![],
+			has_stakers: true,
+			initialize_first_session: true,
+			init_dna: false,
+		}
 	}
 }
 
@@ -652,14 +578,6 @@ fn post_conditions() {
 	check_nominators();
 	check_exposures();
 	check_ledgers();
-}
-
-pub(crate) fn current_era() -> EraIndex {
-	Staking::current_era().unwrap()
-}
-
-pub(crate) fn active_era() -> EraIndex {
-	Staking::active_era().unwrap().index
 }
 
 fn check_ledgers() {
@@ -733,8 +651,40 @@ fn assert_is_stash(acc: AccountId) {
 
 pub fn assert_ledger_consistent(controller: AccountId) {
 	let ledger = Staking::ledger(controller).unwrap();
+
 	assert_eq!(ledger.active_etp, ledger.etp_staking_lock.staking_amount);
 	assert_eq!(ledger.active_dna, ledger.dna_staking_lock.staking_amount);
+
+	let real_total_etp: Balance = ledger
+		.etp_staking_lock
+		.unbondings
+		.iter()
+		.fold(ledger.active_etp, |a, c| a + c.amount);
+	let real_total_dna: Balance = ledger
+		.dna_staking_lock
+		.unbondings
+		.iter()
+		.fold(ledger.active_dna, |a, c| a + c.amount);
+
+	assert!(
+		ledger.active_etp >= Etp::minimum_balance()
+			|| ledger.active_dna >= Dna::minimum_balance()
+			|| (ledger.active_etp == 0 && ledger.active_dna == 0),
+		"{}: active ledger amount ({}/{}) must be greater than ED {}/{}",
+		controller,
+		ledger.active_etp,
+		ledger.active_dna,
+		Etp::minimum_balance(),
+		Dna::minimum_balance()
+	);
+}
+
+pub(crate) fn active_era() -> EraIndex {
+	Staking::active_era().unwrap().index
+}
+
+pub(crate) fn current_era() -> EraIndex {
+	Staking::current_era().unwrap()
 }
 
 fn bond(stash: AccountId, controller: AccountId, val: StakingBalanceT<Test>) {
@@ -775,16 +725,40 @@ pub(crate) fn bond_nominator(
 	assert_ok!(Staking::nominate(Origin::signed(controller), target));
 }
 
+/// Progress to the given block, triggering session and era changes as we progress.
+///
+/// This will finalize the previous block, initialize up to the given block, essentially simulating
+/// a block import/propose process where we first initialize the block, then execute some stuff (not
+/// in the function), and then finalize the block.
 pub(crate) fn run_to_block(n: BlockNumber) {
 	Staking::on_finalize(System::block_number());
 	for b in System::block_number() + 1..=n {
 		System::set_block_number(b);
 		Session::on_initialize(b);
 		Staking::on_initialize(b);
+		Timestamp::set_timestamp(System::block_number() * BLOCK_TIME + INIT_TIMESTAMP);
 		if b != n {
 			Staking::on_finalize(System::block_number());
 		}
 	}
+}
+
+/// Progresses from the current block number (whatever that may be) to the `P * session_index + 1`.
+pub(crate) fn start_session(session_index: SessionIndex) {
+	let end: u64 = if Offset::get().is_zero() {
+		(session_index as u64) * Period::get()
+	} else {
+		Offset::get() + (session_index.saturating_sub(1) as u64) * Period::get()
+	};
+	run_to_block(end);
+	// session must have progressed properly.
+	assert_eq!(
+		Session::current_index(),
+		session_index,
+		"current session index = {}, expected = {}",
+		Session::current_index(),
+		session_index,
+	);
 }
 
 pub(crate) fn advance_session() {
@@ -792,40 +766,62 @@ pub(crate) fn advance_session() {
 	start_session(current_index + 1);
 }
 
-pub(crate) fn start_session(session_index: SessionIndex) {
-	assert_eq!(
-		<Period as Get<BlockNumber>>::get(),
-		1,
-		"start_session can only be used with session length 1."
-	);
-	for i in Session::current_index()..session_index {
-		Staking::on_finalize(System::block_number());
-		System::set_block_number((i + 1).into());
-		Timestamp::set_timestamp(System::block_number() * 1000 + INIT_TIMESTAMP);
-		Session::on_initialize(System::block_number());
-		Staking::on_initialize(System::block_number());
-	}
-
-	assert_eq!(Session::current_index(), session_index);
-}
-
-pub(crate) fn start_era(era_index: EraIndex) {
+/// Progress until the given era.
+pub(crate) fn start_active_era(era_index: EraIndex) {
 	start_session((era_index * <SessionsPerEra as Get<u32>>::get()).into());
-	assert_eq!(Staking::current_era().unwrap(), era_index);
+	assert_eq!(active_era(), era_index);
+	// One way or another, current_era must have changed before the active era, so they must match
+	// at this point.
+	assert_eq!(current_era(), active_era());
 }
 
-pub(crate) fn current_total_payout_for_duration(era_duration: TsInMs) -> Balance {
+pub(crate) fn current_total_payout_for_duration(duration: TsInMs) -> Balance {
 	inflation::compute_total_payout::<Test>(
-		era_duration,
+		duration,
 		Staking::living_time(),
-		<Test as Trait>::Cap::get() - Etp::total_issuance(),
+		<Test as Config>::Cap::get() - Etp::total_issuance(),
 		Perbill::from_percent(50),
 	)
 	.0
 }
 
+pub(crate) fn maximum_payout_for_duration(duration: u64) -> Balance {
+	inflation::compute_total_payout::<Test>(
+		duration,
+		Staking::living_time(),
+		<Test as Config>::Cap::get() - Etp::total_issuance(),
+		Perbill::from_percent(50),
+	)
+	.1
+}
+
+/// Time it takes to finish a session.
+///
+/// Note, if you see `time_per_session() - BLOCK_TIME`, it is fine. This is because we set the
+/// timestamp after on_initialize, so the timestamp is always one block old.
+pub(crate) fn time_per_session() -> u64 {
+	Period::get() * BLOCK_TIME
+}
+
+/// Time it takes to finish an era.
+///
+/// Note, if you see `time_per_era() - BLOCK_TIME`, it is fine. This is because we set the
+/// timestamp after on_initialize, so the timestamp is always one block old.
+pub(crate) fn time_per_era() -> u64 {
+	time_per_session() * SessionsPerEra::get() as u64
+}
+
+/// Time that will be calculated for the reward per era.
+pub(crate) fn reward_time_per_era() -> u64 {
+	time_per_era() - BLOCK_TIME
+}
+
+pub(crate) fn bonding_duration_in_blocks() -> BlockNumber {
+	BondingDurationInEra::get() as BlockNumber * Period::get()
+}
+
 pub(crate) fn reward_all_elected() {
-	let rewards = <Test as Trait>::SessionInterface::validators()
+	let rewards = <Test as Config>::SessionInterface::validators()
 		.into_iter()
 		.map(|v| (v, 1));
 
@@ -857,7 +853,7 @@ pub(crate) fn on_offence_in_era(
 		}
 	}
 
-	if Staking::active_era().unwrap().index == era {
+	if active_era() == era {
 		Staking::on_offence(
 			offenders,
 			slash_fraction,
@@ -876,7 +872,7 @@ pub(crate) fn on_offence_now(
 	>],
 	slash_fraction: &[Perbill],
 ) {
-	let now = Staking::active_era().unwrap().index;
+	let now = active_era();
 	on_offence_in_era(offenders, slash_fraction, now)
 }
 
@@ -885,7 +881,7 @@ pub(crate) fn add_slash(who: &AccountId) {
 		&[OffenceDetails {
 			offender: (
 				who.clone(),
-				Staking::eras_stakers(Staking::active_era().unwrap().index, who.clone()),
+				Staking::eras_stakers(active_era(), who.clone()),
 			),
 			reporters: vec![],
 		}],
@@ -965,8 +961,8 @@ pub(crate) fn horrible_npos_solution(
 	let score = {
 		let (_, _, better_score) = prepare_submission_with(true, true, 0, |_| {});
 
-		let support = build_support_map::<AccountId>(&winners, &staked_assignment).unwrap();
-		let score = evaluate_support(&support);
+		let support = to_support_map::<AccountId>(&winners, &staked_assignment).unwrap();
+		let score = support.evaluate();
 
 		assert!(sp_npos_elections::is_score_better::<Perbill>(
 			better_score,
@@ -1076,8 +1072,8 @@ pub(crate) fn prepare_submission_with(
 			});
 
 		let support_map =
-			build_support_map::<AccountId>(winners.as_slice(), staked.as_slice()).unwrap();
-		evaluate_support::<AccountId>(&support_map)
+			to_support_map::<AccountId>(winners.as_slice(), staked.as_slice()).unwrap();
+		support_map.evaluate()
 	} else {
 		Default::default()
 	};
@@ -1119,12 +1115,12 @@ pub(crate) fn make_all_reward_payment(era: EraIndex) {
 	}
 }
 
-pub(crate) fn staking_events() -> Vec<Event<Test>> {
+pub(crate) fn staking_events() -> Vec<hyperspace_staking::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
 		.filter_map(|e| {
-			if let MetaEvent::staking(inner) = e {
+			if let Event::hyperspace_staking(inner) = e {
 				Some(inner)
 			} else {
 				None
@@ -1151,10 +1147,10 @@ macro_rules! assert_session_era {
 			$session,
 		);
 		assert_eq!(
-			Staking::active_era().unwrap().index,
+			active_era(),
 			$era,
 			"wrong active era {} != {}",
-			Staking::active_era().unwrap().index,
+			active_era(),
 			$era,
 		);
 	};

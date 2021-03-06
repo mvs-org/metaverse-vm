@@ -1,25 +1,25 @@
 [package]
-authors     = ["Metaverse <hello@mvs.org>"]
+authors     = ["Hyperspace Network <contact@mvs.org>"]
 description = "DISPATCH precompiles for EVM pallet."
 edition     = "2018"
 homepage    = "https://mvs.org/"
 license     = "GPL-3.0"
 name        = "hyperspace-evm-precompile-dispatch"
 readme      = "README.md"
-repository  = "https://github.com/hyperspace-network/hyperspace-common/"
+repository  = "https://github.com/mvs-org/Hyperspace"
 version     = "1.3.0"
 
 
 [dependencies]
 # crates
-codec                    = {  default-features = false, package = "parity-scale-codec", version = "1.3.5" }
-hyperspace-evm             = { default-features = false, path = "../../../../evm" }
-hyperspace-evm-primitives  = { default-features = false, path = "../../../../../primitives/evm" }
-evm                      = { default-features = false, git = "https://github.com/darwinia-network/evm.git", branch = "darwinia", features = ["with-codec"] }
+codec                   = { package = "parity-scale-codec", version = "1.3.7", default-features = false }
+hyperspace-evm            = { default-features = false, path = "../../../../evm" }
+hyperspace-evm-primitives = { default-features = false, path = "../../../../../primitives/evm" }
+evm                     = { version = "0.22.0", features = ["with-codec"], default-features = false }
 # substrate
-frame-support            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-core                  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-io                    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-core       = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-io         = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [features]
 default = ["std"]

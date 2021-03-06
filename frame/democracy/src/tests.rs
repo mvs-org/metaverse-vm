@@ -1,7 +1,5 @@
 //! The crate's tests.
 
-// --- std ---
-use std::cell::RefCell;
 // --- crates ---
 use codec::Encode;
 // --- substrate ---
@@ -80,7 +78,7 @@ impl_outer_event! {
 	}
 }
 
-hyperspace_support::impl_test_account_data! {}
+hyperspace_support::impl_test_account_data! { deprecated }
 
 // Test that a fitlered call can be dispatched.
 pub struct BaseFilter;
@@ -97,13 +95,14 @@ impl Filter<Call> for BaseFilter {
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Test;
 parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = 1_000_000;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
+	pub BlockWeights: frame_system::limits::BlockWeights =
+		frame_system::limits::BlockWeights::simple_max(1_000_000);
 }
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = BaseFilter;
+	type BlockWeights = BlockWeights;
+	type BlockLength = ();
+	type DbWeight = ();
 	type Origin = Origin;
 	type Index = u64;
 	type BlockNumber = u64;
@@ -114,25 +113,19 @@ impl frame_system::Trait for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
+	type BlockHashCount = ();
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
+	type SS58Prefix = ();
 }
 parameter_types! {
-	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * MaximumBlockWeight::get();
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * BlockWeights::get().max_block;
 }
-impl pallet_scheduler::Trait for Test {
+impl pallet_scheduler::Config for Test {
 	type Event = Event;
 	type Origin = Origin;
 	type PalletsOrigin = OriginCaller;
@@ -145,7 +138,7 @@ impl pallet_scheduler::Trait for Test {
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
-impl hyperspace_balances::Trait<EtpInstance> for Test {
+impl hyperspace_balances::Config<EtpInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;
@@ -165,6 +158,8 @@ parameter_types! {
 	pub const CooloffPeriod: u64 = 2;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = MAX_PROPOSALS;
+	pub static PreimageByteDeposit: u64 = 0;
+	pub static InstantAllowed: bool = false;
 }
 ord_parameter_types! {
 	pub const One: u64 = 1;
@@ -182,23 +177,8 @@ impl Contains<u64> for OneToFive {
 	#[cfg(feature = "runtime-benchmarks")]
 	fn add(_m: &u64) {}
 }
-thread_local! {
-	static PREIMAGE_BYTE_DEPOSIT: RefCell<u64> = RefCell::new(0);
-	static INSTANT_ALLOWED: RefCell<bool> = RefCell::new(false);
-}
-pub struct PreimageByteDeposit;
-impl Get<u64> for PreimageByteDeposit {
-	fn get() -> u64 {
-		PREIMAGE_BYTE_DEPOSIT.with(|v| *v.borrow())
-	}
-}
-pub struct InstantAllowed;
-impl Get<bool> for InstantAllowed {
-	fn get() -> bool {
-		INSTANT_ALLOWED.with(|v| *v.borrow())
-	}
-}
-impl super::Trait for Test {
+
+impl super::Config for Test {
 	type Proposal = Call;
 	type Event = Event;
 	type Currency = Balances;
@@ -232,7 +212,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
-	hyperspace_balances::GenesisConfig::<Test, EtpInstance> {
+	EtpConfig {
 		balances: vec![(1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (6, 60)],
 	}
 	.assimilate_storage(&mut t)
@@ -271,7 +251,7 @@ fn set_balance_proposal(value: u64) -> Vec<u8> {
 fn set_balance_proposal_is_correctly_filtered_out() {
 	for i in 0..10 {
 		let call = Call::decode(&mut &set_balance_proposal(i)[..]).unwrap();
-		assert!(!<Test as frame_system::Trait>::BaseCallFilter::filter(
+		assert!(!<Test as frame_system::Config>::BaseCallFilter::filter(
 			&call
 		));
 	}

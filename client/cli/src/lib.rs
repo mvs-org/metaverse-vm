@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -314,7 +314,6 @@ impl Configuration {
 			);
 			quick_if_let!(cmd.import_params, self.import_config, unsafe_pruning);
 			quick_if_let!(cmd.import_params, self.import_config, state_cache_size);
-			quick_if_let!(cmd.import_params, self.import_config, Some(tracing_targets));
 
 			quick_if_let!(cmd.network_params, self.network_config, bootnodes);
 			quick_if_let!(cmd.network_params, self.network_config, reserved_nodes);
@@ -570,9 +569,6 @@ struct ImportConfig {
 
 	/// Specify the state cache size.
 	state_cache_size: Option<usize>,
-
-	/// Comma separated list of targets for tracing.
-	tracing_targets: Option<String>,
 
 	/// Receiver to process tracing messages.
 	tracing_receiver: Option<TracingReceiver>,

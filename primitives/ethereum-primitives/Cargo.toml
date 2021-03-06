@@ -1,45 +1,45 @@
 [package]
-authors     = ["Metaverse <hello@mvs.org>"]
+authors     = ["Hyperspace Network <contact@mvs.org>"]
 description = "Ethereum primitives for Hyperspace Relay"
 edition     = "2018"
 homepage    = "https://mvs.org/"
 license     = "GPL-3.0"
 name        = "ethereum-primitives"
 readme      = "README.md"
-repository  = "https://github.com/hyperspace-network/hyperspace-common/"
+repository  = "https://github.com/mvs-org/Hyperspace"
 version     = "1.3.0"
 
 [dependencies]
 # crates
-codec  = { package = "parity-scale-codec", version = "1.3.5", default-features = false, features = ["derive"] }
-ethash = { default-features = false, git = "https://github.com/darwinia-network/rust-ethash" }
-serde  = { version = "1.0.118", optional = true, features = ["derive"] }
+codec  = { package = "parity-scale-codec", version = "1.3.7", default-features = false, features = ["derive"] }
+ethash = { default-features = false, git = "https://github.com/new-mvs/rust-ethash" }
+serde  = { version = "1.0.123", optional = true, features = ["derive"] }
 # hyperspace
 array-bytes          = { default-features = false, path = "../array-bytes" }
 merkle-patricia-trie = { default-features = false, path = "../merkle-patricia-trie" }
 # github
-ethbloom        = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
-ethereum-types  = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
-fixed-hash      = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
-impl-codec      = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
-impl-rlp        = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
-keccak-hash     = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
-primitive-types = { default-features = false, features = ["codec", "rlp"], git = "https://github.com/darwinia-network/parity-common.git" }
-rlp             = { default-features = false, git = "https://github.com/darwinia-network/parity-common.git" }
-rlp-derive      = { git = "https://github.com/darwinia-network/parity-common.git" }
+ethbloom        = { default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
+ethereum-types  = { default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
+fixed-hash      = { default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
+impl-codec      = { default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
+impl-rlp        = { default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
+keccak-hash     = { default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
+primitive-types = { default-features = false, features = ["codec", "rlp"], git = "https://github.com/new-mvs/parity-common.git" }
+rlp             = { default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
+rlp-derive      = { git = "https://github.com/new-mvs/parity-common.git" }
 # substrate
-sp-io      = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io      = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-runtime = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-std     = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [dev-dependencies]
 # crates
 keccak-hasher = { version = "0.15.3" }
-serde_json    = { version = "1.0.61" }
+serde_json    = { version = "1.0.62" }
 # github
-triehash = { git = "https://github.com/darwinia-network/parity-common.git" }
+triehash = { git = "https://github.com/new-mvs/parity-common.git" }
 # substrate
-frame-support = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [features]
 default = ["std"]
