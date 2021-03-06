@@ -1,5 +1,5 @@
 # Hyperspace Mainnet
-Hyperspace Mainnet Node - Stage 1 - PoS Consensus Mode
+Hyperspace Mainnet Node - Stage 1 - PoS Consensus Mode - (Hybrid PoW/Pos and Stratum protocol implementation will be available  on Stage 2)
 
 First of all you have to get the code:
 ```
