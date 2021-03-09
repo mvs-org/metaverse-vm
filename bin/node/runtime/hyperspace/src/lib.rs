@@ -34,9 +34,9 @@ pub mod constants {
 	pub const CAP: Balance = 10_000_000_000 * COIN;
 	pub const TOTAL_POWER: Power = 1_000_000_000;
 
-	pub const MILLISECS_PER_BLOCK: Moment = 21000;
+	pub const MILLISECS_PER_BLOCK: Moment = 23000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
-	pub const BLOCKS_PER_SESSION: BlockNumber = 10 * MINUTES;
+	pub const BLOCKS_PER_SESSION: BlockNumber = 2057 * MINUTES;
 	pub const SESSIONS_PER_ERA: SessionIndex = 6;
 
 	// Time is measured by number of blocks.
@@ -358,7 +358,7 @@ parameter_types! {
 		})
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
-	pub const SS58Prefix: u8 = 42;
+	pub const SS58Prefix: u8 = 150;
 }
 impl frame_system::Config for Runtime {
 	type BaseCallFilter = ();
@@ -1088,7 +1088,7 @@ impl FeeCalculator for FixedGasPrice {
 }
 
 parameter_types! {
-	pub const ChainId: u64 = 43;
+	pub const ChainId: u64 = 23;
 }
 impl hyperspace_evm::Config for Runtime {
 	type FeeCalculator = FixedGasPrice;

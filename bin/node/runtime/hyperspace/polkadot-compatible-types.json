@@ -1,4 +1,6 @@
 {
+	"Address": "MultiAddress",
+	"LookupSource": "MultiAddress",
 	"__[pallet.balances]__": {},
 	"BalanceInfo": null,
 	"BalanceLock": {

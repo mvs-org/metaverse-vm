@@ -65,8 +65,8 @@ pub fn hyperspace_session_keys(
 pub fn properties() -> Properties {
 	let mut properties = Properties::new();
 
-	properties.insert("ss58Format".into(), 42.into());
-	properties.insert("tokenDecimals".into(), vec![9, 9].into());
+	properties.insert("ss58Format".into(),150.into());
+	properties.insert("tokenDecimals".into(), vec![8, 8].into());
 	properties.insert("tokenSymbol".into(), vec!["ETP", "DNA"].into());
 
 	properties
