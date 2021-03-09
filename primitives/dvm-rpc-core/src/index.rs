@@ -84,8 +84,8 @@ mod tests {
 
 	#[test]
 	fn index_deserialization() {
-		let s = r#"["0xa", "10", 42]"#;
+		let s = r#"["0xa", "10",150]"#;
 		let deserialized: Vec<Index> = serde_json::from_str(s).unwrap();
-		assert_eq!(deserialized, vec![Index(10), Index(10), Index(42)]);
+		assert_eq!(deserialized, vec![Index(10), Index(10), Index(150)]);
 	}
 }

@@ -8,7 +8,7 @@ describe("Test RPC Constants", function () {
 		expect(await web3.eth.getHashrate()).to.equal(0);
 	});
 
-	it("should have chainId 43", async function () {
+	it("should have chainId 23", async function () {
 		expect(await web3.eth.getChainId()).to.equal(43);
 	});
 
