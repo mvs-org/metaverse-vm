@@ -553,7 +553,8 @@ impl pallet_timestamp::Config for Runtime {
 
 type EtpInstance = hyperspace_balances::Instance0;
 parameter_types! {
-	pub const ExistentialDeposit: Balance = 1 * COIN;
+	//pub const ExistentialDeposit: Balance = 1 * COIN;
+	pub const ExistentialDeposit: Balance = 0;
 	pub const MaxLocks: u32 = 50;
 }
 impl hyperspace_balances::Config<EtpInstance> for Runtime {
