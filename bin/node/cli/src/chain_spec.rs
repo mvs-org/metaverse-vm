@@ -168,7 +168,7 @@ fn hyperspace_build_spec_genesis() -> GenesisConfig {
 		hyperspace_balances_Instance0: Some(EtpConfig { balances: endowed_accounts }),
 		hyperspace_balances_Instance1: Some(Default::default()),
 		hyperspace_staking: Some(StakingConfig {
-			minimum_validator_count: 1,
+			minimum_validator_count: 2,
 			validator_count: 7,
 			stakers: initial_authorities
 				.iter()
