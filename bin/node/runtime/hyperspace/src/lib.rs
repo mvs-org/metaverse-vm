@@ -311,7 +311,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("Hyperspace"),
 	impl_name: create_runtime_str!("Hyperspace"),
 	authoring_version: 1,
-	spec_version: 16,
+	spec_version: 17,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1084,7 +1084,8 @@ pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> U256 {
 		// Gas price is always one token per gas.
-		1.into()
+		//1.into()
+		1_000_000_000.into()
 	}
 }
 
