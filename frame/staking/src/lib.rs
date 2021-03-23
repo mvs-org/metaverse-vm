@@ -3082,7 +3082,9 @@ impl<T: Config> Module<T> {
 	}
 
 	/// Compute payout for era.
+	#[allow(dead_code)]
 	fn end_era(active_era: ActiveEraInfo, _session_index: SessionIndex) {
+		// Temporary Disable era reward
 		// Note: active_era_start can be None if end era is called during genesis config.
 		if let Some(active_era_start) = active_era.start {
 			let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
@@ -3097,17 +3099,18 @@ impl<T: Config> Module<T> {
 			);
 			let rest = max_payout.saturating_sub(validator_payout);
 
-			Self::deposit_event(RawEvent::EraPayout(
-				active_era.index,
-				validator_payout,
-				rest,
-			));
+			//Self::deposit_event(RawEvent::EraPayout(
+			//	active_era.index,
+			//	validator_payout,
+			//	rest,
+			//));
 
 			LivingTime::put(living_time + era_duration);
 			// Set ending era reward.
-			<ErasValidatorReward<T>>::insert(&active_era.index, validator_payout);
-			T::EtpCurrency::deposit_creating(&Self::account_id(), validator_payout);
-			T::EtpRewardRemainder::on_unbalanced(T::EtpCurrency::issue(rest));
+			
+			//<ErasValidatorReward<T>>::insert(&active_era.index, validator_payout);
+			//T::EtpCurrency::deposit_creating(&Self::account_id(), validator_payout);
+			//T::EtpRewardRemainder::on_unbalanced(T::EtpCurrency::issue(rest));
 		}
 	}
 
