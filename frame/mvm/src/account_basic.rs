@@ -16,7 +16,7 @@ impl<T: crate::Trait + hyperspace_balances::Trait<hyperspace_balances::Instance0
 		let account_id = <T as hyperspace_evm::Trait>::AddressMapping::into_account_id(*address);
 		let nonce = frame_system::Module::<T>::account_nonce(&account_id);
 		let helper = U256::from(10)
-			.checked_pow(U256::from(9))
+			.checked_pow(U256::from(10))
 			.unwrap_or(U256::from(0));
 
 		// Get balance from <T as hyperspace_evm::Trait>::EtpCurrency
@@ -29,7 +29,7 @@ impl<T: crate::Trait + hyperspace_balances::Trait<hyperspace_balances::Instance0
 			.saturated_into::<u128>()
 			.into();
 
-		// Final balance = balance * 10^9 + remaining_balance
+		// Final balance = balance * 10^8 + remaining_balance
 		let final_balance = U256::from(balance * helper)
 			.checked_add(remaining_balance)
 			.unwrap_or_default();
@@ -45,7 +45,7 @@ impl<T: crate::Trait + hyperspace_balances::Trait<hyperspace_balances::Instance0
 		let account_id = <T as hyperspace_evm::Trait>::AddressMapping::into_account_id(*address);
 		let current = T::AccountBasicMapping::account_basic(address);
 		let helper = U256::from(10)
-			.checked_pow(U256::from(9))
+			.checked_pow(U256::from(10))
 			.unwrap_or(U256::MAX);
 		let mvm_balance: U256 = crate::Module::<T>::remaining_balance(&account_id)
 			.saturated_into::<u128>()
