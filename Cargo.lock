@@ -1542,7 +1542,7 @@ dependencies = [
 [[package]]
 name = "ethash"
 version = "0.4.0"
-source = "git+https://github.com/new-mvs/rust-ethash#1b3ed05a8b7996d7aae0a4c363d9ce57ed4d4eb1"
+source = "git+https://github.com/new-mvs/rust-ethash#d5aad9cbb8280723b95ca0c7d9c8d7a83dee1bd9"
 dependencies = [
  "byteorder",
  "ethereum-types 0.8.0",

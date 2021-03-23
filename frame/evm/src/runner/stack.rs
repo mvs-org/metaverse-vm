@@ -495,15 +495,17 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	}
 
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
+		//EVM double transfer issue
 		let source_account = T::AccountBasicMapping::account_basic(&transfer.source);
-		let target_account = T::AccountBasicMapping::account_basic(&transfer.target);
+		
+		//let target_account = T::AccountBasicMapping::account_basic(&transfer.target);
 
 		ensure!(
 			source_account.balance >= transfer.value,
 			ExitError::Other("Insufficient balance".into())
 		);
 		let new_source_balance = source_account.balance.saturating_sub(transfer.value);
-		let new_target_balance = target_account.balance.saturating_add(transfer.value);
+		//let new_target_balance = target_account.balance.saturating_add(transfer.value);
 
 		T::AccountBasicMapping::mutate_account_basic(
 			&transfer.source,
@@ -512,6 +514,10 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 				balance: new_source_balance,
 			},
 		);
+		
+		let target_account = T::AccountBasicMapping::account_basic(&transfer.target);
+		let new_target_balance = target_account.balance.saturating_add(transfer.value);
+
 		T::AccountBasicMapping::mutate_account_basic(
 			&transfer.target,
 			Account {
