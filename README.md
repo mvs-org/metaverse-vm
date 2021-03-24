@@ -3,7 +3,7 @@ Hyperspace Mainnet Node - Stage 1 - PoS Consensus Mode - (Hybrid PoW/Pos and Str
 
 First of all you have to get the code:
 ```
-git clone https://github.com/mvs-org/Hyperspace
+git clone https://github.com/mvs-org/hyperspace
 ```
 
 # Setting up enviroment
