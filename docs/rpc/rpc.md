@@ -27,7 +27,7 @@ key\_type: String*)\
 Checks if the keystore has private keys for the given public key and
 key type. Returns \`true\` if a private key could be found.
 
-**author\_hasSessionKeys** (*session\_keys: Bytes*)
+**author\_hasSessionKeys** (*session\_keys: Bytes*) \
 Checks if the keystore has private keys for the given session public
 keys. \`session\_keys\` is the SCALE encoded session keys object from
 theruntime. Returns \`true\` iff all private keys could be found.
@@ -68,7 +68,7 @@ the current epoch with the keys in the keystore.
 *who: AccountId*) \
 Node-specific RPC methods for interaction with balances.
 
-**chain\_getBlock (***hash: Option&lt;Hash&gt;*) \
+**chain_getBlock** (*hash: Option&lt;Hash&gt;*) \
 Get header and body of a relay chain block.
 
 **chain\_getBlockHash** (*hash:Option&lt;ListOrValue&lt;NumberOrHex&gt;&gt;*) \
@@ -117,6 +117,7 @@ Unsubscribe all heads.
 
 **chain\_unsubscribeNewHeads** (metadata: Option&lt;Self::Metadata&gt;, \
 id: SubscriptionId*)
+Unsubscribe all heads.
 
 **chain\_unsubscribeRuntimeVersion**(*metadata:Option&lt;Self::Metadata&gt;,*
 *id: SubscriptionId*) \
