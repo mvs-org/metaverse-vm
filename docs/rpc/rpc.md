@@ -55,7 +55,7 @@ details on transaction life cycle.
 
 **author\_submitExtrinsic** (*extrinsic: Bytes*) \
 Submit hex-encoded extrinsic for inclusion in block.
-**
+
 **author\_unwatchExtrinsic** (*metadata: Option&lt;Self::Metadata&gt;,*
 *id: SubscriptionId*) \
 Unsubscribe from extrinsic watching.
