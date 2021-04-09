@@ -24,7 +24,7 @@ sp-std        = { default-features = false, git = "https://github.com/new-mvs/su
 
 [dev-dependencies]
 # crates
-array-bytes = { version = "0.3.0" }
+array-bytes = { version = "1.1.0" }
 # hyperspace
 hyperspace-balances = { path = "../../balances" }
 hyperspace-support  = { path = "../../support" }

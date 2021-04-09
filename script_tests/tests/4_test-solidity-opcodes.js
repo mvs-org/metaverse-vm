@@ -24,7 +24,7 @@ describe("Test Solidity OpCodes", function () {
 		opcodes.options.address = instance.options.address;
 		await opcodes.methods.test().send();
 		await opcodes.methods.test_stop().send();
-	}).timeout(80000);
+	}).timeout(120000);
 
 	it("Should throw invalid op code", async () => {
 		try {
@@ -32,7 +32,7 @@ describe("Test Solidity OpCodes", function () {
 		} catch (error) {
 			expect(error.receipt.status).to.be.false;
 		}
-	}).timeout(80000);
+	}).timeout(120000);
 
 	it("Should revert", async () => {
 		try {
@@ -40,5 +40,5 @@ describe("Test Solidity OpCodes", function () {
 		} catch (error) {
 			expect(error.receipt.status).to.be.false;
 		}
-	}).timeout(80000);
+	}).timeout(120000);
 });

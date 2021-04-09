@@ -131,16 +131,9 @@ dependencies = [
 
 [[package]]
 name = "array-bytes"
-version = "0.3.0"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43759f68cc29a37659a6b7a48a49674e03a888b6d41f36f4204c36d0d09a51de"
-
-[[package]]
-name = "array-bytes"
-version = "1.3.0"
-dependencies = [
- "sp-std 2.0.1",
-]
+checksum = "d709a11595cecbc902e04927043d6b472a13f65fe3c47bfb89a6d3a7b0a9d5b5"
 
 [[package]]
 name = "arrayref"
@@ -1612,7 +1605,7 @@ dependencies = [
 name = "ethereum-primitives"
 version = "1.3.0"
 dependencies = [
- "array-bytes 1.3.0",
+ "array-bytes",
  "ethash",
  "ethbloom 0.8.1",
  "ethereum-types 0.8.0",
@@ -2642,7 +2635,7 @@ dependencies = [
 name = "hyperspace"
 version = "1.0.12"
 dependencies = [
- "array-bytes 1.3.0",
+ "array-bytes",
  "dvm-consensus",
  "dvm-rpc",
  "dvm-rpc-runtime-api",
@@ -2757,7 +2750,7 @@ dependencies = [
 name = "hyperspace-claims"
 version = "1.3.0"
 dependencies = [
- "array-bytes 1.3.0",
+ "array-bytes",
  "frame-support",
  "frame-system",
  "hyperspace-balances",
@@ -2827,7 +2820,7 @@ dependencies = [
 name = "hyperspace-ethereum-backing"
 version = "1.3.0"
 dependencies = [
- "array-bytes 1.3.0",
+ "array-bytes",
  "ethabi",
  "ethereum-primitives",
  "frame-support",
@@ -2856,7 +2849,7 @@ dependencies = [
 name = "hyperspace-ethereum-linear-relay"
 version = "1.3.0"
 dependencies = [
- "array-bytes 1.3.0",
+ "array-bytes",
  "ethereum-primitives",
  "ethereum-types 0.8.0",
  "frame-support",
@@ -2877,7 +2870,7 @@ dependencies = [
 name = "hyperspace-ethereum-relay"
 version = "1.3.0"
 dependencies = [
- "array-bytes 1.3.0",
+ "array-bytes",
  "blake2-rfc",
  "ckb-merkle-mountain-range",
  "ethereum-primitives",
@@ -3064,7 +3057,7 @@ dependencies = [
 name = "hyperspace-header-mmr"
 version = "1.3.0"
 dependencies = [
- "array-bytes 1.3.0",
+ "array-bytes",
  "ckb-merkle-mountain-range",
  "frame-support",
  "frame-system",
@@ -3155,7 +3148,7 @@ dependencies = [
 name = "hyperspace-relay-authorities"
 version = "1.3.0"
 dependencies = [
- "array-bytes 0.3.0",
+ "array-bytes",
  "frame-support",
  "frame-system",
  "hyperspace-balances",
@@ -3435,14 +3428,6 @@ dependencies = [
 [[package]]
 name = "impl-codec"
 version = "0.4.2"
-source = "git+https://github.com/new-mvs/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
-dependencies = [
- "parity-scale-codec 1.3.7",
-]
-
-[[package]]
-name = "impl-codec"
-version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1be51a921b067b0eaca2fad532d9400041561aa922221cc65f95a85641c6bf53"
 dependencies = [
@@ -3450,11 +3435,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "impl-rlp"
-version = "0.2.1"
+name = "impl-codec"
+version = "0.4.2"
 source = "git+https://github.com/new-mvs/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
 dependencies = [
- "rlp 0.4.4",
+ "parity-scale-codec 1.3.7",
 ]
 
 [[package]]
@@ -3464,6 +3449,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f7a72f11830b52333f36e3b09a288333888bf54380fd0ac0790a3c31ab0f3c5"
 dependencies = [
  "rlp 0.4.6",
+]
+
+[[package]]
+name = "impl-rlp"
+version = "0.2.1"
+source = "git+https://github.com/new-mvs/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
+dependencies = [
+ "rlp 0.4.4",
 ]
 
 [[package]]
@@ -6274,7 +6267,8 @@ dependencies = [
 [[package]]
 name = "rlp-derive"
 version = "0.1.0"
-source = "git+https://github.com/new-mvs/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e33d7b2abe0c340d8797fe2907d3f20d3b5ea5908683618bfe80df7f621f672a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6284,8 +6278,7 @@ dependencies = [
 [[package]]
 name = "rlp-derive"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e33d7b2abe0c340d8797fe2907d3f20d3b5ea5908683618bfe80df7f621f672a"
+source = "git+https://github.com/new-mvs/parity-common.git#12a86aa8af8ff5ccd5c953074aa893c716cf85b5"
 dependencies = [
  "proc-macro2",
  "quote",

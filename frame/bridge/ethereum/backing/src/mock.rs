@@ -32,7 +32,7 @@ macro_rules! decl_tests {
 			ModuleId, {KeyTypeId, MultiSignature, Perbill},
 		};
 		// --- hyperspace ---
-		use array_bytes::fixed_hex_bytes_unchecked;
+		
 		use hyperspace_staking::{EraIndex, Exposure, ExposureOf};
 
 		type Balance = u128;

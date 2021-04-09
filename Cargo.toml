@@ -47,7 +47,6 @@ members = [
 	"frame/treasury",
 	"frame/vesting",
 	# primitives
-	"primitives/array-bytes",
 	"primitives/consensus",
 	"primitives/dvm-rpc-core",
 	"primitives/ethereum-primitives",

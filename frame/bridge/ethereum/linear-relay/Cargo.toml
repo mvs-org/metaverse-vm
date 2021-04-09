@@ -28,8 +28,9 @@ sp-runtime    = { default-features = false, git = "https://github.com/new-mvs/su
 sp-std        = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [dev-dependencies]
+# crates
+array-bytes = { version = "1.1.0" }
 # hyperspace
-array-bytes         = { path = "../../../../primitives/array-bytes" }
 hyperspace-balances   = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
 # substrate

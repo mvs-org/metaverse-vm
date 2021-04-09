@@ -174,13 +174,13 @@ fn try_confirm_relay_header_parcel_should_work() {
 // #[test]
 // fn mmr() {
 // 	// 102 header hash
-// 	let header_hash: H256 = array_bytes::fixed_hex_bytes_unchecked!(
+// 	let header_hash: H256 = array_bytes::array_bytes::hex2array_unchecked!(
 // 		"0x16110f3aa1895de2ec22cfd746751f724d112a953c71b62858a1523b50f3dc64",
 // 		32
 // 	)
 // 	.into();
 // 	// 103 mmr root
-// 	let mmr_root: H256 = array_bytes::fixed_hex_bytes_unchecked!(
+// 	let mmr_root: H256 = array_bytes::array_bytes::hex2array_unchecked!(
 // 		"0x34a80a8e0b6bfe253d1c960647cb4de34607a9caf86e99f7611304dbdf7fbde0",
 // 		32
 // 	)

@@ -593,7 +593,7 @@ mod tests {
 	};
 	// --- hyperspace ---
 	use crate::{self as hyperspace_claims, secp_utils::*, *};
-	use array_bytes::fixed_hex_bytes_unchecked;
+	
 
 	type Balance = u64;
 
@@ -736,7 +736,7 @@ mod tests {
 
 	#[test]
 	fn serde_works() {
-		let x = EthereumAddress(fixed_hex_bytes_unchecked!(
+		let x = EthereumAddress(array_bytes::hex2array_unchecked!(
 			"0x0123456789abcdef0123456789abcdef01234567",
 			20
 		));
@@ -745,7 +745,7 @@ mod tests {
 		let z: EthereumAddress = serde_json::from_str(&y).unwrap();
 		assert_eq!(x.0, z.0);
 
-		let x = OldetpAddress(fixed_hex_bytes_unchecked!(
+		let x = OldetpAddress(array_bytes::hex2array_unchecked!(
 			"0x0123456789abcdef0123456789abcdef01234567",
 			20
 		));
@@ -990,11 +990,11 @@ mod tests {
 	fn real_eth_sig_works() {
 		new_test_ext().execute_with(|| {
 				// "Pay RUSTs to the TEST account:2a00000000000000"
-				let sig = fixed_hex_bytes_unchecked!("0x444023e89b67e67c0562ed0305d252a5dd12b2af5ac51d6d3cb69a0b486bc4b3191401802dc29d26d586221f7256cd3329fe82174bdf659baea149a40e1c495d1c", 65);
+				let sig = array_bytes::hex2array_unchecked!("0x444023e89b67e67c0562ed0305d252a5dd12b2af5ac51d6d3cb69a0b486bc4b3191401802dc29d26d586221f7256cd3329fe82174bdf659baea149a40e1c495d1c", 65);
 				let sig = EcdsaSignature(sig);
 				let who = 42u64.using_encoded(to_ascii_hex);
 				let signer = Claims::eth_recover(&sig, &who).unwrap();
-				assert_eq!(signer, fixed_hex_bytes_unchecked!("0x6d31165d5d932d571f3b44695653b46dcc327e84", 20));
+				assert_eq!(signer, array_bytes::hex2array_unchecked!("0x6d31165d5d932d571f3b44695653b46dcc327e84", 20));
 			});
 	}
 
@@ -1002,11 +1002,11 @@ mod tests {
 	fn real_oldetp_sig_works() {
 		new_test_ext().execute_with(|| {
 			// "Pay RUSTs to the TEST account:0c0529c66a44e1861e5e1502b4a87009f23c792518a7a2091363f5a0e38abd57"
-			let sig = fixed_hex_bytes_unchecked!("0x34c3d5afc7f8fa08f9d00a1ec4ac274c63ebce99460b556de85258c94f41ab2f52ad5188bd9fc51251cf5dcdd53751b1bd577828db3f2e8fe8ef77907d7f3f6a1b", 65);
+			let sig = array_bytes::hex2array_unchecked!("0x34c3d5afc7f8fa08f9d00a1ec4ac274c63ebce99460b556de85258c94f41ab2f52ad5188bd9fc51251cf5dcdd53751b1bd577828db3f2e8fe8ef77907d7f3f6a1b", 65);
 			let sig = EcdsaSignature(sig);
-			let who = fixed_hex_bytes_unchecked!("0x0c0529c66a44e1861e5e1502b4a87009f23c792518a7a2091363f5a0e38abd57", 32).using_encoded(to_ascii_hex);
+			let who = array_bytes::hex2array_unchecked!("0x0c0529c66a44e1861e5e1502b4a87009f23c792518a7a2091363f5a0e38abd57", 32).using_encoded(to_ascii_hex);
 			let signer = Claims::oldetp_recover(&sig, &who).unwrap();
-			assert_eq!(signer, fixed_hex_bytes_unchecked!("0x11974bce18a43243ede78beec2fd8e0ba4fe17ae", 20));
+			assert_eq!(signer, array_bytes::hex2array_unchecked!("0x11974bce18a43243ede78beec2fd8e0ba4fe17ae", 20));
 		});
 	}
 

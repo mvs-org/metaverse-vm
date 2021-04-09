@@ -72,7 +72,7 @@ use sp_std::borrow::ToOwned;
 use sp_std::{convert::From, marker::PhantomData, prelude::*};
 // --- hyperspace ---
 use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
-use array_bytes::array_unchecked;
+
 use hyperspace_relay_primitives::relayer_game::*;
 use hyperspace_support::{
 	balance::lock::LockableCurrency, traits::EthereumReceipt as EthereumReceiptT,
@@ -737,7 +737,7 @@ impl<T: Config> Relayable for Module<T> {
 		);
 
 		let last_leaf = *relay_header_id - 1;
-		let mmr_root = array_unchecked!(mmr_root, 0, 32).into();
+		let mmr_root = array_bytes::dyn2array!(mmr_root, 32).into();
 
 		if let Some(best_confirmed_block_number) = optional_best_confirmed_relay_header_id {
 			let maybe_best_confirmed_block_header_hash =
@@ -761,7 +761,7 @@ impl<T: Config> Relayable for Module<T> {
 					mmr_root,
 					mmr_proof
 						.iter()
-						.map(|h| array_unchecked!(h, 0, 32).into())
+						.map(|h| array_bytes::dyn2array!(h, 32).into())
 						.collect(),
 					vec![(
 						*best_confirmed_block_number,
@@ -785,11 +785,11 @@ impl<T: Config> Relayable for Module<T> {
 					mmr_root,
 					mmr_proof
 						.iter()
-						.map(|h| array_unchecked!(h, 0, 32).into())
+						.map(|h| array_bytes::dyn2array!(h, 32).into())
 						.collect(),
 					vec![(
 						header.number,
-						array_unchecked!(header.hash.ok_or(<Error<T>>::HeaderInv)?, 0, 32).into(),
+						array_bytes::dyn2array!(header.hash.ok_or(<Error<T>>::HeaderInv)?, 32).into(),
 					)],
 				),
 				<Error<T>>::MMRInv
@@ -930,12 +930,8 @@ impl<T: Config> EthereumReceiptT<AccountId<T>, EtpBalance<T>> for Module<T> {
 				mmr_proof.proof.to_vec(),
 				vec![(
 					ethereum_header.number,
-					array_unchecked!(
-						ethereum_header.hash.ok_or(<Error<T>>::HeaderHashInv)?,
-						0,
-						32
-					)
-					.into(),
+					array_bytes::dyn2array!(ethereum_header.hash.ok_or(<Error<T>>::HeaderHashInv)?, 32)
+						.into(),
 				)]
 			),
 			<Error<T>>::MMRInv

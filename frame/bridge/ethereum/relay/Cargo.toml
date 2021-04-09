@@ -12,12 +12,12 @@ version     = "1.3.0"
 
 [dependencies]
 # crates
+array-bytes = { version = "1.1.0" }
 blake2-rfc = { version = "0.2.18", default-features = false }
 codec      = { package = "parity-scale-codec", version = "1.3.7", default-features = false }
 serde      = { version = "1.0.123", optional = true }
 serde_json = { version = "1.0.62", optional = true }
 # hyperspace
-array-bytes               = { default-features = false, path = "../../../../primitives/array-bytes" }
 hyperspace-relay-primitives = { default-features = false, path = "../../../../primitives/relay" }
 hyperspace-relayer-game     = { default-features = false, path = "../../../bridge/relayer-game" }
 hyperspace-support          = { default-features = false, path = "../../../support" }
@@ -58,7 +58,6 @@ crates-std    = [
 	"serde_json",
 ]
 hyperspace-std  = [
-	"array-bytes/std",
 	"hyperspace-relayer-game/std",
 	"hyperspace-relay-primitives/std",
 	"hyperspace-support/std",

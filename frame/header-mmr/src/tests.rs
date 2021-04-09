@@ -25,7 +25,7 @@ use frame_support::traits::OnFinalize;
 use sp_runtime::testing::{Digest, H256};
 // --- hyperspace ---
 use crate::{mock::*, *};
-use array_bytes::fixed_hex_bytes_unchecked as hh;
+
 use merkle_mountain_range::{leaf_index_to_pos, Merge};
 
 #[test]
@@ -131,7 +131,8 @@ fn test_mmr_root() {
 	let mut mmr = <MMR<_, MMRMerge<Test>, _>>::new(0, store);
 	(0..10).for_each(|i| {
 		let cur = HEADERS_N_ROOTS[i];
-		mmr.push(hh!(cur.0, 32).into()).unwrap();
+		mmr.push(array_bytes::hex2array_unchecked!(cur.0, 32).into())
+			.unwrap();
 		assert_eq!(
 			&format!("{:?}", mmr.get_root().expect("get root failed"))[2..],
 			cur.1
@@ -142,8 +143,8 @@ fn test_mmr_root() {
 #[test]
 fn test_mmr_merge() {
 	let res = MMRMerge::<Test>::merge(
-		&hh!(HEADERS_N_ROOTS[0].0, 32).into(),
-		&hh!(HEADERS_N_ROOTS[1].0, 32).into(),
+		&array_bytes::hex2array_unchecked!(HEADERS_N_ROOTS[0].0, 32).into(),
+		&array_bytes::hex2array_unchecked!(HEADERS_N_ROOTS[1].0, 32).into(),
 	);
 	assert_eq!(
 		format!("{:?}", res),

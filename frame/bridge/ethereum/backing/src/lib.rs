@@ -74,7 +74,7 @@ use sp_runtime::{
 use sp_std::borrow::ToOwned;
 use sp_std::{convert::TryFrom, prelude::*};
 // --- hyperspace ---
-use array_bytes::array_unchecked;
+
 use hyperspace_relay_primitives::relay_authorities::*;
 use hyperspace_support::{
 	balance::lock::*,
@@ -424,7 +424,7 @@ impl<T: Config> Module<T> {
 	pub fn account_id_try_from_bytes(bytes: &[u8]) -> Result<T::AccountId, DispatchError> {
 		ensure!(bytes.len() == 32, <Error<T>>::AddrLenMis);
 
-		let redeem_account_id: T::RedeemAccountId = array_unchecked!(bytes, 0, 32).into();
+		let redeem_account_id: T::RedeemAccountId = array_bytes::dyn2array!(bytes, 32).into();
 
 		Ok(redeem_account_id.into())
 	}

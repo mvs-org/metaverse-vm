@@ -25,7 +25,6 @@
 /frame/bridge/relay-authorities/ @AurevoirXavier
 /frame/bridge/relayer-game/ @AurevoirXavier @yanganto
 
-/primitives/array-bytes/ @AurevoirXavier
 /primitives/ethereum-primitives/ @AurevoirXavier @HackFisher
 /primitives/merkle-patricia-trie/ @HackFisher
 /primitives/relay/ @AurevoirXavier

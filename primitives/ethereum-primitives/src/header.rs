@@ -29,8 +29,9 @@ use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
 // --- hyperspace ---
 use crate::*;
-#[cfg(any(feature = "deserialize", test))]
-use array_bytes::hex_bytes_unchecked;
+
+
+
 
 #[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 enum Seal {
@@ -82,7 +83,8 @@ pub struct EthereumHeader {
 impl EthereumHeader {
 	#[cfg(any(feature = "deserialize", test))]
 	pub fn from_scale_codec_str<S: AsRef<str>>(s: S) -> Option<Self> {
-		if let Ok(eth_header) = <Self as Decode>::decode(&mut &hex_bytes_unchecked(s.as_ref())[..])
+		if let Ok(eth_header) =
+			<Self as Decode>::decode(&mut &array_bytes::hex2bytes_unchecked(s.as_ref())[..])
 		{
 			Some(eth_header)
 		} else {
@@ -94,8 +96,8 @@ impl EthereumHeader {
 	pub fn from_str_unchecked(s: &str) -> Self {
 		// --- std ---
 		use std::str::FromStr;
-		// --- hyperspace ---
-		use array_bytes::fixed_hex_bytes_unchecked;
+		
+		
 
 		fn parse_value_unchecked(s: &str) -> &str {
 			s.splitn(2, ':')
@@ -137,43 +139,43 @@ impl EthereumHeader {
 			if s.starts_with("\"difficulty") {
 				eth_header.difficulty = str_to_u64(parse_value_unchecked(s)).into();
 			} else if s.starts_with("\"extraData") {
-				eth_header.extra_data = hex_bytes_unchecked(parse_value_unchecked(s));
+				eth_header.extra_data = array_bytes::hex2bytes_unchecked(parse_value_unchecked(s));
 			} else if s.starts_with("\"gasLimit") {
 				eth_header.gas_limit = str_to_u64(parse_value_unchecked(s)).into();
 			} else if s.starts_with("\"gasUsed") {
 				eth_header.gas_used = str_to_u64(parse_value_unchecked(s)).into();
 			} else if s.starts_with("\"hash") {
 				eth_header.hash =
-					Some(fixed_hex_bytes_unchecked!(parse_value_unchecked(s), 32).into());
+					Some(array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into());
 			} else if s.starts_with("\"logsBloom") {
 				let s = parse_value_unchecked(s);
 				let s = if s.starts_with("0x") { &s[2..] } else { s };
 				eth_header.log_bloom = Bloom::from_str(s).unwrap_or_default();
 			} else if s.starts_with("\"miner") {
-				eth_header.author = fixed_hex_bytes_unchecked!(parse_value_unchecked(s), 20).into();
+				eth_header.author = array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 20).into();
 			} else if s.starts_with("\"mixHash") {
-				mix_hash = fixed_hex_bytes_unchecked!(parse_value_unchecked(s), 32).into();
+				mix_hash = array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into();
 			} else if s.starts_with("\"nonce") {
-				nonce = fixed_hex_bytes_unchecked!(parse_value_unchecked(s), 8).into();
+				nonce = array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 8).into();
 			} else if s.starts_with("\"number") {
 				eth_header.number = str_to_u64(parse_value_unchecked(s));
 			} else if s.starts_with("\"parentHash") {
 				eth_header.parent_hash =
-					fixed_hex_bytes_unchecked!(parse_value_unchecked(s), 32).into();
+					array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into();
 			} else if s.starts_with("\"receiptsRoot") {
 				eth_header.receipts_root =
-					fixed_hex_bytes_unchecked!(parse_value_unchecked(s), 32).into();
+					array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into();
 			} else if s.starts_with("\"sha3Uncles") {
 				eth_header.uncles_hash =
-					fixed_hex_bytes_unchecked!(parse_value_unchecked(s), 32).into();
+					array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into();
 			} else if s.starts_with("\"stateRoot") {
 				eth_header.state_root =
-					fixed_hex_bytes_unchecked!(parse_value_unchecked(s), 32).into();
+					array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into();
 			} else if s.starts_with("\"timestamp") {
 				eth_header.timestamp = str_to_u64(parse_value_unchecked(s));
 			} else if s.starts_with("\"transactionsRoot") {
 				eth_header.transactions_root =
-					fixed_hex_bytes_unchecked!(parse_value_unchecked(s), 32).into();
+					array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into();
 			}
 		}
 		eth_header.seal = vec![rlp::encode(&mix_hash), rlp::encode(&nonce)];
@@ -437,7 +439,9 @@ pub fn bytes_from_string<'de, D>(deserializer: D) -> Result<Bytes, D::Error>
 where
 	D: serde::Deserializer<'de>,
 {
-	Ok(hex_bytes_unchecked(&String::deserialize(deserializer)?))
+	Ok(array_bytes::hex2bytes_unchecked(&String::deserialize(
+		deserializer,
+	)?))
 }
 
 #[cfg(any(feature = "deserialize", test))]
@@ -455,7 +459,7 @@ where
 {
 	Ok(<Vec<String>>::deserialize(deserializer)?
 		.into_iter()
-		.map(|s| hex_bytes_unchecked(&s))
+		.map(|s| array_bytes::hex2bytes_unchecked(&s))
 		.collect())
 }
 
@@ -551,7 +555,7 @@ mod tests {
 	use std::str::FromStr;
 	// --- hyperspace ---
 	use super::*;
-	use array_bytes::fixed_hex_bytes_unchecked;
+	
 	use error::EthereumError;
 	use pow::EthashPartial;
 
@@ -712,7 +716,7 @@ mod tests {
 
 		assert_eq!(
 			header.hash(),
-			fixed_hex_bytes_unchecked!(
+			array_bytes::hex2array_unchecked!(
 				"0xb80bf91d6f459227a9c617c5d9823ff0b07f1098ea16788676f0b804ecd42f3b",
 				32
 			)
@@ -722,7 +726,7 @@ mod tests {
 		let partial_header_hash = header.bare_hash();
 		assert_eq!(
 			partial_header_hash,
-			fixed_hex_bytes_unchecked!(
+			array_bytes::hex2array_unchecked!(
 				"0x3c2e6623b1de8862a927eeeef2b6b25dea6e1d9dad88dca3c239be3959dc384a",
 				32
 			)
@@ -767,7 +771,7 @@ mod tests {
 		let partial_header_hash = header.bare_hash();
 		assert_eq!(
 			partial_header_hash,
-			fixed_hex_bytes_unchecked!(
+			array_bytes::hex2array_unchecked!(
 				"0xbb698ea6e304a7a88a6cd8238f0e766b4f7bf70dc0869bd2e4a76a8e93fffc80",
 				32
 			)
@@ -901,7 +905,7 @@ mod tests {
 			}
 			"#,
 		);
-		let encoded_header = hex_bytes_unchecked("ccd3a54b1bb11a8fa7eb82c6885c3bdcc9884cb0229cb9a70683d58bfe78e80c57f2785e00000000d59873000000000005fc5a079e0583b8a07526023a16e2022c4c62961d096373d65213a55a03f1edd066091ef245054ddbd827a4679f19983b2d8ae6ec428257d3daf5aa3a394665c7ab79e14a51116178653038fd2d5c23bb0118337cde830207028f5061726974792d457468657265756d86312e34312e30826c69bd3b97632b55686763748c69dec192fa2b5067c92cc0e3b5e19afad6bf43ed046c57de9ea8a275b131b344d60bbdef1ea1465753cba5924be631116fc9994d8b0006000000400004000000000800000ac000000200208000040000100084410200017001004000090100600000002800000041020002400000000000200000c81080602800004000000200080020000828200000110320001000000008008420000000400200a0008c0000380410084040200201040001000014045011001010000408000000a80000000010020002000000049000000000800a5000080000000000008010000000820041040014000100000004000000000040000002000000000000221000404028000002048200080000000000000000000001000108204002000200000012000000808000008200a002000000100080000000008000000055881b00000000000000000000000000000000000000000000000000000000001d127a000000000000000000000000000000000000000000000000000000000072c14a23000000000000000000000000000000000000000000000000000000000884a0e582018f215ce844c7e0b9bd10ee8ab89cad57dc01f3aec080bff11134cc55732488e55fdb2d73c14cee01253c1f8ed3051930949251bcf786d4ecfe379c001202d07aeb8a68ba15588f1d");
+		let encoded_header = array_bytes::hex2bytes_unchecked("ccd3a54b1bb11a8fa7eb82c6885c3bdcc9884cb0229cb9a70683d58bfe78e80c57f2785e00000000d59873000000000005fc5a079e0583b8a07526023a16e2022c4c62961d096373d65213a55a03f1edd066091ef245054ddbd827a4679f19983b2d8ae6ec428257d3daf5aa3a394665c7ab79e14a51116178653038fd2d5c23bb0118337cde830207028f5061726974792d457468657265756d86312e34312e30826c69bd3b97632b55686763748c69dec192fa2b5067c92cc0e3b5e19afad6bf43ed046c57de9ea8a275b131b344d60bbdef1ea1465753cba5924be631116fc9994d8b0006000000400004000000000800000ac000000200208000040000100084410200017001004000090100600000002800000041020002400000000000200000c81080602800004000000200080020000828200000110320001000000008008420000000400200a0008c0000380410084040200201040001000014045011001010000408000000a80000000010020002000000049000000000800a5000080000000000008010000000820041040014000100000004000000000040000002000000000000221000404028000002048200080000000000000000000001000108204002000200000012000000808000008200a002000000100080000000008000000055881b00000000000000000000000000000000000000000000000000000000001d127a000000000000000000000000000000000000000000000000000000000072c14a23000000000000000000000000000000000000000000000000000000000884a0e582018f215ce844c7e0b9bd10ee8ab89cad57dc01f3aec080bff11134cc55732488e55fdb2d73c14cee01253c1f8ed3051930949251bcf786d4ecfe379c001202d07aeb8a68ba15588f1d");
 		assert_eq!(
 			<EthereumHeader as Decode>::decode(&mut &encoded_header[..]).unwrap(),
 			header

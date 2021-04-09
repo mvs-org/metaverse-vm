@@ -24,7 +24,7 @@ log            = { version = "0.4.14" }
 structopt      = { version = "0.3.21" }
 tokio          = { version = "0.3.6", optional = true, features = ["rt-multi-thread"] }
 # hyperspace
-array-bytes                         = { path = "../../../primitives/array-bytes" }
+array-bytes = { version = "1.1.0" }
 hyperspace-balances-rpc               = { path = "../../../frame/balances/rpc" }
 hyperspace-balances-rpc-runtime-api   = { path = "../../../frame/balances/rpc/runtime-api" }
 hyperspace-claims                     = { path = "../../../frame/claims" }
