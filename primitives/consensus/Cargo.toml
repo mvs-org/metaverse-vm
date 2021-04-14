@@ -7,7 +7,7 @@ license     = "Apache-2.0"
 name        = "dvm-consensus-primitives"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "1.3.0"
+version     = "1.4.0"
 
 [dependencies]
 # crates

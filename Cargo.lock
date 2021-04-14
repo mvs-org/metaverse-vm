@@ -1236,7 +1236,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-consensus"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "derive_more",
  "dvm-consensus-primitives",
@@ -1258,7 +1258,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-consensus-primitives"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "parity-scale-codec 1.3.7",
  "sp-core",
@@ -1268,7 +1268,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-ethereum"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "dvm-consensus-primitives",
  "dvm-rpc-runtime-api",
@@ -1297,7 +1297,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-rpc"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "dvm-consensus",
  "dvm-ethereum",
@@ -1333,7 +1333,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-rpc-core"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "dvm-rpc-core-primitives",
  "ethereum",
@@ -1352,7 +1352,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-rpc-core-primitives"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "ethereum-types 0.10.0",
  "jsonrpc-core",
@@ -1366,7 +1366,7 @@ dependencies = [
 
 [[package]]
 name = "dvm-rpc-runtime-api"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "ethereum",
  "ethereum-types 0.10.0",
@@ -1603,7 +1603,7 @@ dependencies = [
 
 [[package]]
 name = "ethereum-primitives"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "array-bytes",
  "ethash",
@@ -2633,7 +2633,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace"
-version = "1.0.12"
+version = "1.0.13"
 dependencies = [
  "array-bytes",
  "dvm-consensus",
@@ -2706,7 +2706,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-balances"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -2723,7 +2723,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-balances-rpc"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "hyperspace-balances-rpc-runtime-api",
  "jsonrpc-core",
@@ -2737,7 +2737,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-balances-rpc-runtime-api"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "hyperspace-support",
  "parity-scale-codec 1.3.7",
@@ -2748,7 +2748,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-claims"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "array-bytes",
  "frame-support",
@@ -2767,7 +2767,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-cli"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "sc-cli",
  "sc-client-api",
@@ -2779,7 +2779,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-democracy"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -2799,7 +2799,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-elections-phragmen"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -2818,7 +2818,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-ethereum-backing"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "array-bytes",
  "ethabi",
@@ -2847,7 +2847,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-ethereum-linear-relay"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "array-bytes",
  "ethereum-primitives",
@@ -2868,7 +2868,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-ethereum-relay"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "array-bytes",
  "blake2-rfc",
@@ -2893,7 +2893,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-evm"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "evm",
  "evm-gasometer",
@@ -2917,7 +2917,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-evm-precompile"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "hyperspace-evm-precompile-dna",
  "hyperspace-evm-precompile-empty",
@@ -2927,7 +2927,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-evm-precompile-blake2"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "evm",
  "hyperspace-evm-primitives",
@@ -2937,7 +2937,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-evm-precompile-bn128"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "evm",
  "hyperspace-evm-primitives",
@@ -2948,7 +2948,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-evm-precompile-dispatch"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "evm",
  "frame-support",
@@ -2961,7 +2961,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-evm-precompile-dna"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "ethabi",
  "ethereum-types 0.8.0",
@@ -2983,7 +2983,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-evm-precompile-ed25519"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "ed25519-dalek",
  "evm",
@@ -2994,7 +2994,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-evm-precompile-empty"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "evm",
  "hyperspace-evm-primitives",
@@ -3002,7 +3002,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-evm-precompile-modexp"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "evm",
  "hex",
@@ -3014,7 +3014,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-evm-precompile-simple"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "evm",
  "hyperspace-evm-primitives",
@@ -3025,7 +3025,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-evm-precompile-withdraw"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "evm",
  "frame-support",
@@ -3043,7 +3043,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-evm-primitives"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "evm",
  "impl-trait-for-tuples 0.2.1",
@@ -3055,7 +3055,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-header-mmr"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "array-bytes",
  "ckb-merkle-mountain-range",
@@ -3075,7 +3075,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-header-mmr-rpc"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "hyperspace-header-mmr-rpc-runtime-api",
  "jsonrpc-core",
@@ -3089,7 +3089,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-header-mmr-rpc-runtime-api"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "hyperspace-support",
  "parity-scale-codec 1.3.7",
@@ -3101,7 +3101,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-oldetp-backing"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3112,7 +3112,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-oldna-backing"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3123,7 +3123,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-oldna-issuing"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3138,7 +3138,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-primitives"
-version = "1.0.12"
+version = "1.0.13"
 dependencies = [
  "sp-core",
  "sp-runtime",
@@ -3146,7 +3146,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-relay-authorities"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "array-bytes",
  "frame-support",
@@ -3164,7 +3164,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-relay-primitives"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "frame-support",
  "parity-scale-codec 1.3.7",
@@ -3174,7 +3174,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-relayer-game"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "env_logger 0.8.3",
  "frame-support",
@@ -3192,7 +3192,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-runtime"
-version = "1.0.12"
+version = "1.0.13"
 dependencies = [
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
@@ -3265,7 +3265,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-staking"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3294,7 +3294,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-staking-rpc"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "hyperspace-staking-rpc-runtime-api",
  "jsonrpc-core",
@@ -3308,7 +3308,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-staking-rpc-runtime-api"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "hyperspace-support",
  "parity-scale-codec 1.3.7",
@@ -3319,7 +3319,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-support"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "ethereum-primitives",
  "frame-support",
@@ -3332,7 +3332,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-treasury"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3349,7 +3349,7 @@ dependencies = [
 
 [[package]]
 name = "hyperspace-vesting"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "enumflags2",
  "frame-support",
@@ -4476,7 +4476,7 @@ checksum = "71d96e3f3c0b6325d8ccd83c33b28acb183edcb6c67938ba104ec546854b0882"
 
 [[package]]
 name = "merkle-patricia-trie"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "criterion",
  "ethereum-types 0.5.2",
@@ -7526,9 +7526,9 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.123"
+version = "1.0.125"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92d5161132722baa40d802cc70b15262b98258453e85e5d1d365c757c73869ae"
+checksum = "558dc50e1a5a5fa7112ca2ce4effcb321b0300c0d4ccf0776a9f60cd89031171"
 dependencies = [
  "serde_derive",
 ]
@@ -7545,9 +7545,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.123"
+version = "1.0.125"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9391c295d64fc0abb2c556bad848f33cb8296276b1ad2677d1ae1ace4f258f31"
+checksum = "b093b7a2bb58203b5da3056c05b4ec1fed827dcfdb37347a8841695263b3d06d"
 dependencies = [
  "proc-macro2",
  "quote",

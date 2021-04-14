@@ -55,7 +55,7 @@ pub trait V2ToV3 {
 struct __Candidates;
 impl frame_support::traits::StorageInstance for __Candidates {
 	fn pallet_prefix() -> &'static str {
-		"PhragmenElection"
+		"HyperspacePhragmenElection"
 	}
 	const STORAGE_PREFIX: &'static str = "Candidates";
 }
@@ -66,7 +66,7 @@ type Candidates<T: V2ToV3> = StorageValue<__Candidates, Vec<(T::AccountId, T::Ba
 struct __Members;
 impl frame_support::traits::StorageInstance for __Members {
 	fn pallet_prefix() -> &'static str {
-		"PhragmenElection"
+		"HyperspacePhragmenElection"
 	}
 	const STORAGE_PREFIX: &'static str = "Members";
 }
@@ -76,7 +76,7 @@ type Members<T: V2ToV3> = StorageValue<__Members, Vec<SeatHolder<T::AccountId, T
 struct __RunnersUp;
 impl frame_support::traits::StorageInstance for __RunnersUp {
 	fn pallet_prefix() -> &'static str {
-		"PhragmenElection"
+		"HyperspacePhragmenElection"
 	}
 	const STORAGE_PREFIX: &'static str = "RunnersUp";
 }
@@ -86,7 +86,7 @@ type RunnersUp<T: V2ToV3> = StorageValue<__RunnersUp, Vec<SeatHolder<T::AccountI
 struct __Voting;
 impl frame_support::traits::StorageInstance for __Voting {
 	fn pallet_prefix() -> &'static str {
-		"PhragmenElection"
+		"HyperspacePhragmenElection"
 	}
 	const STORAGE_PREFIX: &'static str = "Voting";
 }
