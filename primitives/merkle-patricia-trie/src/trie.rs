@@ -891,7 +891,10 @@ mod tests {
 		let v2 = trie.get(b"test44").unwrap();
 		assert_eq!(Some(b"test".to_vec()), v2);
 		let root2 = trie.root().unwrap();
-		assert_eq!(hex::encode(root), hex::encode(root2));
+		assert_eq!(
+			array_bytes::bytes2hex("0x", root),
+			array_bytes::bytes2hex("0x", root2)
+		);
 	}
 
 	#[test]

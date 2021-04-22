@@ -1270,6 +1270,7 @@ dependencies = [
 name = "dvm-ethereum"
 version = "1.4.0"
 dependencies = [
+ "array-bytes",
  "dvm-consensus-primitives",
  "dvm-rpc-runtime-api",
  "ethereum",
@@ -1286,7 +1287,6 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec 1.3.7",
  "rlp 0.5.0",
- "rustc-hex",
  "serde",
  "sha3 0.8.2",
  "sp-core",
@@ -1299,6 +1299,7 @@ dependencies = [
 name = "dvm-rpc"
 version = "1.4.0"
 dependencies = [
+ "array-bytes",
  "dvm-consensus",
  "dvm-ethereum",
  "dvm-rpc-core",
@@ -1317,7 +1318,6 @@ dependencies = [
  "parity-scale-codec 1.3.7",
  "rand 0.7.3",
  "rlp 0.5.0",
- "rustc-hex",
  "sc-client-api",
  "sc-network",
  "sc-rpc",
@@ -2963,12 +2963,12 @@ dependencies = [
 name = "hyperspace-evm-precompile-dna"
 version = "1.4.0"
 dependencies = [
+ "array-bytes",
  "ethabi",
  "ethereum-types 0.8.0",
  "evm",
  "frame-support",
  "frame-system",
- "hex",
  "hyperspace-evm",
  "hyperspace-evm-primitives",
  "pallet-timestamp",
@@ -4478,6 +4478,7 @@ checksum = "71d96e3f3c0b6325d8ccd83c33b28acb183edcb6c67938ba104ec546854b0882"
 name = "merkle-patricia-trie"
 version = "1.4.0"
 dependencies = [
+ "array-bytes",
  "criterion",
  "ethereum-types 0.5.2",
  "hashbrown",

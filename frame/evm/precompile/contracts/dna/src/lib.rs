@@ -134,10 +134,10 @@ pub enum Action<T: frame_system::Config> {
 pub fn which_action<T: frame_system::Config>(input_data: &[u8]) -> Result<Action<T>, ExitError> {
 	let transfer_and_call_action = &sha3::Keccak256::digest(&TRANSFER_AND_CALL_ACTION)[0..4];
 	let withdraw_action = &sha3::Keccak256::digest(&WITHDRAW_ACTION)[0..4];
-	if hex::encode(&input_data[0..4]) == hex::encode(transfer_and_call_action) {
+	if &input_data[0..4] == transfer_and_call_action {
 		let decoded_data = CallData::decode(&input_data[4..])?;
 		return Ok(Action::TransferAndCall(decoded_data));
-	} else if hex::encode(&input_data[0..4]) == hex::encode(withdraw_action) {
+	} else if &input_data[0..4] == withdraw_action {
 		let decoded_data = WithdrawData::decode(&input_data[4..])?;
 		return Ok(Action::Withdraw(decoded_data));
 	}
@@ -222,13 +222,15 @@ mod tests {
 		let mock_address =
 			sp_core::H160::from_str("Aa01a1bEF0557fa9625581a293F3AA7770192632").unwrap();
 		let mock_value_1 = sp_core::U256::from(30);
-		let expected_str = "47e7ef24000000000000000000000000aa01a1bef0557fa9625581a293f3aa7770192632000000000000000000000000000000000000000000000000000000000000001e";
+		let expected_str = "0x47e7ef24000000000000000000000000aa01a1bef0557fa9625581a293f3aa7770192632000000000000000000000000000000000000000000000000000000000000001e";
 
-		let encoded_str = hex::encode(make_call_data(mock_address, mock_value_1).unwrap());
+		let encoded_str =
+			array_bytes::bytes2hex("0x", make_call_data(mock_address, mock_value_1).unwrap());
 		assert_eq!(encoded_str, expected_str);
 
 		let mock_value_2 = sp_core::U256::from(25);
-		let encoded_str = hex::encode(make_call_data(mock_address, mock_value_2).unwrap());
+		let encoded_str =
+			array_bytes::bytes2hex("0x", make_call_data(mock_address, mock_value_2).unwrap());
 		assert_ne!(encoded_str, expected_str);
 	}
 }

@@ -22,7 +22,6 @@ use codec::Decode;
 use ethereum::TransactionSignature;
 use frame_support::{assert_err, assert_noop, assert_ok, unsigned::ValidateUnsigned};
 use mock::*;
-use rustc_hex::{FromHex, ToHex};
 use sp_runtime::transaction_validity::{InvalidTransaction, TransactionSource};
 use std::str::FromStr;
 
@@ -43,7 +42,7 @@ fn default_erc20_creation_unsigned_transaction() -> UnsignedTransaction {
 		gas_limit: U256::from(0x100000),
 		action: ethereum::TransactionAction::Create,
 		value: U256::zero(),
-		input: FromHex::from_hex(ERC20_CONTRACT_BYTECODE).unwrap(),
+		input: array_bytes::hex2bytes_unchecked(ERC20_CONTRACT_BYTECODE),
 	}
 }
 
@@ -54,7 +53,7 @@ fn default_withdraw_unsigned_transaction() -> UnsignedTransaction {
 		gas_limit: U256::from(0x100000),
 		action: ethereum::TransactionAction::Call(H160::from_str(WITHDRAW_DVM_ADDRESS).unwrap()),
 		value: U256::from(30000000000000000000u128),
-		input: FromHex::from_hex(WITH_DRAW_INPUT).unwrap(),
+		input: array_bytes::hex2bytes_unchecked(WITH_DRAW_INPUT),
 	}
 }
 
@@ -295,7 +294,7 @@ fn call_should_handle_errors() {
 			gas_limit: U256::from(0x100000),
 			action: ethereum::TransactionAction::Create,
 			value: U256::zero(),
-			input: FromHex::from_hex(contract).unwrap(),
+			input: array_bytes::hex2bytes_unchecked(contract),
 		}
 		.sign(&alice.private_key);
 		assert_ok!(Ethereum::execute(
@@ -310,9 +309,9 @@ fn call_should_handle_errors() {
 		));
 
 		let contract_address: Vec<u8> =
-			FromHex::from_hex("32dcab0ef3fb2de2fce1d2e0799d36239671f04a").unwrap();
-		let foo: Vec<u8> = FromHex::from_hex("c2985578").unwrap();
-		let bar: Vec<u8> = FromHex::from_hex("febb0f7e").unwrap();
+			array_bytes::hex2bytes_unchecked("32dcab0ef3fb2de2fce1d2e0799d36239671f04a");
+		let foo: Vec<u8> = array_bytes::hex2bytes_unchecked("c2985578");
+		let bar: Vec<u8> = array_bytes::hex2bytes_unchecked("febb0f7e");
 
 		// calling foo will succeed
 		let (_, _, info) = Ethereum::execute(
@@ -329,8 +328,8 @@ fn call_should_handle_errors() {
 		match info {
 			CallOrCreateInfo::Call(info) => {
 				assert_eq!(
-					info.value.to_hex::<String>(),
-					"0000000000000000000000000000000000000000000000000000000000000001".to_owned()
+					array_bytes::bytes2hex("0x", info.value),
+					"0x0000000000000000000000000000000000000000000000000000000000000001".to_owned()
 				);
 			}
 			CallOrCreateInfo::Create(_) => panic!("expected call info"),
@@ -377,7 +376,7 @@ fn withdraw_with_enough_balance() {
 			U256::from(70_000_000_000_000_000_000u128)
 		);
 		// Check the target balance
-		let input_bytes: Vec<u8> = FromHex::from_hex(WITH_DRAW_INPUT).unwrap();
+		let input_bytes: Vec<u8> = array_bytes::hex2bytes_unchecked(WITH_DRAW_INPUT);
 		let dest =
 			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
 		assert_eq!(
@@ -424,7 +423,7 @@ fn withdraw_without_enough_balance_should_fail() {
 			U256::from(100000000000000000000u128)
 		);
 		// Check target balance
-		let input_bytes: Vec<u8> = FromHex::from_hex(WITH_DRAW_INPUT).unwrap();
+		let input_bytes: Vec<u8> = array_bytes::hex2bytes_unchecked(WITH_DRAW_INPUT);
 		let dest =
 			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
 		assert_eq!(<Test as Config>::EtpCurrency::free_balance(&dest), 0);
@@ -458,7 +457,7 @@ fn withdraw_with_invalid_input_length_should_failed() {
 			U256::from(100000000000000000000u128)
 		);
 		// Check target balance
-		let input_bytes: Vec<u8> = FromHex::from_hex(WITH_DRAW_INPUT).unwrap();
+		let input_bytes: Vec<u8> = array_bytes::hex2bytes_unchecked(WITH_DRAW_INPUT);
 		let dest =
 			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
 		assert_eq!(<Test as Config>::EtpCurrency::free_balance(&dest), 0);

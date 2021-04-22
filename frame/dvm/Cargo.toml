@@ -17,9 +17,9 @@ ethereum-types = { version = "0.10.0", default-features = false }
 evm            = { version = "0.22.0", default-features = false, features = ["with-codec"] }
 libsecp256k1   = { version = "0.3", default-features = false }
 rlp            = { version = "0.5.0", default-features = false }
-rustc-hex      = { version = "2.1.0", default-features = false }
 serde          = { version = "1.0.124", optional = true, default-features = false }
 sha3           = { version = "0.8", default-features = false }
+array-bytes = { version = "1.1.0" }
 # hyperspace
 hyperspace-balances        = { default-features = false, path = "../balances" }
 hyperspace-evm             = { default-features = false, path = "../evm" }
@@ -56,7 +56,6 @@ crates-std    = [
 	"evm/std",
 	"libsecp256k1/std",
 	"rlp/std",
-	"rustc-hex/std",
 	"serde",
 	"sha3/std",
 ]

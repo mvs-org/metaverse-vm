@@ -789,7 +789,8 @@ impl<T: Config> Relayable for Module<T> {
 						.collect(),
 					vec![(
 						header.number,
-						array_bytes::dyn2array!(header.hash.ok_or(<Error<T>>::HeaderInv)?, 32).into(),
+						array_bytes::dyn2array!(header.hash.ok_or(<Error<T>>::HeaderInv)?, 32)
+							.into(),
 					)],
 				),
 				<Error<T>>::MMRInv
@@ -930,8 +931,11 @@ impl<T: Config> EthereumReceiptT<AccountId<T>, EtpBalance<T>> for Module<T> {
 				mmr_proof.proof.to_vec(),
 				vec![(
 					ethereum_header.number,
-					array_bytes::dyn2array!(ethereum_header.hash.ok_or(<Error<T>>::HeaderHashInv)?, 32)
-						.into(),
+					array_bytes::dyn2array!(
+						ethereum_header.hash.ok_or(<Error<T>>::HeaderHashInv)?,
+						32
+					)
+					.into(),
 				)]
 			),
 			<Error<T>>::MMRInv

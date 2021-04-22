@@ -27,7 +27,6 @@ use jsonrpc_pubsub::{
 };
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
-use rustc_hex::ToHex;
 use sha3::{Digest, Keccak256};
 
 pub use dvm_rpc_core::EthPubSubApiServer;
@@ -60,8 +59,7 @@ impl IdProvider for HexEncodedIdProvider {
 			.map(|()| rng.sample(Alphanumeric))
 			.take(self.len)
 			.collect();
-		let out: String = id.as_bytes().to_hex();
-		format!("0x{}", out)
+			array_bytes::bytes2hex("0x", id.as_bytes())
 	}
 }
 

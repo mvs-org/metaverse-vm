@@ -20,7 +20,6 @@
 mod trie_tests {
 	use std::rc::Rc;
 
-	use hex::FromHex;
 	use rand::Rng;
 	use rlp::{self};
 
@@ -33,11 +32,11 @@ mod trie_tests {
 			trie.insert(k.to_vec(), v.to_vec()).unwrap();
 		}
 		let r = trie.root().unwrap();
-		let rs = format!("0x{}", hex::encode(r.clone()));
+		let rs = array_bytes::bytes2hex("0x", r.clone());
 		assert_eq!(rs.as_str(), hash);
 		let mut trie = MerklePatriciaTrie::from(Rc::clone(&memdb), &r).unwrap();
 		let r2 = trie.root().unwrap();
-		let rs2 = format!("0x{}", hex::encode(r2));
+		let rs2 = array_bytes::bytes2hex("0x", r2);
 		assert_eq!(rs2.as_str(), hash);
 	}
 
@@ -82,12 +81,12 @@ mod trie_tests {
 		assert_root(
 			vec![
 				(
-					Vec::from_hex("0045").unwrap().as_slice(),
-					Vec::from_hex("0123456789").unwrap().as_slice(),
+					array_bytes::hex2bytes("0045").unwrap().as_slice(),
+					array_bytes::hex2bytes("0123456789").unwrap().as_slice(),
 				),
 				(
-					Vec::from_hex("4500").unwrap().as_slice(),
-					Vec::from_hex("9876543210").unwrap().as_slice(),
+					array_bytes::hex2bytes("4500").unwrap().as_slice(),
+					array_bytes::hex2bytes("9876543210").unwrap().as_slice(),
 				),
 			],
 			"0x285505fcabe84badc8aa310e2aae17eddc7d120aabec8a476902c8184b3a3503",
@@ -121,301 +120,301 @@ mod trie_tests {
 		assert_root(
 			vec![
 				(
-					Vec::from_hex("04110d816c380812a427968ece99b1c963dfbce6")
+					array_bytes::hex2bytes("04110d816c380812a427968ece99b1c963dfbce6")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("095e7baea6a6c7c4c2dfeb977efac326af552d87")
+					array_bytes::hex2bytes("095e7baea6a6c7c4c2dfeb977efac326af552d87")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("0a517d755cebbf66312b30fff713666a9cb917e0")
+					array_bytes::hex2bytes("0a517d755cebbf66312b30fff713666a9cb917e0")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("24dd378f51adc67a50e339e8031fe9bd4aafab36")
+					array_bytes::hex2bytes("24dd378f51adc67a50e339e8031fe9bd4aafab36")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("293f982d000532a7861ab122bdc4bbfd26bf9030")
+					array_bytes::hex2bytes("293f982d000532a7861ab122bdc4bbfd26bf9030")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("2cf5732f017b0cf1b1f13a1478e10239716bf6b5")
+					array_bytes::hex2bytes("2cf5732f017b0cf1b1f13a1478e10239716bf6b5")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("31c640b92c21a1f1465c91070b4b3b4d6854195f")
+					array_bytes::hex2bytes("31c640b92c21a1f1465c91070b4b3b4d6854195f")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("37f998764813b136ddf5a754f34063fd03065e36")
+					array_bytes::hex2bytes("37f998764813b136ddf5a754f34063fd03065e36")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("37fa399a749c121f8a15ce77e3d9f9bec8020d7a")
+					array_bytes::hex2bytes("37fa399a749c121f8a15ce77e3d9f9bec8020d7a")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("4f36659fa632310b6ec438dea4085b522a2dd077")
+					array_bytes::hex2bytes("4f36659fa632310b6ec438dea4085b522a2dd077")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("62c01474f089b07dae603491675dc5b5748f7049")
+					array_bytes::hex2bytes("62c01474f089b07dae603491675dc5b5748f7049")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("729af7294be595a0efd7d891c9e51f89c07950c7")
+					array_bytes::hex2bytes("729af7294be595a0efd7d891c9e51f89c07950c7")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("83e3e5a16d3b696a0314b30b2534804dd5e11197")
+					array_bytes::hex2bytes("83e3e5a16d3b696a0314b30b2534804dd5e11197")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("8703df2417e0d7c59d063caa9583cb10a4d20532")
+					array_bytes::hex2bytes("8703df2417e0d7c59d063caa9583cb10a4d20532")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("8dffcd74e5b5923512916c6a64b502689cfa65e1")
+					array_bytes::hex2bytes("8dffcd74e5b5923512916c6a64b502689cfa65e1")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("95a4d7cccb5204733874fa87285a176fe1e9e240")
+					array_bytes::hex2bytes("95a4d7cccb5204733874fa87285a176fe1e9e240")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("99b2fcba8120bedd048fe79f5262a6690ed38c39")
+					array_bytes::hex2bytes("99b2fcba8120bedd048fe79f5262a6690ed38c39")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("a4202b8b8afd5354e3e40a219bdc17f6001bf2cf")
+					array_bytes::hex2bytes("a4202b8b8afd5354e3e40a219bdc17f6001bf2cf")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("a94f5374fce5edbc8e2a8697c15331677e6ebf0b")
+					array_bytes::hex2bytes("a94f5374fce5edbc8e2a8697c15331677e6ebf0b")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("a9647f4a0a14042d91dc33c0328030a7157c93ae")
+					array_bytes::hex2bytes("a9647f4a0a14042d91dc33c0328030a7157c93ae")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("aa6cffe5185732689c18f37a7f86170cb7304c2a")
+					array_bytes::hex2bytes("aa6cffe5185732689c18f37a7f86170cb7304c2a")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("aae4a2e3c51c04606dcb3723456e58f3ed214f45")
+					array_bytes::hex2bytes("aae4a2e3c51c04606dcb3723456e58f3ed214f45")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("c37a43e940dfb5baf581a0b82b351d48305fc885")
+					array_bytes::hex2bytes("c37a43e940dfb5baf581a0b82b351d48305fc885")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("d2571607e241ecf590ed94b12d87c94babe36db6")
+					array_bytes::hex2bytes("d2571607e241ecf590ed94b12d87c94babe36db6")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("f735071cbee190d76b704ce68384fc21e389fbe7")
+					array_bytes::hex2bytes("f735071cbee190d76b704ce68384fc21e389fbe7")
 						.unwrap()
 						.as_slice(),
 					b"something",
 				),
 				(
-					Vec::from_hex("04110d816c380812a427968ece99b1c963dfbce6")
+					array_bytes::hex2bytes("04110d816c380812a427968ece99b1c963dfbce6")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("095e7baea6a6c7c4c2dfeb977efac326af552d87")
+					array_bytes::hex2bytes("095e7baea6a6c7c4c2dfeb977efac326af552d87")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("0a517d755cebbf66312b30fff713666a9cb917e0")
+					array_bytes::hex2bytes("0a517d755cebbf66312b30fff713666a9cb917e0")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("24dd378f51adc67a50e339e8031fe9bd4aafab36")
+					array_bytes::hex2bytes("24dd378f51adc67a50e339e8031fe9bd4aafab36")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("293f982d000532a7861ab122bdc4bbfd26bf9030")
+					array_bytes::hex2bytes("293f982d000532a7861ab122bdc4bbfd26bf9030")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("2cf5732f017b0cf1b1f13a1478e10239716bf6b5")
+					array_bytes::hex2bytes("2cf5732f017b0cf1b1f13a1478e10239716bf6b5")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("31c640b92c21a1f1465c91070b4b3b4d6854195f")
+					array_bytes::hex2bytes("31c640b92c21a1f1465c91070b4b3b4d6854195f")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("37f998764813b136ddf5a754f34063fd03065e36")
+					array_bytes::hex2bytes("37f998764813b136ddf5a754f34063fd03065e36")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("37fa399a749c121f8a15ce77e3d9f9bec8020d7a")
+					array_bytes::hex2bytes("37fa399a749c121f8a15ce77e3d9f9bec8020d7a")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("4f36659fa632310b6ec438dea4085b522a2dd077")
+					array_bytes::hex2bytes("4f36659fa632310b6ec438dea4085b522a2dd077")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("62c01474f089b07dae603491675dc5b5748f7049")
+					array_bytes::hex2bytes("62c01474f089b07dae603491675dc5b5748f7049")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("729af7294be595a0efd7d891c9e51f89c07950c7")
+					array_bytes::hex2bytes("729af7294be595a0efd7d891c9e51f89c07950c7")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("83e3e5a16d3b696a0314b30b2534804dd5e11197")
+					array_bytes::hex2bytes("83e3e5a16d3b696a0314b30b2534804dd5e11197")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("8703df2417e0d7c59d063caa9583cb10a4d20532")
+					array_bytes::hex2bytes("8703df2417e0d7c59d063caa9583cb10a4d20532")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("8dffcd74e5b5923512916c6a64b502689cfa65e1")
+					array_bytes::hex2bytes("8dffcd74e5b5923512916c6a64b502689cfa65e1")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("95a4d7cccb5204733874fa87285a176fe1e9e240")
+					array_bytes::hex2bytes("95a4d7cccb5204733874fa87285a176fe1e9e240")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("99b2fcba8120bedd048fe79f5262a6690ed38c39")
+					array_bytes::hex2bytes("99b2fcba8120bedd048fe79f5262a6690ed38c39")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("a4202b8b8afd5354e3e40a219bdc17f6001bf2cf")
+					array_bytes::hex2bytes("a4202b8b8afd5354e3e40a219bdc17f6001bf2cf")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("a94f5374fce5edbc8e2a8697c15331677e6ebf0b")
+					array_bytes::hex2bytes("a94f5374fce5edbc8e2a8697c15331677e6ebf0b")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("a9647f4a0a14042d91dc33c0328030a7157c93ae")
+					array_bytes::hex2bytes("a9647f4a0a14042d91dc33c0328030a7157c93ae")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("aa6cffe5185732689c18f37a7f86170cb7304c2a")
+					array_bytes::hex2bytes("aa6cffe5185732689c18f37a7f86170cb7304c2a")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("aae4a2e3c51c04606dcb3723456e58f3ed214f45")
+					array_bytes::hex2bytes("aae4a2e3c51c04606dcb3723456e58f3ed214f45")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("c37a43e940dfb5baf581a0b82b351d48305fc885")
+					array_bytes::hex2bytes("c37a43e940dfb5baf581a0b82b351d48305fc885")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("d2571607e241ecf590ed94b12d87c94babe36db6")
+					array_bytes::hex2bytes("d2571607e241ecf590ed94b12d87c94babe36db6")
 						.unwrap()
 						.as_slice(),
 					b"",
 				),
 				(
-					Vec::from_hex("f735071cbee190d76b704ce68384fc21e389fbe7")
+					array_bytes::hex2bytes("f735071cbee190d76b704ce68384fc21e389fbe7")
 						.unwrap()
 						.as_slice(),
 					b"",
@@ -426,116 +425,116 @@ mod trie_tests {
 		assert_root(
 			vec![
 				(
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"0000000000000000000000000000000000000000000000000000000000000045",
 					)
 					.unwrap()
 					.as_slice(),
-					Vec::from_hex("22b224a1420a802ab51d326e29fa98e34c4f24ea")
+					array_bytes::hex2bytes("22b224a1420a802ab51d326e29fa98e34c4f24ea")
 						.unwrap()
 						.as_slice(),
 				),
 				(
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"0000000000000000000000000000000000000000000000000000000000000046",
 					)
 					.unwrap()
 					.as_slice(),
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"67706c2076330000000000000000000000000000000000000000000000000000",
 					)
 					.unwrap()
 					.as_slice(),
 				),
 				(
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"0000000000000000000000000000000000000000000000000000001234567890",
 					)
 					.unwrap()
 					.as_slice(),
-					Vec::from_hex("697c7b8c961b56f675d570498424ac8de1a918f6")
+					array_bytes::hex2bytes("697c7b8c961b56f675d570498424ac8de1a918f6")
 						.unwrap()
 						.as_slice(),
 				),
 				(
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"000000000000000000000000697c7b8c961b56f675d570498424ac8de1a918f6",
 					)
 					.unwrap()
 					.as_slice(),
-					Vec::from_hex("1234567890").unwrap().as_slice(),
+					array_bytes::hex2bytes("1234567890").unwrap().as_slice(),
 				),
 				(
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"0000000000000000000000007ef9e639e2733cb34e4dfc576d4b23f72db776b2",
 					)
 					.unwrap()
 					.as_slice(),
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"4655474156000000000000000000000000000000000000000000000000000000",
 					)
 					.unwrap()
 					.as_slice(),
 				),
 				(
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"000000000000000000000000ec4f34c97e43fbb2816cfd95e388353c7181dab1",
 					)
 					.unwrap()
 					.as_slice(),
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"4e616d6552656700000000000000000000000000000000000000000000000000",
 					)
 					.unwrap()
 					.as_slice(),
 				),
 				(
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"4655474156000000000000000000000000000000000000000000000000000000",
 					)
 					.unwrap()
 					.as_slice(),
-					Vec::from_hex("7ef9e639e2733cb34e4dfc576d4b23f72db776b2")
+					array_bytes::hex2bytes("7ef9e639e2733cb34e4dfc576d4b23f72db776b2")
 						.unwrap()
 						.as_slice(),
 				),
 				(
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"4e616d6552656700000000000000000000000000000000000000000000000000",
 					)
 					.unwrap()
 					.as_slice(),
-					Vec::from_hex("ec4f34c97e43fbb2816cfd95e388353c7181dab1")
+					array_bytes::hex2bytes("ec4f34c97e43fbb2816cfd95e388353c7181dab1")
 						.unwrap()
 						.as_slice(),
 				),
 				(
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"0000000000000000000000000000000000000000000000000000001234567890",
 					)
 					.unwrap()
 					.as_slice(),
-					Vec::from_hex("").unwrap().as_slice(),
+					array_bytes::hex2bytes("").unwrap().as_slice(),
 				),
 				(
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"000000000000000000000000697c7b8c961b56f675d570498424ac8de1a918f6",
 					)
 					.unwrap()
 					.as_slice(),
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"6f6f6f6820736f2067726561742c207265616c6c6c793f000000000000000000",
 					)
 					.unwrap()
 					.as_slice(),
 				),
 				(
-					Vec::from_hex(
+					array_bytes::hex2bytes(
 						"6f6f6f6820736f2067726561742c207265616c6c6c793f000000000000000000",
 					)
 					.unwrap()
 					.as_slice(),
-					Vec::from_hex("697c7b8c961b56f675d570498424ac8de1a918f6")
+					array_bytes::hex2bytes("697c7b8c961b56f675d570498424ac8de1a918f6")
 						.unwrap()
 						.as_slice(),
 				),
@@ -684,10 +683,10 @@ mod trie_tests {
 
 	#[test]
 	fn test_ethereum_receipts_proof() {
-		let rlp_proof: Vec<u8> = Vec::from_hex("f9016ef9016bb853f851a009b67a67265063da0dd6a7abad695edb2c439f6b458f2a2ee48a21442fef8a2680808080808080a0a7d4f8b974d21b7244014729b07e9c9f19fdc445da2ceddc089d90cead74be618080808080808080b90113f9011031b9010cf9010901835cdb6eb9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0").unwrap();
-		let expected: Vec<u8> = Vec::from_hex("f9010901835cdb6eb9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0").unwrap();
+		let rlp_proof: Vec<u8> = array_bytes::hex2bytes("f9016ef9016bb853f851a009b67a67265063da0dd6a7abad695edb2c439f6b458f2a2ee48a21442fef8a2680808080808080a0a7d4f8b974d21b7244014729b07e9c9f19fdc445da2ceddc089d90cead74be618080808080808080b90113f9011031b9010cf9010901835cdb6eb9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0").unwrap();
+		let expected: Vec<u8> = array_bytes::hex2bytes("f9010901835cdb6eb9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0").unwrap();
 		let root =
-			Vec::from_hex("7fa081e3e33e53c4d09ae691af3853bb73a7e02c856104fe843172abab85df7b")
+			array_bytes::hex2bytes("7fa081e3e33e53c4d09ae691af3853bb73a7e02c856104fe843172abab85df7b")
 				.unwrap();
 
 		let proof: Proof = rlp::decode(&rlp_proof).unwrap();
@@ -702,8 +701,8 @@ mod trie_tests {
 		// transaction hash 0xb04fcb9822eb21b5ffdbf89df076de58469af66d23c86abe30266e5d3c5e0db2   in ropsten
 		// build trie
 		let data = vec![
-			Vec::from_hex("f90184018261beb9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000040000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000020000000000000000000000000000000000f87bf87994095c5cbf4937d0a21f6f395194e95b6ebe8616b9e1a06ef95f06320e7a25a04a175ca677b7052bdd97131872c2192525a629f51be770b8400000000000000000000000002e0a521fe69c14d99c8d236d8c3cd5353cc44e720000000000000000000000000000000000000000000000000000000000000000").unwrap(),
-			Vec::from_hex("f9010901835cdb6eb9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0").unwrap(),
+			array_bytes::hex2bytes("f90184018261beb9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000040000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000020000000000000000000000000000000000f87bf87994095c5cbf4937d0a21f6f395194e95b6ebe8616b9e1a06ef95f06320e7a25a04a175ca677b7052bdd97131872c2192525a629f51be770b8400000000000000000000000002e0a521fe69c14d99c8d236d8c3cd5353cc44e720000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+			array_bytes::hex2bytes("f9010901835cdb6eb9010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0").unwrap(),
 		];
 		let hash = "0x7fa081e3e33e53c4d09ae691af3853bb73a7e02c856104fe843172abab85df7b";
 
@@ -718,7 +717,7 @@ mod trie_tests {
 			trie.insert(k.to_vec(), v.to_vec()).unwrap();
 		}
 		let r = trie.root().unwrap();
-		let rs = format!("0x{}", hex::encode(r.clone()));
+		let rs = array_bytes::bytes2hex("0x", r.clone());
 
 		assert_eq!(rs.as_str(), hash);
 

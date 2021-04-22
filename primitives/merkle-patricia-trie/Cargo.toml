@@ -15,7 +15,8 @@ name    = "trie"
 
 [dependencies]
 # crates
-hashbrown = { version = "0.9.1" }
+hashbrown      = { version = "0.9.1" }
+array-bytes    = { version = "1.1.0" }
 # github
 hash = { package = "keccak-hash", default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
 rlp  = { default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
