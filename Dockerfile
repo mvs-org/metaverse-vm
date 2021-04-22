@@ -1,5 +1,5 @@
 ### build stage
-FROM rust:1.40-stretch as builder
+FROM rust:1.51-slim as builder
 ENV USER root
 ENV CI_PROJECT_NAME docker
 RUN apt-get update && apt-get install -y git cmake pkg-config libssl-dev git clang libclang-dev
