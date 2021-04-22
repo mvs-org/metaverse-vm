@@ -1038,7 +1038,9 @@ decl_module! {
 		fn deposit_event() = default;
 
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
-			if StorageVersion::get() == Releases::V4_0_0 {
+			if StorageVersion::get() == Releases::V4_0_0 || !StorageVersion::exists() {
+				log!(info, "Migrating Staking...");
+				
 				StorageVersion::put(Releases::V5_0_0);
 				migrations::migrate_to_blockable::<T>()
 			} else {
