@@ -109,22 +109,16 @@ pub fn apply<T: V2ToV3>(old_voter_bond: T::Balance, old_candidacy_bond: T::Balan
 		"Running migration for elections-phragmen with storage version {:?}",
 		maybe_storage_version
 	);
-	match maybe_storage_version {
-		Some(storage_version) if storage_version <= PalletVersion::new(2, 0, 0) => {
-			migrate_voters_to_recorded_deposit::<T>(old_voter_bond);
-			migrate_candidates_to_recorded_deposit::<T>(old_candidacy_bond);
-			migrate_runners_up_to_recorded_deposit::<T>(old_candidacy_bond);
-			migrate_members_to_recorded_deposit::<T>(old_candidacy_bond);
-			Weight::max_value()
-		}
-		_ => {
-			frame_support::debug::warn!(
-				"Attempted to apply migration to V3 but failed because storage version is {:?}",
-				maybe_storage_version
-			);
-			0
+	if let Some(storage_version) = maybe_storage_version {
+		if storage_version > PalletVersion::new(2, 0, 0) {
+			return 0;
 		}
 	}
+	migrate_voters_to_recorded_deposit::<T>(old_voter_bond);
+	migrate_candidates_to_recorded_deposit::<T>(old_candidacy_bond);
+	migrate_runners_up_to_recorded_deposit::<T>(old_candidacy_bond);
+	migrate_members_to_recorded_deposit::<T>(old_candidacy_bond);
+	Weight::max_value()
 }
 
 /// Migrate from the old legacy voting bond (fixed) to the new one (per-vote dynamic).
