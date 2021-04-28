@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "merkle-patricia-trie"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "1.4.0"
+version     = "2.0.0"
 
 [[bench]]
 harness = false
@@ -15,13 +15,13 @@ name    = "trie"
 
 [dependencies]
 # crates
-hashbrown      = { version = "0.9.1" }
-array-bytes    = { version = "1.1.0" }
+array-bytes = { version = "1.1.0" }
+hashbrown   = { version = "0.9.1" }
 # github
 hash = { package = "keccak-hash", default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
 rlp  = { default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
 # substrate
-sp-std = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-std = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
 
 [dev-dependencies]
 # crates

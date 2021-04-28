@@ -24,10 +24,17 @@ pub use sc_executor::NativeExecutor;
 pub use hyperspace_runtime;
 
 // --- std ---
-use std::{sync::Arc, time::Duration};
+use std::{
+	collections::{BTreeMap, HashMap},
+	sync::{Arc, Mutex},
+	time::Duration,
+};
+// --- crates.io ---
+use futures::StreamExt;
 // --- substrate ---
 use sc_basic_authorship::ProposerFactory;
-use sc_client_api::{ExecutorProvider, RemoteBackend, StateBackendFor};
+use sc_cli::SubstrateCli;
+use sc_client_api::{BlockchainEvents, ExecutorProvider, RemoteBackend, StateBackendFor};
 use sc_consensus::LongestChain;
 use sc_consensus_babe::{BabeBlockImport, BabeLink, BabeParams, Config as BabeConfig};
 use sc_executor::{native_executor_instance, NativeExecutionDispatch};
@@ -40,7 +47,7 @@ use sc_keystore::LocalKeystore;
 use sc_network::NetworkService;
 use sc_service::{
 	config::{KeystoreConfig, PrometheusConfig},
-	BuildNetworkParams, Configuration, Error as ServiceError, NoopRpcExtensionBuilder,
+	BasePath, BuildNetworkParams, Configuration, Error as ServiceError, NoopRpcExtensionBuilder,
 	PartialComponents, RpcHandlers, SpawnTasksParams, TaskManager,
 };
 use sc_telemetry::{TelemetryConnectionNotifier, TelemetrySpan};
@@ -58,8 +65,12 @@ use crate::rpc::{
 	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
 	SubscriptionTaskExecutor,
 };
+use dc_consensus::FrontierBlockImport;
+use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
+use dc_mapping_sync::MappingSyncWorker;
+use dc_rpc::EthTask;
+use dp_rpc::{FilterPool, PendingTransactions};
 use hyperspace_primitives::{AccountId, Balance, Hash, Nonce, OpaqueBlock as Block, Power};
-use dvm_consensus::FrontierBlockImport;
 
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
@@ -122,9 +133,9 @@ where
 {
 }
 
-/// DRML client abstraction, this super trait only pulls in functionality required for
-/// DRML internal crates like DRML-collator.
-pub trait DRMLClient<Block, Backend, Runtime>:
+/// HYPERSPACE client abstraction, this super trait only pulls in functionality required for
+/// HYPERSPACE internal crates like HYPERSPACE-collator.
+pub trait HYPERSPACEClient<Block, Backend, Runtime>:
 	Sized
 	+ Send
 	+ Sync
@@ -138,7 +149,7 @@ where
 	Runtime: sp_api::ConstructRuntimeApi<Block, Self>,
 {
 }
-impl<Block, Backend, Runtime, Client> DRMLClient<Block, Backend, Runtime> for Client
+impl<Block, Backend, Runtime, Client> HYPERSPACEClient<Block, Backend, Runtime> for Client
 where
 	Backend: sc_client_api::Backend<Block>,
 	Block: sp_runtime::traits::Block,
@@ -155,10 +166,29 @@ where
 
 fn set_prometheus_registry(config: &mut Configuration) -> Result<(), ServiceError> {
 	if let Some(PrometheusConfig { registry, .. }) = config.prometheus_config.as_mut() {
-		*registry = Registry::new_custom(Some("DRML".into()), None)?;
+		*registry = Registry::new_custom(Some("HYPERSPACE".into()), None)?;
 	}
 
 	Ok(())
+}
+
+fn open_frontier_backend(config: &Configuration) -> Result<Arc<Backend<Block>>, String> {
+	let config_dir = config
+		.base_path
+		.as_ref()
+		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
+		.unwrap_or_else(|| {
+			BasePath::from_project("", "", &crate::cli::Cli::executable_name())
+				.config_dir(config.chain_spec.id())
+		});
+	let database_dir = config_dir.join("dvm").join("db");
+
+	Ok(Arc::new(Backend::<Block>::new(&DatabaseSettings {
+		source: DatabaseSettingsSrc::RocksDb {
+			path: database_dir,
+			cache_size: 0,
+		},
+	})?))
 }
 
 #[cfg(feature = "full-node")]
@@ -193,6 +223,9 @@ fn new_partial<RuntimeApi, Executor>(
 			),
 			GrandpaSharedVoterState,
 			Option<TelemetrySpan>,
+			PendingTransactions,
+			Arc<Backend<Block>>,
+			Option<FilterPool>,
 		),
 	>,
 	ServiceError,
@@ -224,6 +257,7 @@ where
 		task_manager.spawn_handle(),
 		client.clone(),
 	);
+	let frontier_backend = open_frontier_backend(config)?;
 	let grandpa_hard_forks = vec![];
 	let (grandpa_block_import, grandpa_link) =
 		sc_finality_grandpa::block_import_with_authority_set_hard_forks(
@@ -233,8 +267,11 @@ where
 			grandpa_hard_forks,
 		)?;
 	let justification_import = grandpa_block_import.clone();
-	let frontier_block_import =
-		FrontierBlockImport::new(grandpa_block_import.clone(), client.clone(), true);
+	let frontier_block_import = FrontierBlockImport::new(
+		grandpa_block_import.clone(),
+		client.clone(),
+		frontier_backend.clone(),
+	);
 	let (babe_import, babe_link) = sc_consensus_babe::block_import(
 		BabeConfig::get_or_compute(&*client)?,
 		frontier_block_import,
@@ -263,12 +300,17 @@ where
 	let babe_config = babe_link.config().clone();
 	let shared_epoch_changes = babe_link.epoch_changes().clone();
 	let subscription_task_executor = SubscriptionTaskExecutor::new(task_manager.spawn_handle());
+	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
+	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let keystore = keystore_container.sync_keystore();
 		let transaction_pool = transaction_pool.clone();
 		let select_chain = select_chain.clone();
 		let chain_spec = config.chain_spec.cloned_box();
+		let pending_transactions = pending_transactions.clone();
+		let frontier_backend = frontier_backend.clone();
+		let filter_pool = filter_pool.clone();
 
 		move |deny_unsafe, is_authority, network, subscription_executor| -> RpcExtension {
 			let deps = FullDeps {
@@ -291,6 +333,9 @@ where
 					subscription_executor,
 					finality_provider: finality_proof_provider.clone(),
 				},
+				pending_transactions: pending_transactions.clone(),
+				backend: frontier_backend.clone(),
+				filter_pool: filter_pool.clone(),
 			};
 
 			rpc::create_full(deps, subscription_task_executor.clone())
@@ -311,6 +356,9 @@ where
 			import_setup,
 			rpc_setup,
 			telemetry_span,
+			pending_transactions,
+			frontier_backend,
+			filter_pool,
 		),
 	})
 }
@@ -357,7 +405,16 @@ where
 		import_queue,
 		transaction_pool,
 		inherent_data_providers,
-		other: (rpc_extensions_builder, import_setup, rpc_setup, telemetry_span),
+		other:
+			(
+				rpc_extensions_builder,
+				import_setup,
+				rpc_setup,
+				telemetry_span,
+				pending_transactions,
+				frontier_backend,
+				filter_pool,
+			),
 	} = new_partial::<RuntimeApi, Executor>(&mut config)?;
 
 	if let Some(url) = &config.keystore_remote {
@@ -506,7 +563,6 @@ where
 	}
 
 	if role.is_authority() && !authority_discovery_disabled {
-		use futures::StreamExt;
 		use sc_network::Event;
 
 		let authority_discovery_role =
@@ -531,6 +587,41 @@ where
 		task_manager.spawn_handle().spawn(
 			"authority-discovery-worker",
 			authority_discovery_worker.run(),
+		);
+	}
+
+	// Spawn Frontier pending transactions maintenance task (as essential, otherwise we leak).
+	if let Some(pending_transactions) = pending_transactions {
+		const TRANSACTION_RETAIN_THRESHOLD: u64 = 5;
+		task_manager.spawn_essential_handle().spawn(
+			"frontier-pending-transactions",
+			EthTask::pending_transaction_task(
+				Arc::clone(&client),
+				pending_transactions,
+				TRANSACTION_RETAIN_THRESHOLD,
+			),
+		);
+	}
+
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-mapping-sync-worker",
+		MappingSyncWorker::new(
+			client.import_notification_stream(),
+			Duration::new(6, 0),
+			client.clone(),
+			backend.clone(),
+			frontier_backend.clone(),
+		)
+		.for_each(|()| futures::future::ready(())),
+	);
+
+	// Spawn Frontier EthFilterApi maintenance task.
+	if let Some(filter_pool) = filter_pool {
+		// Each filter is allowed to stay in the pool for 100 blocks.
+		const FILTER_RETAIN_THRESHOLD: u64 = 100;
+		task_manager.spawn_essential_handle().spawn(
+			"frontier-filter-pool",
+			EthTask::filter_pool_task(Arc::clone(&client), filter_pool, FILTER_RETAIN_THRESHOLD),
 		);
 	}
 
@@ -680,7 +771,7 @@ where
 	Ok((client, backend, import_queue, task_manager))
 }
 
-/// Create a new DRML service for a full node.
+/// Create a new HYPERSPACE service for a full node.
 #[cfg(feature = "full-node")]
 pub fn hyperspace_new_full(
 	config: Configuration,
@@ -688,7 +779,7 @@ pub fn hyperspace_new_full(
 ) -> Result<
 	(
 		TaskManager,
-		Arc<impl DRMLClient<Block, FullBackend, hyperspace_runtime::RuntimeApi>>,
+		Arc<impl HYPERSPACEClient<Block, FullBackend, hyperspace_runtime::RuntimeApi>>,
 		RpcHandlers,
 	),
 	ServiceError,
@@ -701,7 +792,7 @@ pub fn hyperspace_new_full(
 	Ok((components, client, rpc_handlers))
 }
 
-/// Create a new DRML service for a light client.
+/// Create a new HYPERSPACE service for a light client.
 pub fn hyperspace_new_light(
 	config: Configuration,
 ) -> Result<

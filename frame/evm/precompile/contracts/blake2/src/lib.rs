@@ -23,7 +23,7 @@ mod eip_152;
 
 use alloc::vec::Vec;
 use core::mem::size_of;
-use hyperspace_evm_primitives::LinearCostPrecompile;
+use dp_evm::LinearCostPrecompile;
 use evm::{ExitError, ExitSucceed};
 
 pub struct Blake2F;

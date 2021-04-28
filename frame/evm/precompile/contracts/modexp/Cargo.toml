@@ -7,17 +7,17 @@ license     = "GPL-3.0"
 name        = "hyperspace-evm-precompile-modexp"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "1.4.0"
+version     = "2.0.0"
 
 
 [dependencies]
 # crates
-hyperspace-evm-primitives = { default-features = false, path = "../../../../../primitives/evm" }
-evm                     = { version = "0.22.0", default-features = false, features = ["with-codec"] }
-num                     = { version = "0.3", default-features = false, features = ["alloc"] }
+dp-evm = { default-features = false, path = "../../../../../primitives/evm" }
+evm    = { default-features = false, version = "0.23.0", features = ["with-codec"] }
+num    = { default-features = false, version = "0.3", features = ["alloc"] }
 # substrate
-sp-core = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
-sp-io   = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-core = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sp-io   = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
 
 [dev-dependencies]
 hex = "0.4.0"
@@ -31,7 +31,7 @@ std = [
 ]
 
 crates-std = [
-	"hyperspace-evm-primitives/std",
+	"dp-evm/std",
 	"evm/std",
 	"num/std",
 ]

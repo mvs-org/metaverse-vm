@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Hyperspace. If not, see <https://www.gnu.org/licenses/>.
 
-
 use codec::{Decode, Encode};
 pub use ethereum_types::{H128, H512};
 use sp_io::hashing::sha2_256;

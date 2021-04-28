@@ -1,0 +1,16 @@
+[package]
+authors     = ["Hyperspace Network <contact@mvs.org>"]
+description = "Storage key for ethereum schema"
+edition     = "2018"
+homepage    = "https://mvs.org/"
+license     = "GPL-3.0"
+name        = "dp-storage"
+readme      = "README.md"
+repository  = "https://github.com/mvs-org/Hyperspace"
+version     = "2.0.0"
+
+[dependencies]
+
+[features]
+default = ["std"]
+std = []

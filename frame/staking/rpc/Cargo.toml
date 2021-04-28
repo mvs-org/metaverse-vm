@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "hyperspace-staking-rpc"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "1.4.0"
+version     = "2.0.0"
 
 [dependencies]
 # crates
@@ -18,6 +18,6 @@ jsonrpc-derive      = { version = "15.1.0" }
 # hyperspace
 hyperspace-staking-rpc-runtime-api = { path = "./runtime-api" }
 # substrate
-sp-api        = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
-sp-blockchain = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
-sp-runtime    = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-api        = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sp-blockchain = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sp-runtime    = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
