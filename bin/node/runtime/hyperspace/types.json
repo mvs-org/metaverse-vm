@@ -105,7 +105,7 @@
 		"etp_bond": "Balance",
 		"dna_bond": "Balance"
 	},
-	"__[pallet.bridge.oldna]__": {},
+	"__[pallet.bridge.oldetp]__": {},
 	"MappedEtp": "u128",
 	"__[pallet.bridge.eth]__": {},
 	"EthereumTransactionIndex": "(H256, u64)",
@@ -180,14 +180,14 @@
 	"OtherSignature": {
 		"_enum": {
 			"Eth": "EcdsaSignature",
-			"Oldetp": "EcdsaSignature"
+			"Oldna": "EcdsaSignature"
 		}
 	},
 	"EcdsaSignature": "[u8; 65; EcdsaSignature]",
 	"OtherAddress": {
 		"_enum": {
 			"Eth": "[u8; 20; EthereumAddress]",
-			"Oldetp": "[u8; 20; OldetpAddress]"
+			"Oldna": "[u8; 20; OldnaAddress]"
 		}
 	},
 	"AddressT": "[u8; 20; AddressT]",

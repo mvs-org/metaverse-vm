@@ -149,14 +149,16 @@ impl BlockWithProof {
 
 		BlockWithProof {
 			proof_length: raw_block_with_proof.proof_length,
-			merkle_root: array_bytes::hex2array_unchecked!(&raw_block_with_proof.merkle_root, 16).into(),
+			merkle_root: array_bytes::hex2array_unchecked!(&raw_block_with_proof.merkle_root, 16)
+				.into(),
 			header_rlp: array_bytes::hex2bytes_unchecked(&raw_block_with_proof.header_rlp),
 			merkle_proofs: raw_block_with_proof
 				.merkle_proofs
 				.iter()
 				.cloned()
 				.map(|raw_merkle_proof| {
-					array_bytes::hex2array_unchecked!(&zero_padding(raw_merkle_proof, 16), 16).into()
+					array_bytes::hex2array_unchecked!(&zero_padding(raw_merkle_proof, 16), 16)
+						.into()
 				})
 				.collect(),
 			elements: raw_block_with_proof
@@ -222,7 +224,9 @@ impl HeaderWithProof {
 			serde_json::from_reader(File::open(path).unwrap()).unwrap();
 		Self {
 			header: Decode::decode::<&[u8]>(
-				&mut &array_bytes::hex2bytes_unchecked(raw_shadow_service_response.result.eth_header)[..],
+				&mut &array_bytes::hex2bytes_unchecked(
+					raw_shadow_service_response.result.eth_header,
+				)[..],
 			)
 			.unwrap(),
 			proof: Decode::decode::<&[u8]>(
@@ -319,8 +323,11 @@ pub fn mock_canonical_receipt() -> EthereumReceiptProof {
 			.parse()
 			.unwrap(),
 		proof: array_bytes::hex2bytes_unchecked(receipt["proof"].as_str().unwrap()),
-		header_hash: array_bytes::hex2array_unchecked!(receipt["header_hash"].as_str().unwrap(), 32)
-			.into(),
+		header_hash: array_bytes::hex2array_unchecked!(
+			receipt["header_hash"].as_str().unwrap(),
+			32
+		)
+		.into(),
 	}
 }
 
@@ -353,7 +360,7 @@ pub const MAINNET_GENESIS_HEADER: &'static str = r#"
 	"gasUsed": "0x0",
 	"hash": "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3",
 	"logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-	"miner": "0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa",
+	"miner": "0x0000000000000000000000000000000000000000",
 	"mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
 	"nonce": "0x0000000000000042",
 	"number": "0x0",

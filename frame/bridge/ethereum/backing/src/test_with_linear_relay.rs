@@ -24,7 +24,6 @@ use frame_system::RawOrigin;
 use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- hyperspace ---
 use crate::*;
-use array_bytes::array_bytes::hex2bytes_unchecked;
 use hyperspace_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use hyperspace_support::balance::lock::StakingLock;
 use ethereum_primitives::{
@@ -235,7 +234,7 @@ fn verify_linear_redeem_deposit() {
 		.execute_with(|| {
 			assert_ok!(EthereumRelay::set_number_of_blocks_safe(RawOrigin::Root.into(), 0));
 
-			// 1234 -> 0.1234dna
+			// 1234ring -> 0.1234dna
 
 			// _depositID    2
 			// 0: address: 0xcC5E48BEb33b83b8bD0D9d9A85A8F6a27C51F5C5  _depositor

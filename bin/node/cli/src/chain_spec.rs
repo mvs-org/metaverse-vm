@@ -41,7 +41,7 @@ pub type HyperspaceChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
 type AccountPublic = <Signature as Verify>::Signer;
 
-const PANGOLIN_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
+const HYPERSPACE_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 pub fn hyperspace_config() -> Result<HyperspaceChainSpec, String> {
 	HyperspaceChainSpec::from_json_bytes(&include_bytes!("../../../res/hyperspace/hyperspace.json")[..])
@@ -64,9 +64,9 @@ pub fn hyperspace_session_keys(
 pub fn properties() -> Properties {
 	let mut properties = Properties::new();
 
-	properties.insert("ss58Format".into(),150.into());
-	properties.insert("tokenDecimals".into(), vec![8, 8].into());
-	properties.insert("tokenSymbol".into(), vec!["ETP", "DNA"].into());
+	properties.insert("ss58Format".into(), 18.into());
+	properties.insert("tokenDecimals".into(), vec![9, 9].into());
+	properties.insert("tokenSymbol".into(), vec!["PETP", "PDNA"].into());
 
 	properties
 }
@@ -112,7 +112,7 @@ pub fn hyperspace_build_spec_config() -> HyperspaceChainSpec {
 		hyperspace_build_spec_genesis,
 		vec![],
 		Some(
-			TelemetryEndpoints::new(vec![(PANGOLIN_TELEMETRY_URL.to_string(), 0)])
+			TelemetryEndpoints::new(vec![(HYPERSPACE_TELEMETRY_URL.to_string(), 0)])
 				.expect("Hyperspace telemetry url is valid; qed"),
 		),
 		None,
@@ -196,10 +196,10 @@ fn hyperspace_build_spec_genesis() -> GenesisConfig {
 		hyperspace_claims: Some(Default::default()),
 		hyperspace_vesting: Some(Default::default()),
 		pallet_sudo: Some(SudoConfig { key: root.clone() }),
-		hyperspace_oldna_issuing: Some(OldnaIssuingConfig {
+		hyperspace_oldetp_issuing: Some(OldetpIssuingConfig {
 			total_mapped_etp: 1 << 56
 		}),
-		hyperspace_oldna_backing: Some(OldnaBackingConfig {
+		hyperspace_oldetp_backing: Some(OldetpBackingConfig {
 			backed_etp: 1 << 56
 		}),
 		hyperspace_ethereum_backing: Some(EthereumBackingConfig {
@@ -222,7 +222,7 @@ fn hyperspace_build_spec_genesis() -> GenesisConfig {
 			),
 			..Default::default()
 		}),
-		hyperspace_oldetp_backing: Some(OldetpBackingConfig {
+		hyperspace_oldna_backing: Some(OldnaBackingConfig {
 			backed_etp: 1 << 56,
 			backed_dna: 1 << 56,
 		}),
@@ -367,10 +367,10 @@ fn hyperspace_development_genesis(
 		}),
 		hyperspace_vesting: Some(Default::default()),
 		pallet_sudo: Some(SudoConfig { key: root_key.clone() }),
-		hyperspace_oldna_issuing: Some(OldnaIssuingConfig {
+		hyperspace_oldetp_issuing: Some(OldetpIssuingConfig {
 			total_mapped_etp: 1 << 56
 		}),
-		hyperspace_oldna_backing: Some(OldnaBackingConfig {
+		hyperspace_oldetp_backing: Some(OldetpBackingConfig {
 			backed_etp: 1 << 56
 		}),
 		hyperspace_ethereum_backing: Some(EthereumBackingConfig {
@@ -393,7 +393,7 @@ fn hyperspace_development_genesis(
 			),
 			..Default::default()
 		}),
-		hyperspace_oldetp_backing: Some(OldetpBackingConfig {
+		hyperspace_oldna_backing: Some(OldnaBackingConfig {
 			backed_etp: 1 << 56,
 			backed_dna: 1 << 56,
 		}),
