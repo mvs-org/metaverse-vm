@@ -27,7 +27,7 @@ use sp_std::vec::Vec;
 
 use codec::Decode;
 use hyperspace_evm::{AddressMapping, Config};
-use dp_evm::Precompile;
+use hyperspace_evm_primitives::Precompile;
 use evm::{Context, ExitError, ExitSucceed};
 
 type AccountId<T> = <T as frame_system::Config>::AccountId;

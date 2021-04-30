@@ -1,28 +1,28 @@
 [workspace]
 members = [
+	# node
 	"bin/node/cli",
 	"bin/node/primitives",
 	"bin/node/runtime/hyperspace",
+	# client
 	"client/cli",
 	"client/dvm/consensus",
-	"client/dvm/db",
-	"client/dvm/mapping-sync",
 	"client/dvm/rpc",
+	# frame
 	"frame/balances",
 	"frame/balances/rpc",
 	"frame/balances/rpc/runtime-api",
-	"frame/bridge/oldetp/backing",
-	"frame/bridge/oldetp/issuing",
+	"frame/bridge/oldna/backing",
+	"frame/bridge/oldna/issuing",
 	"frame/bridge/ethereum/backing",
 	"frame/bridge/ethereum/linear-relay",
 	"frame/bridge/ethereum/relay",
 	"frame/bridge/relayer-game",
 	"frame/bridge/relay-authorities",
-	"frame/bridge/oldna/backing",
+	"frame/bridge/oldetp/backing",
 	"frame/claims",
 	"frame/democracy",
 	"frame/dvm",
-	"frame/dvm-dynamic-fee",
 	"frame/dvm/rpc",
 	"frame/dvm/rpc/runtime-api",
 	"frame/elections-phragmen",
@@ -46,13 +46,13 @@ members = [
 	"frame/support",
 	"frame/treasury",
 	"frame/vesting",
+	# primitives
 	"primitives/consensus",
+	"primitives/dvm-rpc-core",
 	"primitives/ethereum-primitives",
 	"primitives/evm",
 	"primitives/merkle-patricia-trie",
 	"primitives/relay",
-	"primitives/rpc",
-	"primitives/storage",
 ]
 
 # The list of dependencies below (which can be both direct and indirect dependencies) are crates

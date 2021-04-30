@@ -18,7 +18,7 @@
 pub mod stack;
 
 use crate::Config;
-use dp_evm::{CallInfo, CreateInfo};
+use hyperspace_evm_primitives::{CallInfo, CreateInfo};
 use sp_core::{H160, H256, U256};
 use sp_std::vec::Vec;
 

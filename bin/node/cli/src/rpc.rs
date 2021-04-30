@@ -22,7 +22,7 @@
 //! about the modules used inside the runtime, so do
 //! RPC methods defined in `sc-rpc` crate.
 //! It means that `client/rpc` can't have any methods that
-//! need some soldnag assumptions about the particular runtime.
+//! need some soldetpg assumptions about the particular runtime.
 //!
 //! The RPCs available in this crate however can make some assumptions
 //! about how the runtime is constructed and what FRAME pallets
@@ -35,11 +35,9 @@
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 
 // --- std ---
-use std::{collections::BTreeMap, sync::Arc};
+use std::sync::Arc;
 // --- hyperspace ---
-use dp_rpc::{FilterPool, PendingTransactions};
 use hyperspace_primitives::{AccountId, Balance, BlockNumber, Hash, Nonce, OpaqueBlock as Block, Power};
-use dvm_ethereum::EthereumStorageSchema;
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpc_core::IoHandler<sc_rpc::Metadata>;
@@ -89,12 +87,6 @@ pub struct FullDeps<C, P, SC, B> {
 	pub babe: BabeDeps,
 	/// GRANDPA specific dependencies.
 	pub grandpa: GrandpaDeps<B>,
-	/// Ethereum pending transactions.
-	pub pending_transactions: PendingTransactions,
-	/// EthFilterApi pool.
-	pub filter_pool: Option<FilterPool>,
-	/// Backend.
-	pub backend: Arc<dc_db::Backend<Block>>,
 }
 
 /// Light client extra dependencies.
@@ -150,10 +142,9 @@ where
 	use hyperspace_balances_rpc::{Balances, BalancesApi};
 	use hyperspace_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use hyperspace_staking_rpc::{Staking, StakingApi};
-	use dc_rpc::{
-		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
-		HexEncodedIdProvider, NetApi, NetApiServer, SchemaV1Override, StorageOverride, Web3Api,
-		Web3ApiServer,
+	use dvm_rpc::{
+		EthApi, EthApiServer, EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider, NetApi,
+		NetApiServer, Web3Api, Web3ApiServer,
 	};
 	use hyperspace_runtime::TransactionConverter;
 
@@ -167,9 +158,6 @@ where
 		network,
 		babe,
 		grandpa,
-		pending_transactions,
-		filter_pool,
-		backend,
 	} = deps;
 	let mut io = jsonrpc_core::IoHandler::default();
 
@@ -218,30 +206,13 @@ where
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
 	io.extend_with(HeaderMMRApi::to_delegate(HeaderMMR::new(client.clone())));
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
-
-	let mut overrides = BTreeMap::new();
-	overrides.insert(
-		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
-	);
 	io.extend_with(EthApiServer::to_delegate(EthApi::new(
 		client.clone(),
 		pool.clone(),
 		TransactionConverter,
 		network.clone(),
-		overrides,
-		pending_transactions.clone(),
-		backend,
 		is_authority,
 	)));
-	if let Some(filter_pool) = filter_pool {
-		io.extend_with(EthFilterApiServer::to_delegate(EthFilterApi::new(
-			client.clone(),
-			filter_pool.clone(),
-			500 as usize, // max stored filters
-		)));
-	}
 	io.extend_with(EthPubSubApiServer::to_delegate(EthPubSubApi::new(
 		pool,
 		client.clone(),

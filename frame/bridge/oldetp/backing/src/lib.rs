@@ -33,9 +33,13 @@ mod types {
 
 	#[cfg(feature = "std")]
 	pub type EtpBalance<T> = <EtpCurrency<T> as Currency<AccountId<T>>>::Balance;
+	#[cfg(feature = "std")]
+	pub type DnaBalance<T> = <DnaCurrency<T> as Currency<AccountId<T>>>::Balance;
 
 	#[cfg(feature = "std")]
 	type EtpCurrency<T> = <T as Config>::EtpCurrency;
+	#[cfg(feature = "std")]
+	type DnaCurrency<T> = <T as Config>::DnaCurrency;
 }
 
 // --- substrate ---
@@ -51,6 +55,7 @@ pub trait Config: frame_system::Config {
 	type ModuleId: Get<ModuleId>;
 
 	type EtpCurrency: Currency<AccountId<Self>>;
+	type DnaCurrency: Currency<AccountId<Self>>;
 
 	type WeightInfo: WeightInfo;
 }
@@ -60,10 +65,16 @@ decl_storage! {
 
 	add_extra_genesis {
 		config(backed_etp): EtpBalance<T>;
+		config(backed_dna): DnaBalance<T>;
 		build(|config| {
+			let module_account = <Module<T>>::account_id();
 			let _ = T::EtpCurrency::make_free_balance_be(
-				&<Module<T>>::account_id(),
+				&module_account,
 				T::EtpCurrency::minimum_balance() + config.backed_etp
+			);
+			let _ = T::DnaCurrency::make_free_balance_be(
+				&module_account,
+				config.backed_dna
 			);
 		});
 	}

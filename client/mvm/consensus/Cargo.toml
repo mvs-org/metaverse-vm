@@ -1,0 +1,31 @@
+[package]
+authors     = ["Metaverse <hello@mvs.org>"]
+description = "Consensus for hyperspace mvm"
+edition     = "2018"
+homepage    = "https://mvs.org/"
+license     = "GPL-3.0"
+name        = "mvm-consensus"
+readme      = "README.md"
+repository  = "https://github.com/hyperspace-network/hyperspace-common/"
+version     = "1.4.0"
+
+[dependencies]
+# crates
+codec       = { package = "parity-scale-codec", version = "1.3.5", features = ["derive"] }
+derive_more = { version = "0.99.11" }
+ethereum    = { version = "0.5", features = ["with-codec"] }
+futures     = { version = "=0.3.8", features = ["compat"] }
+log         = { version = "0.4.13" }
+# hyperspace
+mvm-consensus-primitives = { path = "../../../primitives/consensus/" }
+# substrate
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-block-builder    = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-consensus        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core             = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-inherents        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-timestamp        = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

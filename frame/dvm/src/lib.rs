@@ -22,20 +22,16 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// --- hyperspace ---
-use hyperspace_evm::{AccountBasicMapping, FeeCalculator, GasWeightMapping, Runner};
-use dp_consensus::{PostLog, PreLog, FRONTIER_ENGINE_ID};
-use dp_evm::CallOrCreateInfo;
-use dp_storage::PALLET_ETHEREUM_SCHEMA;
-pub use dvm_rpc_runtime_api::TransactionStatus;
-// --- substrate ---
-use frame_support::traits::Currency;
+use codec::{Decode, Encode};
+use dvm_consensus_primitives::{ConsensusLog, FRONTIER_ENGINE_ID};
+use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
+use evm::ExitReason;
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResultWithPostInfo,
 	traits::FindAuthor, traits::Get, weights::Weight,
 };
-use frame_support::{ensure, traits::UnfilteredDispatchable};
-use frame_system::{ensure_none, RawOrigin};
+use frame_system::ensure_none;
+use sha3::{Digest, Keccak256};
 use sp_runtime::{
 	generic::DigestItem,
 	traits::{Saturating, UniqueSaturatedInto},
@@ -45,12 +41,12 @@ use sp_runtime::{
 	DispatchError,
 };
 use sp_std::prelude::*;
-// --- std ---
-use codec::{Decode, Encode};
+
+use hyperspace_evm::{AccountBasicMapping, AddressMapping, GasWeightMapping, Runner};
+use hyperspace_evm_primitives::CallOrCreateInfo;
+pub use dvm_rpc_runtime_api::TransactionStatus;
 pub use ethereum::{Block, Log, Receipt, Transaction, TransactionAction, TransactionMessage};
-use ethereum_types::{Bloom, BloomInput, H160, H256, H64, U256};
-use evm::ExitReason;
-use sha3::{Digest, Keccak256};
+use frame_support::traits::Currency;
 
 #[cfg(all(feature = "std", test))]
 mod tests;
@@ -65,20 +61,8 @@ pub enum ReturnValue {
 	Hash(H160),
 }
 
-/// The schema version for Pallet Ethereum's storage
-#[derive(Clone, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
-pub enum EthereumStorageSchema {
-	Undefined,
-	V1,
-}
-
-impl Default for EthereumStorageSchema {
-	fn default() -> Self {
-		Self::Undefined
-	}
-}
-
 /// A type alias for the balance type from this pallet's point of view.
+pub type BalanceOf<T> = <T as hyperspace_balances::Config>::Balance;
 type EtpInstance = hyperspace_balances::Instance0;
 
 pub struct IntermediateStateRoot;
@@ -105,6 +89,8 @@ pub trait Config:
 	type StateRoot: Get<H256>;
 	/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another pallet.
 	type BlockGasLimit: Get<U256>;
+	// How evm address convert to hyperspace address
+	type AddressMapping: AddressMapping<Self::AccountId>;
 	// Balance module
 	type EtpCurrency: Currency<Self::AccountId>;
 }
@@ -125,10 +111,7 @@ decl_storage! {
 	}
 	add_extra_genesis {
 		build(|_config: &GenesisConfig| {
-			<Module<T>>::store_block(false);
-
-			// Initialize the storage schema at the well known key.
-			frame_support::storage::unhashed::put::<EthereumStorageSchema>(&PALLET_ETHEREUM_SCHEMA, &EthereumStorageSchema::V1);
+			<Module<T>>::store_block();
 		});
 	}
 }
@@ -146,8 +129,6 @@ decl_error! {
 	pub enum Error for Module<T: Config> {
 		/// Signature is invalid.
 		InvalidSignature,
-		/// Pre-log is present, therefore transact is not allowed.
-		PreLogExists,
 	}
 }
 
@@ -161,11 +142,6 @@ decl_module! {
 		#[weight = <T as hyperspace_evm::Config>::GasWeightMapping::gas_to_weight(transaction.gas_limit.unique_saturated_into())]
 		fn transact(origin, transaction: ethereum::Transaction) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
-
-			ensure!(
-				dp_consensus::find_pre_log(&frame_system::Module::<T>::digest()).is_err(),
-				Error::<T>::PreLogExists,
-			);
 
 			let source = Self::recover_signer(&transaction)
 				.ok_or_else(|| Error::<T>::InvalidSignature)?;
@@ -244,20 +220,11 @@ decl_module! {
 		}
 
 		fn on_finalize(_block_number: T::BlockNumber) {
-			<Module<T>>::store_block(
-				dp_consensus::find_pre_log(&frame_system::Module::<T>::digest()).is_err(),
-			);
+			<Module<T>>::store_block();
 		}
 
 		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
 			Pending::kill();
-			if let Ok(log) = dp_consensus::find_pre_log(&frame_system::Module::<T>::digest()) {
-				let PreLog::Block(block) = log;
-
-				for transaction in block.transactions {
-					let _ = Call::<T>::transact(transaction).dispatch_bypass_filter(RawOrigin::None.into());
-				}
-			}
 			0
 		}
 	}
@@ -297,12 +264,7 @@ impl<T: Config> frame_support::unsigned::ValidateUnsigned for Module<T> {
 			}
 
 			let fee = transaction.gas_price.saturating_mul(transaction.gas_limit);
-			let total_payment = transaction.value.saturating_add(fee);
-			if account_data.balance < total_payment {
-				return InvalidTransaction::Payment.into();
-			}
-
-			if transaction.gas_price < T::FeeCalculator::min_gas_price() {
+			if account_data.balance < fee {
 				return InvalidTransaction::Payment.into();
 			}
 
@@ -337,7 +299,7 @@ impl<T: Config> Module<T> {
 		)))
 	}
 
-	fn store_block(post_log: bool) {
+	fn store_block() {
 		let mut transactions = Vec::new();
 		let mut statuses = Vec::new();
 		let mut receipts = Vec::new();
@@ -378,17 +340,26 @@ impl<T: Config> Module<T> {
 		let mut block = ethereum::Block::new(partial_header, transactions.clone(), ommers);
 		block.header.state_root = T::StateRoot::get();
 
+		let mut transaction_hashes = Vec::new();
+
+		for t in &transactions {
+			let transaction_hash = H256::from_slice(Keccak256::digest(&rlp::encode(t)).as_slice());
+			transaction_hashes.push(transaction_hash);
+		}
+
 		CurrentBlock::put(block.clone());
 		CurrentReceipts::put(receipts.clone());
 		CurrentTransactionStatuses::put(statuses.clone());
 
-		if post_log {
-			let digest = DigestItem::<T::Hash>::Consensus(
-				FRONTIER_ENGINE_ID,
-				PostLog::Hashes(dp_consensus::Hashes::from_block(block)).encode(),
-			);
-			frame_system::Module::<T>::deposit_log(digest.into());
-		}
+		let digest = DigestItem::<T::Hash>::Consensus(
+			FRONTIER_ENGINE_ID,
+			ConsensusLog::EndBlock {
+				block_hash: block.header.hash(),
+				transaction_hashes,
+			}
+			.encode(),
+		);
+		frame_system::Module::<T>::deposit_log(digest.into());
 	}
 
 	/// Get the remaining balance for evm address
@@ -402,14 +373,14 @@ impl<T: Config> Module<T> {
 	}
 
 	/// Inc remaining balance
-	pub fn inc_remaining_balance(account_id: &T::AccountId, value: T::Balance) {
+	pub fn inc_remain_balance(account_id: &T::AccountId, value: T::Balance) {
 		let remain_balance = Self::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_add(value);
 		<RemainingBalance<T>>::insert(account_id, updated_balance);
 	}
 
 	/// Dec remaining balance
-	pub fn dec_remaining_balance(account_id: &T::AccountId, value: T::Balance) {
+	pub fn dec_remain_balance(account_id: &T::AccountId, value: T::Balance) {
 		let remain_balance = Self::remaining_balance(account_id);
 		let updated_balance = remain_balance.saturating_sub(value);
 		<RemainingBalance<T>>::insert(account_id, updated_balance);

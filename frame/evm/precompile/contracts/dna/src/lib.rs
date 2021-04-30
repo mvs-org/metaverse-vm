@@ -37,7 +37,7 @@ use sp_std::prelude::*;
 use sp_std::vec::Vec;
 
 use hyperspace_evm::{AddressMapping, Config, Runner};
-use dp_evm::Precompile;
+use hyperspace_evm_primitives::Precompile;
 
 type AccountId<T> = <T as frame_system::Config>::AccountId;
 

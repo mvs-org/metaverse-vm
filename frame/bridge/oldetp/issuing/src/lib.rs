@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Hyperspace Network
+// Copyright (C) 2018-2021 Metaverse
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,19 +10,15 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
 // along with Hyperspace. If not, see <https://www.gnu.org/licenses/>.
 
-//! # Oldetp Issuing Module
+//! # oldETP Issuing Module
 
 #![cfg_attr(not(feature = "std"), no_std)]
-
-pub mod weights;
-// --- hyperspace ---
-pub use weights::WeightInfo;
 
 #[cfg(test)]
 mod mock;
@@ -35,11 +31,11 @@ mod types {
 
 	pub type MappedEtp = u128;
 
-	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+	pub type AccountId<T> = <T as frame_system::Trait>::AccountId;
 
 	pub type EtpBalance<T> = <EtpCurrency<T> as Currency<AccountId<T>>>::Balance;
 
-	type EtpCurrency<T> = <T as Config>::EtpCurrency;
+	type EtpCurrency<T> = <T as Trait>::EtpCurrency;
 }
 
 // --- substrate ---
@@ -51,8 +47,8 @@ use sp_runtime::{traits::AccountIdConversion, ModuleId};
 // --- hyperspace ---
 use types::*;
 
-pub trait Config: frame_system::Config {
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
+pub trait Trait: frame_system::Trait {
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
 	type ModuleId: Get<ModuleId>;
 
@@ -60,6 +56,9 @@ pub trait Config: frame_system::Config {
 
 	type WeightInfo: WeightInfo;
 }
+
+pub trait WeightInfo {}
+impl WeightInfo for () {}
 
 decl_event! {
 	pub enum Event<T>
@@ -73,12 +72,12 @@ decl_event! {
 }
 
 decl_error! {
-	pub enum Error for Module<T: Config> {
+	pub enum Error for Module<T: Trait> {
 	}
 }
 
 decl_storage! {
-	trait Store for Module<T: Config> as HyperspaceOldetpIssuing {
+	trait Store for Module<T: Trait> as HyperspaceoldETPIssuing {
 		pub TotalMappedEtp get(fn total_mapped_etp) config(): MappedEtp;
 	}
 
@@ -95,7 +94,7 @@ decl_storage! {
 }
 
 decl_module! {
-	pub struct Module<T: Config> for enum Call
+	pub struct Module<T: Trait> for enum Call
 	where
 		origin: T::Origin
 	{
@@ -107,7 +106,7 @@ decl_module! {
 	}
 }
 
-impl<T: Config> Module<T> {
+impl<T: Trait> Module<T> {
 	pub fn account_id() -> T::AccountId {
 		T::ModuleId::get().into_account()
 	}

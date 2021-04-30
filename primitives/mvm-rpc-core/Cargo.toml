@@ -1,0 +1,21 @@
+[package]
+authors     = ["Metaverse <hello@mvs.org>"]
+description = "RPC traits of Ethereum."
+edition     = "2018"
+homepage    = "https://mvs.org/"
+license     = "GPL-3.0"
+name        = "mvm-rpc-core-primitives"
+readme      = "README.md"
+repository  = "https://github.com/hyperspace-network/hyperspace-common/"
+version     = "1.4.0"
+
+[dependencies]
+# crates
+ethereum-types      = { version = "0.9.0" }
+jsonrpc-core        = { version = "15.1.0" }
+jsonrpc-core-client = { version = "15.1.0" }
+jsonrpc-derive      = { version = "15.1.0" }
+jsonrpc-pubsub      = { version = "15.1.0" }
+rustc-hex           = { version = "2.1.0" }
+serde               = { version = "1.0", features = ["derive"] }
+serde_json          = { version = "1.0" }

@@ -8,7 +8,7 @@ license     = "GPL-3.0"
 name        = "hyperspace"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.0.0"
+version     = "1.0.13"
 
 # TODO: Consider rename this repo to hyperspace-runtime-module-library
 [[bin]]
@@ -16,7 +16,6 @@ name = "hyperspace"
 
 [dependencies]
 # crates
-array-bytes    = { version = "1.1.0" }
 codec          = { package = "parity-scale-codec", version = "1.3.7" }
 futures        = { version = "0.3.13" }
 jsonrpc-core   = { version = "15.1.0" }
@@ -25,6 +24,7 @@ log            = { version = "0.4.14" }
 structopt      = { version = "0.3.21" }
 tokio          = { version = "0.3.6", optional = true, features = ["rt-multi-thread"] }
 # hyperspace
+array-bytes = { version = "1.1.0" }
 hyperspace-balances-rpc               = { path = "../../../frame/balances/rpc" }
 hyperspace-balances-rpc-runtime-api   = { path = "../../../frame/balances/rpc/runtime-api" }
 hyperspace-claims                     = { path = "../../../frame/claims" }
@@ -36,63 +36,58 @@ hyperspace-header-mmr-rpc-runtime-api = { path = "../../../frame/header-mmr/rpc/
 hyperspace-staking                    = { path = "../../../frame/staking" }
 hyperspace-staking-rpc                = { path = "../../../frame/staking/rpc" }
 hyperspace-staking-rpc-runtime-api    = { path = "../../../frame/staking/rpc/runtime-api" }
-dc-consensus                        = { path = "../../../client/dvm/consensus" }
-dc-db                               = { path = "../../../client/dvm/db" }
-dc-mapping-sync                     = { path = "../../../client/dvm/mapping-sync" }
-dc-rpc                              = { path = "../../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }
-dp-rpc                              = { path = "../../../primitives/rpc" }
-dp_consensus                        = { path = "../../../primitives/consensus" }
 hyperspace-primitives                     = { path = "../primitives" }
-dvm-ethereum                        = { path = "../../../frame/dvm" }
+dvm-consensus                       = { path = "../../../client/dvm/consensus" }
+dvm-rpc                             = { path = "../../../client/dvm/rpc" }
 dvm-rpc-runtime-api                 = { path = "../../../frame/dvm/rpc/runtime-api" }
 hyperspace-runtime                    = { path = "../runtime/hyperspace" }
 # substrate
-frame-system-rpc-runtime-api               = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-im-online                           = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-transaction-payment-rpc             = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-authority-discovery                     = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-basic-authorship                        = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-chain-spec                              = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-cli                                     = { optional = true, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-client-api                              = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-consensus                               = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-consensus-babe                          = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-consensus-babe-rpc                      = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-consensus-epochs                        = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-consensus-slots                         = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-executor                                = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-finality-grandpa                        = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-finality-grandpa-rpc                    = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-finality-grandpa-warp-sync              = { optional = true, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-keystore                                = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-network                                 = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-rpc                                     = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-service                                 = { optional = true, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-sync-state-rpc                          = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-telemetry                               = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-transaction-pool                        = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-api                                     = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-authority-discovery                     = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-block-builder                           = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-blockchain                              = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-consensus                               = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-consensus-babe                          = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-core                                    = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-finality-grandpa                        = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-inherents                               = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-keystore                                = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-offchain                                = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-runtime                                 = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-session                                 = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-transaction-pool                        = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-trie                                    = { features = ["memory-tracker"], git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-substrate-frame-rpc-system                 = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-substrate-prometheus-endpoint              = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+frame-system-rpc-runtime-api               = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-im-online                           = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-transaction-payment-rpc             = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-authority-discovery                     = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-basic-authorship                        = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-chain-spec                              = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-cli                                     = { optional = true, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-client-api                              = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-consensus                               = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-consensus-babe                          = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-consensus-babe-rpc                      = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-consensus-epochs                        = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-consensus-slots                         = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-executor                                = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-finality-grandpa                        = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-finality-grandpa-rpc                    = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-finality-grandpa-warp-sync              = { optional = true, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-keystore                                = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-network                                 = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-rpc                                     = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-service                                 = { optional = true, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-sync-state-rpc                          = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-telemetry                               = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-transaction-pool                        = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-api                                     = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-authority-discovery                     = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-block-builder                           = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-blockchain                              = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-consensus                               = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-consensus-babe                          = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-core                                    = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-finality-grandpa                        = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-inherents                               = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-keystore                                = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-offchain                                = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-runtime                                 = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-session                                 = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-transaction-pool                        = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-trie                                    = { features = ["memory-tracker"], git = "https://github.com/new-mvs/substrate", branch = "latest" }
+substrate-frame-rpc-system                 = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+substrate-prometheus-endpoint              = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [build-dependencies]
 # substrate
-substrate-build-script-utils = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+substrate-build-script-utils = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [features]
 default = [

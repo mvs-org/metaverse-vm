@@ -21,6 +21,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // --- hyperspace ---
 use crate::AddressT;
 
+
 macro_rules! impl_address {
 	($name:ident, $sname:expr, $prefix:expr) => {
 		#[doc = "An "]
@@ -78,9 +79,9 @@ hyperspace_support::impl_genesis! {
 	struct ClaimsList {
 		dot: Vec<Account<EthereumAddress>>,
 		eth: Vec<Account<EthereumAddress>>,
-		oldna: Vec<Account<OldnaAddress>>
+		oldetp: Vec<Account<OldetpAddress>>
 	}
 }
 
 impl_address!(EthereumAddress, "Ethereum", "0x");
-impl_address!(OldnaAddress, "Oldna", "41");
+impl_address!(OldetpAddress, "Oldetp", "41");

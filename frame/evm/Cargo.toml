@@ -7,29 +7,29 @@ license     = "GPL-3.0"
 name        = "hyperspace-evm"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.0.0"
+version     = "1.4.0"
 
 [dependencies]
 # crates
 codec           = { package = "parity-scale-codec", version = "1.3.7", default-features = false }
-evm             = { version = "0.23.0", default-features = false, features = ["with-codec"] }
-evm-gasometer   = { version = "0.23.0", default-features = false }
-evm-runtime     = { version = "0.23.0", default-features = false }
+evm             = { version = "0.22.0", default-features = false, features = ["with-codec"] }
+evm-gasometer   = { version = "0.22.0", default-features = false }
+evm-runtime     = { version = "0.22.0", default-features = false }
 primitive-types = { version = "0.8.0", default-features = false, features = ["rlp", "byteorder"] }
 rlp             = { version = "0.5.0", default-features = false }
 serde           = { version = "1.0.124", optional = true, default-features = false, features = ["derive"] }
 sha3            = { version = "0.8", default-features = false }
 # hyperspace
-hyperspace-balances   = { default-features = false, path = "../balances" }
-dp-evm              = { default-features = false, path = "../../primitives/evm" }
+hyperspace-balances       = { default-features = false, path = "../balances" }
+hyperspace-evm-primitives = { default-features = false, path = "../../primitives/evm" }
 # substrate
-frame-support    = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-frame-system     = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-timestamp = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-core          = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-io            = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-runtime       = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-std           = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+frame-support    = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+frame-system     = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-timestamp = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-core          = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-io            = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-runtime       = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-std           = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [dev-dependencies]
 hyperspace-support = { features = ["easy-testing"], path = "../support" }
@@ -49,7 +49,7 @@ crates-std    = [
 ]
 hyperspace-std  = [
 	"hyperspace-balances/std",
-	"dp-evm/std",
+	"hyperspace-evm-primitives/std",
 ]
 substrate-std = [
 	"evm/std",

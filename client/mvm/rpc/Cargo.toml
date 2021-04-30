@@ -1,0 +1,48 @@
+[package]
+authors     = ["Metaverse <hello@mvs.org>"]
+description = "Ethereum RPC (web3) compatibility layer for Hyperspace."
+edition     = "2018"
+homepage    = "https://mvs.org/"
+license     = "GPL-3.0"
+name        = "mvm-rpc"
+readme      = "README.md"
+repository  = "https://github.com/hyperspace-network/hyperspace-common/"
+version     = "1.4.0"
+
+[dependencies]
+# crates
+codec               = { package = "parity-scale-codec", version = "1.3.5" }
+ethereum            = { version = "0.5", features = ["with-codec"] }
+ethereum-types      = { version = "0.9.0" }
+futures             = { version = "=0.3.8", features = ["compat"] }
+jsonrpc-core        = { version = "15.1.0" }
+jsonrpc-core-client = { version = "15.1.0" }
+jsonrpc-derive      = { version = "15.1.0" }
+jsonrpc-pubsub      = { version = "15.1.0" }
+libsecp256k1        = { version = "0.3" }
+log                 = { version = "0.4.13" }
+rand                = { version = "0.7" }
+rlp                 = { version = "0.4" }
+rustc-hex           = { version = "2.1.0" }
+sha3                = { version = "0.8" }
+# hyperspace
+hyperspace-evm            = { path = "../../../frame/evm" }
+mvm-consensus           = { path = "../consensus" }
+mvm-ethereum            = { path = "../../../frame/mvm" }
+mvm-rpc-core            = { path = "../../../frame/mvm/rpc" }
+mvm-rpc-core-primitives = { path = "../../../primitives/mvm-rpc-core" }
+mvm-rpc-runtime-api     = { path = "../../../frame/mvm/rpc/runtime-api" }
+# substrate
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-network          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sc-service          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io               = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+
+[features]
+rpc_binary_search_estimate = []

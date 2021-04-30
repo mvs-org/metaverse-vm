@@ -176,6 +176,7 @@ mod tests {
 	use keccak_hasher::KeccakHasher;
 	// --- hyperspace ---
 	use super::*;
+	
 
 	#[inline]
 	fn construct_receipts(

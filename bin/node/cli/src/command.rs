@@ -30,7 +30,7 @@ use hyperspace_cli::{Configuration, HyperspaceCli};
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Hyperspace Runtime Module Library".into()
+		"Hyperspace Node".into()
 	}
 
 	fn impl_version() -> String {
@@ -46,7 +46,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn support_url() -> String {
-		"https://github.com/mvs-org/Hyperspaceissues/new".into()
+		"https://github.com/mvs/Hyperspace/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {

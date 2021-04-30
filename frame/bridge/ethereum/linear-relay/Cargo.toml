@@ -8,7 +8,7 @@ license     = "GPL-3.0"
 name        = "hyperspace-ethereum-linear-relay"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.0.0"
+version     = "1.4.0"
 
 [dependencies]
 # crates
@@ -22,10 +22,10 @@ ethereum-primitives = { default-features = false, path = "../../../../primitives
 ethereum-types = { default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
 rlp            = { default-features = false, git = "https://github.com/new-mvs/parity-common.git" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-frame-system  = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-runtime    = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-std        = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+frame-support = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+frame-system  = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-runtime    = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-std        = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [dev-dependencies]
 # crates
@@ -34,8 +34,8 @@ array-bytes = { version = "1.1.0" }
 hyperspace-balances   = { path = "../../../../frame/balances" }
 ethereum-primitives = { features = ["deserialize"], path = "../../../../primitives/ethereum-primitives" }
 # substrate
-sp-core = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-io   = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sp-core = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-io   = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [features]
 default = ["std"]

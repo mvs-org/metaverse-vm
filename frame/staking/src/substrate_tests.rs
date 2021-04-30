@@ -2125,7 +2125,7 @@ fn bond_with_no_staked_value() {
 				Origin::signed(2),
 				StakingBalance::EtpBalance(1)
 			));
-			// FIXME: https://github.com/mvs-org/Hyperspaceissues/121
+			// FIXME: https://github.com/new-mvs/darwinia-common/issues/121
 			// assert!(Staking::ledger(2).is_none());
 		});
 }

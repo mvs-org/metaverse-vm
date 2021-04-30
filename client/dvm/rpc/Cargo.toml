@@ -4,14 +4,13 @@ description = "Ethereum RPC (web3) compatibility layer for Hyperspace."
 edition     = "2018"
 homepage    = "https://mvs.org/"
 license     = "GPL-3.0"
-name        = "dc-rpc"
+name        = "dvm-rpc"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.0.0"
+version     = "1.4.0"
 
 [dependencies]
 # crates
-array-bytes         = { version = "1.1.0" }
 codec               = { package = "parity-scale-codec", version = "1.3.7" }
 ethereum            = { version = "0.6.0", features = ["with-codec"] }
 ethereum-types      = { version = "0.10.0" }
@@ -25,27 +24,25 @@ log                 = { version = "0.4.14" }
 rand                = { version = "0.7" }
 rlp                 = { version = "0.5.0" }
 sha3                = { version = "0.8" }
+array-bytes = { version = "1.1.0" }
 # hyperspace
-hyperspace-evm        = { path = "../../../frame/evm" }
-dc-consensus        = { path = "../consensus" }
-dc-db               = { path = "../db" }
-dp_consensus        = { path = "../../../primitives/consensus/" }
-dp-storage          = { path = "../../../primitives/storage/" }
-dvm-ethereum        = { path = "../../../frame/dvm" }
-dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
-dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
-dp-rpc              = { path = "../../../primitives/rpc" }
+hyperspace-evm            = { path = "../../../frame/evm" }
+dvm-consensus           = { path = "../consensus" }
+dvm-ethereum            = { path = "../../../frame/dvm" }
+dvm-rpc-core            = { path = "../../../frame/dvm/rpc" }
+dvm-rpc-core-primitives = { path = "../../../primitives/dvm-rpc-core" }
+dvm-rpc-runtime-api     = { path = "../../../frame/dvm/rpc/runtime-api" }
 # substrate
-sc-client-api       = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-network          = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-rpc              = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-service          = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-api              = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-blockchain       = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-io               = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-runtime          = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-storage          = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-transaction-pool = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sc-client-api       = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-network          = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-rpc              = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-service          = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-api              = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-blockchain       = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-io               = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-runtime          = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-storage          = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-transaction-pool = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [features]
 rpc_binary_search_estimate = []
