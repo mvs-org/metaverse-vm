@@ -16,6 +16,7 @@ codec          = { package = "parity-scale-codec", version = "2.0.1", default-fe
 ethereum-types = { version = "0.11.0", default-features = false }
 evm            = { version = "0.25.0", default-features = false, features = ["with-codec"] }
 hex            = { version = "0.4.3", default-features = false }
+log            = { version = "0.4.14" }
 ripemd160      = { version = "0.9.1", default-features = false }
 sha3           = { version = "0.9.1", default-features = false }
 # hyperspace

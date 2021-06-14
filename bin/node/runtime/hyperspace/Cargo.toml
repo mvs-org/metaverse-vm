@@ -11,6 +11,7 @@ version    = "2.2.0"
 
 [dependencies]
 # crates
+array-bytes       = { version = "1.1.0" }
 codec             = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
 log               = { version = "0.4.14" }
 serde             = { version = "1.0.125", optional = true }
@@ -178,6 +179,7 @@ try-runtime = [
 	"frame-try-runtime",
 	"hyperspace-balances/try-runtime",
 	"hyperspace-oldetp-issuing/try-runtime",
+	"hyperspace-ethereum-backing/try-runtime",
 	"hyperspace-staking/try-runtime",
 	"dvm-ethereum/try-runtime",
 ]

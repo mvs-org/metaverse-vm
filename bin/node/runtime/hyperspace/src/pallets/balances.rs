@@ -8,7 +8,7 @@ use frame_system::Config as SystemConfig;
 use crate::*;
 use hyperspace_balances::{weights::SubstrateWeight, Config, Pallet};
 
-pub type NegativeImbalance = <Pallet<Runtime, EtpInstance> as Currency<
+pub type EtpNegativeImbalance = <Pallet<Runtime, EtpInstance> as Currency<
 	<Runtime as SystemConfig>::AccountId,
 >>::NegativeImbalance;
 

@@ -36,7 +36,6 @@ hyperspace-header-mmr-rpc-runtime-api = { path = "../../../frame/header-mmr/rpc/
 hyperspace-staking                    = { path = "../../../frame/staking" }
 hyperspace-staking-rpc                = { path = "../../../frame/staking/rpc" }
 hyperspace-staking-rpc-runtime-api    = { path = "../../../frame/staking/rpc/runtime-api" }
-dc-consensus                        = { path = "../../../client/dvm/consensus" }
 dc-db                               = { path = "../../../client/dvm/db" }
 dc-mapping-sync                     = { path = "../../../client/dvm/mapping-sync" }
 dc-rpc                              = { path = "../../../client/dvm/rpc", features = ["rpc_binary_search_estimate"] }

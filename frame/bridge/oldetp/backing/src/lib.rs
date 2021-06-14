@@ -29,7 +29,7 @@ pub use weights::WeightInfo;
 pub mod pallet {
 	pub mod types {
 		// --- hyperspace ---
-		use super::*;
+		use crate::pallet::*;
 
 		// Generic types
 		pub type AccountId<T> = <T as frame_system::Config>::AccountId;

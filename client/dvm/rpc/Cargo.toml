@@ -27,7 +27,6 @@ rand                = { version = "0.7" }
 rlp                 = { version = "0.5.0" }
 sha3                = { version = "0.8" }
 # hyperspace
-dc-consensus        = { path = "../consensus" }
 dc-db               = { path = "../db" }
 dp-rpc              = { path = "../../../primitives/rpc" }
 dp-storage          = { path = "../../../primitives/storage/" }

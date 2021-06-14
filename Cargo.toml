@@ -4,7 +4,6 @@ members = [
 	"bin/node/primitives",
 	"bin/node/runtime/hyperspace",
 	"client/cli",
-	"client/dvm/consensus",
 	"client/dvm/db",
 	"client/dvm/mapping-sync",
 	"client/dvm/rpc",

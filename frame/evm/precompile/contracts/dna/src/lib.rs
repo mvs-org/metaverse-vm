@@ -23,7 +23,7 @@ mod util;
 use codec::Decode;
 use core::str::FromStr;
 use ethabi::{Function, Param, ParamType, Token};
-use evm::{Context, ExitError, ExitSucceed};
+use evm::{Context, ExitError, ExitReason, ExitSucceed};
 use frame_support::{ensure, traits::Currency};
 use sha3::Digest;
 use sp_core::{H160, U256};
@@ -96,7 +96,7 @@ impl<T: Config + dvm_ethereum::Config> Precompile for Dna<T> {
 				// Call WDNA wrapped contract deposit
 				let precompile_address = H160::from_str(DNA_PRECOMPILE).unwrap_or_default();
 				let raw_input = make_call_data(context.caller, call_data.value)?;
-				T::Runner::call(
+				if let Ok(call_res) = T::Runner::call(
 					precompile_address,
 					call_data.wdna_address,
 					raw_input.to_vec(),
@@ -105,8 +105,14 @@ impl<T: Config + dvm_ethereum::Config> Precompile for Dna<T> {
 					None,
 					None,
 					T::config(),
-				)
-				.map_err(|_| ExitError::Other("Call in Dna precompile failed".into()))?;
+				) {
+					match call_res.exit_reason {
+						ExitReason::Succeed(_) => {
+							log::debug!("Transfer and call execute success.");
+						}
+						_ => return Err(ExitError::Other("Call in Dna precompile failed".into())),
+					}
+				}
 
 				Ok((ExitSucceed::Returned, vec![], 20000))
 			}

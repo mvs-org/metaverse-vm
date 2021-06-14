@@ -21,76 +21,86 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod weights;
-// --- hyperspace ---
 pub use weights::WeightInfo;
 
-mod types {
+#[frame_support::pallet]
+pub mod pallet {
+	pub mod types {
+		// --- hyperspace ---
+		#[cfg(feature = "std")]
+		use crate::pallet::*;
+
+		// Generic type
+		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+		#[cfg(feature = "std")]
+		pub type EtpBalance<T> = <EtpCurrency<T> as Currency<AccountId<T>>>::Balance;
+		#[cfg(feature = "std")]
+		pub type DnaBalance<T> = <DnaCurrency<T> as Currency<AccountId<T>>>::Balance;
+		#[cfg(feature = "std")]
+		type EtpCurrency<T> = <T as Config>::EtpCurrency;
+		#[cfg(feature = "std")]
+		type DnaCurrency<T> = <T as Config>::DnaCurrency;
+	}
+	pub use types::*;
+
+	// --- substrate ---
+	use frame_support::{
+		pallet_prelude::*,
+		traits::{Currency, Get},
+	};
+	use frame_system::pallet_prelude::*;
+	use sp_runtime::{traits::AccountIdConversion, ModuleId};
 	// --- hyperspace ---
+	use crate::weights::WeightInfo;
+
+	#[pallet::config]
+	pub trait Config: frame_system::Config {
+		// --- substrate ---
+		type WeightInfo: WeightInfo;
+		// --- hyperspace ---
+		#[pallet::constant]
+		type ModuleId: Get<ModuleId>;
+		type EtpCurrency: Currency<AccountId<Self>>;
+		type DnaCurrency: Currency<AccountId<Self>>;
+	}
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub backed_etp: EtpBalance<T>,
+		pub backed_dna: DnaBalance<T>,
+	}
 	#[cfg(feature = "std")]
-	use crate::*;
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			GenesisConfig {
+				backed_etp: Default::default(),
+				backed_dna: Default::default(),
+			}
+		}
+	}
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			let module_account = <Pallet<T>>::account_id();
 
-	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-
-	#[cfg(feature = "std")]
-	pub type EtpBalance<T> = <EtpCurrency<T> as Currency<AccountId<T>>>::Balance;
-	#[cfg(feature = "std")]
-	pub type DnaBalance<T> = <DnaCurrency<T> as Currency<AccountId<T>>>::Balance;
-
-	#[cfg(feature = "std")]
-	type EtpCurrency<T> = <T as Config>::EtpCurrency;
-	#[cfg(feature = "std")]
-	type DnaCurrency<T> = <T as Config>::DnaCurrency;
-}
-
-// --- substrate ---
-use frame_support::{
-	decl_module, decl_storage,
-	traits::{Currency, Get},
-};
-use sp_runtime::{traits::AccountIdConversion, ModuleId};
-// --- hyperspace ---
-use types::*;
-
-pub trait Config: frame_system::Config {
-	type ModuleId: Get<ModuleId>;
-
-	type EtpCurrency: Currency<AccountId<Self>>;
-	type DnaCurrency: Currency<AccountId<Self>>;
-
-	type WeightInfo: WeightInfo;
-}
-
-decl_storage! {
-	trait Store for Module<T: Config> as HyperspaceOldnaBacking {}
-
-	add_extra_genesis {
-		config(backed_etp): EtpBalance<T>;
-		config(backed_dna): DnaBalance<T>;
-		build(|config| {
-			let module_account = <Module<T>>::account_id();
 			let _ = T::EtpCurrency::make_free_balance_be(
 				&module_account,
-				T::EtpCurrency::minimum_balance() + config.backed_etp
+				T::EtpCurrency::minimum_balance() + self.backed_etp,
 			);
-			let _ = T::DnaCurrency::make_free_balance_be(
-				&module_account,
-				config.backed_dna
-			);
-		});
+			let _ = T::DnaCurrency::make_free_balance_be(&module_account, self.backed_dna);
+		}
 	}
-}
 
-decl_module! {
-	pub struct Module<T: Config> for enum Call
-	where
-		origin: T::Origin
-	{
-		const ModuleId: ModuleId = T::ModuleId::get();
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		pub fn account_id() -> T::AccountId {
+			T::ModuleId::get().into_account()
+		}
 	}
 }
-
-impl<T: Config> Module<T> {
-	pub fn account_id() -> T::AccountId {
-		T::ModuleId::get().into_account()
-	}
-}
+pub use pallet::*;

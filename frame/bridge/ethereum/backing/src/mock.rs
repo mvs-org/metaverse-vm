@@ -23,17 +23,20 @@ macro_rules! decl_tests {
 	($($pallet:tt)*) => {
 		// --- substrate ---
 		use frame_election_provider_support::onchain;
-		use frame_support::weights::Weight;
+		use frame_support::{weights::Weight, traits::{Currency, GenesisBuild}};
 		use frame_system::mocking::*;
 		use sp_core::crypto::key_types;
 		use sp_runtime::{
 			testing::{Header, TestXt, UintAuthorityId},
 			traits::{IdentifyAccount, IdentityLookup, OpaqueKeys, Verify},
 			ModuleId, {KeyTypeId, MultiSignature, Perbill},
+			DispatchResult
 		};
 		// --- hyperspace ---
-		use crate as hyperspace_ethereum_backing;
+		use crate::{pallet::*, *, self as hyperspace_ethereum_backing};
+		use hyperspace_relay_primitives::*;
 		use hyperspace_staking::{EraIndex, Exposure, ExposureOf};
+		use ethereum_primitives::EthereumAddress;
 
 		type Block = MockBlock<Test>;
 		type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;

@@ -38,8 +38,6 @@ pub type Block = MockBlock<Test>;
 pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 pub type AccountId = u64;
 pub type Balance = u128;
-// Pallet primitives
-pub type OldetpIssuingError = Error<Test>;
 
 hyperspace_support::impl_test_account_data! {}
 
@@ -87,10 +85,9 @@ frame_support::parameter_types! {
 	pub const OldetpIssuingModuleId: ModuleId = ModuleId(*b"da/oldetpi");
 }
 impl Config for Test {
-	type Event = Event;
+	type WeightInfo = ();
 	type ModuleId = OldetpIssuingModuleId;
 	type EtpCurrency = Etp;
-	type WeightInfo = ();
 }
 
 frame_support::construct_runtime! {
@@ -102,7 +99,7 @@ frame_support::construct_runtime! {
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Etp: hyperspace_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
-		HyperspaceOldetpIssuing: hyperspace_oldetp_issuing::{Pallet, Call, Storage, Config, Event<T>},
+		OldetpIssuing: hyperspace_oldetp_issuing::{Pallet, Call, Storage, Config},
 	}
 }
 
@@ -128,22 +125,4 @@ pub fn new_test_ext() -> TestExternalities {
 	.unwrap();
 
 	t.into()
-}
-
-pub fn events() -> Vec<Event> {
-	let events = System::events()
-		.into_iter()
-		.map(|evt| evt.event)
-		.collect::<Vec<_>>();
-
-	System::reset_events();
-
-	events
-}
-
-pub fn oldetp_issuing_events() -> Vec<Event> {
-	events()
-		.into_iter()
-		.filter(|e| matches!(e, Event::hyperspace_oldetp_issuing(_)))
-		.collect()
 }

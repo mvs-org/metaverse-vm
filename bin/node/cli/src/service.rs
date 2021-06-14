@@ -67,7 +67,6 @@ use crate::rpc::{
 	self, BabeDeps, DenyUnsafe, FullDeps, GrandpaDeps, LightDeps, RpcExtension,
 	SubscriptionTaskExecutor,
 };
-use dc_consensus::FrontierBlockImport;
 use dc_db::{Backend, DatabaseSettings, DatabaseSettingsSrc};
 use dc_mapping_sync::MappingSyncWorker;
 use dc_rpc::EthTask;
@@ -214,11 +213,7 @@ fn new_partial<RuntimeApi, Executor>(
 				BabeBlockImport<
 					Block,
 					FullClient<RuntimeApi, Executor>,
-					FrontierBlockImport<
-						Block,
-						FullGrandpaBlockImport<RuntimeApi, Executor>,
-						FullClient<RuntimeApi, Executor>,
-					>,
+					FullGrandpaBlockImport<RuntimeApi, Executor>,
 				>,
 				LinkHalf<Block, FullClient<RuntimeApi, Executor>, FullSelectChain>,
 				BabeLink<Block>,
@@ -287,14 +282,9 @@ where
 			telemetry.as_ref().map(|x| x.handle()),
 		)?;
 	let justification_import = grandpa_block_import.clone();
-	let frontier_block_import = FrontierBlockImport::new(
-		grandpa_block_import.clone(),
-		client.clone(),
-		frontier_backend.clone(),
-	);
 	let (babe_import, babe_link) = sc_consensus_babe::block_import(
 		BabeConfig::get_or_compute(&*client)?,
-		frontier_block_import,
+		grandpa_block_import,
 		client.clone(),
 	)?;
 	let import_queue = sc_consensus_babe::import_queue(

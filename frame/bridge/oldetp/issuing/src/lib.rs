@@ -21,8 +21,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod weights;
-
-pub use pallet::*;
 pub use weights::WeightInfo;
 
 #[cfg(test)]
@@ -34,14 +32,14 @@ mod tests;
 pub mod pallet {
 	pub mod types {
 		// --- hyperspace ---
-		use super::*;
+		use crate::pallet::*;
 
+		// Simple type
+		pub type MappedEtp = u128;
 		// Generic type
 		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 		pub type EtpBalance<T> = <EtpCurrency<T> as Currency<AccountId<T>>>::Balance;
 		type EtpCurrency<T> = <T as Config>::EtpCurrency;
-		// Simple type
-		pub type MappedEtp = u128;
 	}
 	pub use types::*;
 
@@ -58,7 +56,6 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		// --- substrate ---
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
 		// --- hyperspace ---
 		#[pallet::constant]
@@ -66,18 +63,9 @@ pub mod pallet {
 		type EtpCurrency: Currency<AccountId<Self>>;
 	}
 
-	#[pallet::event]
-	pub enum Event<T: Config> {
-		/// Dummy Event. \[who, swapped *CETP*, burned Mapped *ETP*\]
-		DummyEvent(AccountId<T>, EtpBalance<T>, MappedEtp),
-	}
-
-	#[pallet::error]
-	pub enum Error<T> {}
-
 	#[pallet::storage]
 	#[pallet::getter(fn total_mapped_etp)]
-	pub type TotalMappedEtp<T: Config> = StorageValue<_, MappedEtp>;
+	pub type TotalMappedEtp<T> = StorageValue<_, MappedEtp>;
 
 	#[cfg_attr(feature = "std", derive(Default))]
 	#[pallet::genesis_config]
@@ -88,7 +76,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			let _ = T::EtpCurrency::make_free_balance_be(
-				&T::ModuleId::get().into_account(),
+				&<Pallet<T>>::account_id(),
 				T::EtpCurrency::minimum_balance(),
 			);
 
@@ -102,7 +90,13 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		pub fn account_id() -> T::AccountId {
+			T::ModuleId::get().into_account()
+		}
+	}
 }
+pub use pallet::*;
 
 pub mod migration {
 	const OLD_PALLET_NAME: &[u8] = b"HyperspaceOldetpIssuing";

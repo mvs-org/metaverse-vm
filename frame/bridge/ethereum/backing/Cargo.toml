@@ -19,9 +19,8 @@ serde_json  = { version = "1.0.64", optional = true }
 # hyperspace
 hyperspace-relay-primitives = { default-features = false, path = "../../../../primitives/relay" }
 hyperspace-support          = { default-features = false, path = "../../../support" }
+ethabi                    = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "xavier-no-std" }
 ethereum-primitives       = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
-# github
-ethabi = { default-features = false, git = "https://github.com/darwinia-network/ethabi.git", branch = "xavier-no-std" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
@@ -53,7 +52,6 @@ default = ["std"]
 std = [
 	"crates-std",
 	"hyperspace-std",
-	"github-std",
 	"substrate-std",
 ]
 
@@ -65,13 +63,17 @@ crates-std    = [
 hyperspace-std  = [
 	"hyperspace-relay-primitives/std",
 	"hyperspace-support/std",
+	"ethabi/std",
 	"ethereum-primitives/std",
 ]
-github-std    = ["ethabi/std"]
 substrate-std = [
 	"frame-support/std",
 	"frame-system/std",
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
+]
+
+try-runtime = [
+	"frame-support/try-runtime",
 ]

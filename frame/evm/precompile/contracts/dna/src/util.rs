@@ -1,13 +1,11 @@
 pub fn e2s_address(eth_address: ethereum_types::H160) -> sp_core::H160 {
 	let eth_address_bytes = eth_address.to_fixed_bytes();
-	let sp_address = sp_core::H160::from_slice(&eth_address_bytes);
-	sp_address
+	sp_core::H160::from_slice(&eth_address_bytes)
 }
 
 pub fn s2e_address(sp_address: sp_core::H160) -> ethereum_types::H160 {
 	let sp_address_bytes = sp_address.to_fixed_bytes();
-	let eth_address = ethereum_types::H160::from_slice(&sp_address_bytes);
-	eth_address
+	ethereum_types::H160::from_slice(&sp_address_bytes)
 }
 
 pub fn e2s_u256(eth_value: ethereum_types::U256) -> sp_core::U256 {

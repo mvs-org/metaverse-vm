@@ -18,12 +18,14 @@
 
 //! Tests for ethereum-backing.
 
+// --- crates.io ---
+use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{assert_err, assert_ok};
 use frame_system::RawOrigin;
-use sp_runtime::{traits::Dispatchable, AccountId32};
+use sp_runtime::{traits::Dispatchable, AccountId32, RuntimeDebug};
 // --- hyperspace ---
-use crate::*;
+use crate::{pallet::*, *};
 use hyperspace_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
 use hyperspace_support::balance::*;
 use ethereum_primitives::{
@@ -83,8 +85,8 @@ impl ExtBuilder {
 				20
 			)
 			.into(),
-			etp_locked: 20000000000000,
-			dna_locked: 5000000000000,
+			backed_etp: 20000000000000,
+			backed_dna: 5000000000000,
 		}
 		.assimilate_storage(&mut t)
 		.unwrap();

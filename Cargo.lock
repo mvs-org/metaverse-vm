@@ -1269,29 +1269,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dc-consensus"
-version = "2.2.0"
-dependencies = [
- "dc-db",
- "derive_more",
- "dp_consensus",
- "dvm-rpc-runtime-api",
- "futures 0.3.14",
- "log",
- "parity-scale-codec",
- "sc-client-api",
- "sp-api",
- "sp-block-builder",
- "sp-blockchain",
- "sp-consensus",
- "sp-core",
- "sp-inherents",
- "sp-runtime",
- "sp-timestamp",
- "substrate-prometheus-endpoint",
-]
-
-[[package]]
 name = "dc-db"
 version = "2.2.0"
 dependencies = [
@@ -1308,7 +1285,6 @@ dependencies = [
 name = "dc-mapping-sync"
 version = "2.2.0"
 dependencies = [
- "dc-consensus",
  "dc-db",
  "dp_consensus",
  "dvm-rpc-runtime-api",
@@ -1326,7 +1302,6 @@ name = "dc-rpc"
 version = "2.2.0"
 dependencies = [
  "array-bytes",
- "dc-consensus",
  "dc-db",
  "dp-rpc",
  "dp-storage",
@@ -1920,9 +1895,9 @@ checksum = "4443176a9f2c162692bd3d352d745ef9413eec5782a80d8fd6f8a1ac692a07f7"
 
 [[package]]
 name = "fastrand"
-version = "1.4.0"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca5faf057445ce5c9d4329e382b2ce7ca38550ef3b73a5348362d5f24e0c7fe3"
+checksum = "77b705829d1e87f762c2df6da140b26af5839e1033aa84aa5f56bb688e4e1bdb"
 dependencies = [
  "instant",
 ]
@@ -2790,7 +2765,6 @@ name = "hyperspace"
 version = "2.2.0"
 dependencies = [
  "array-bytes",
- "dc-consensus",
  "dc-db",
  "dc-mapping-sync",
  "dc-rpc",
@@ -3174,6 +3148,7 @@ dependencies = [
  "hex",
  "hyperspace-evm",
  "hyperspace-support",
+ "log",
  "pallet-timestamp",
  "parity-scale-codec",
  "ripemd160",
@@ -3410,6 +3385,7 @@ dependencies = [
 name = "hyperspace-runtime"
 version = "2.2.0"
 dependencies = [
+ "array-bytes",
  "dvm-ethereum",
  "dvm-rpc-runtime-api",
  "ethereum-primitives",

@@ -133,25 +133,31 @@ pub mod impls {
 		}
 	}
 
-	pub struct Author;
-	impl OnUnbalanced<NegativeImbalance> for Author {
-		fn on_nonzero_unbalanced(amount: NegativeImbalance) {
+	pub struct ToAuthor;
+	impl OnUnbalanced<EtpNegativeImbalance> for ToAuthor {
+		fn on_nonzero_unbalanced(amount: EtpNegativeImbalance) {
+			let numeric_amount = amount.peek();
+			let author = Authorship::author();
 			Etp::resolve_creating(&Authorship::author(), amount);
+			System::deposit_event(<hyperspace_balances::Event<Runtime, EtpInstance>>::Deposit(
+				author,
+				numeric_amount,
+			));
 		}
 	}
 
 	pub struct DealWithFees;
-	impl OnUnbalanced<NegativeImbalance> for DealWithFees {
-		fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance>) {
+	impl OnUnbalanced<EtpNegativeImbalance> for DealWithFees {
+		fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = EtpNegativeImbalance>) {
 			if let Some(fees) = fees_then_tips.next() {
 				// for fees, 80% to treasury, 20% to author
 				let mut split = fees.ration(80, 20);
 				if let Some(tips) = fees_then_tips.next() {
-					// for tips, if any, 80% to treasury, 20% to author (though this can be anything)
-					tips.ration_merge_into(80, 20, &mut split);
+					// for tips, if any, 100% to author
+					tips.merge_into(&mut split.1);
 				}
 				Treasury::on_unbalanced(split.0);
-				Author::on_unbalanced(split.1);
+				ToAuthor::on_unbalanced(split.1);
 			}
 		}
 	}
@@ -283,7 +289,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("Hyperspace"),
 	authoring_version: 1,
 	// crate version ~2.2.0 := >=2.2.0, <2.3.0
-	spec_version: 221,
+	spec_version: 224,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -372,8 +378,8 @@ frame_support::construct_runtime! {
 		// Multisig module. Late addition.
 		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 32,
 
-		HyperspaceOldetpIssuing: hyperspace_oldetp_issuing::{Pallet, Call, Storage, Config, Event<T>} = 33,
-		HyperspaceOldetpBacking: hyperspace_oldetp_backing::{Pallet, Storage, Config<T>} = 34,
+		OldetpIssuing: hyperspace_oldetp_issuing::{Pallet, Call, Storage, Config} = 33,
+		OldetpBacking: hyperspace_oldetp_backing::{Pallet, Storage, Config<T>} = 34,
 
 		EthereumRelay: hyperspace_ethereum_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
 		EthereumBacking: hyperspace_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
@@ -381,7 +387,7 @@ frame_support::construct_runtime! {
 		EthereumRelayerGame: hyperspace_relayer_game::<Instance0>::{Pallet, Storage} = 37,
 		EthereumRelayAuthorities: hyperspace_relay_authorities::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
-		OldnaBacking: hyperspace_oldna_backing::{Pallet, Storage, Config<T>} = 39,
+		OldnaBacking: hyperspace_oldna_backing::{Pallet, Config<T>} = 39,
 
 		EVM: hyperspace_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
@@ -798,12 +804,22 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		hyperspace_balances::migration::try_runtime::pre_migrate()
+		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		hyperspace_balances::migration::migrate(b"Instance0HyperspaceBalances", b"Balances");
-		hyperspace_balances::migration::migrate(b"Instance1HyperspaceBalances", b"Dna");
+		frame_support::migration::put_storage_value(
+			b"HyperspaceEthereumIssuing",
+			b"MappingFactoryAddress",
+			&[],
+			array_bytes::hex2array_unchecked!("0xcB8531Bc0B7C8F41B55CF4E94698C37b130597B9", 20),
+		);
+		frame_support::migration::put_storage_value(
+			b"HyperspaceEthereumIssuing",
+			b"EthereumBackingAddress",
+			&[],
+			array_bytes::hex2array_unchecked!("0xb2Bea2358d817dAE01B0FD0DC3aECB25910E65AA", 20),
+		);
 
 		RuntimeBlockWeights::get().max_block
 	}

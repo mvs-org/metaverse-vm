@@ -8,8 +8,7 @@ frame_support::parameter_types! {
 	pub const OldetpIssuingModuleId: ModuleId = ModuleId(*b"da/crais");
 }
 impl Config for Runtime {
-	type Event = Event;
+	type WeightInfo = ();
 	type ModuleId = OldetpIssuingModuleId;
 	type EtpCurrency = Etp;
-	type WeightInfo = ();
 }
