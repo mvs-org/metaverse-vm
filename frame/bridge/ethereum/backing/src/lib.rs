@@ -60,7 +60,7 @@ use codec::{Decode, Encode};
 use ethabi::{Event as EthEvent, EventParam as EthEventParam, ParamType, RawLog};
 // --- substrate ---
 use frame_support::{
-	debug, decl_error, decl_event, decl_module, decl_storage, ensure,
+	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::{Currency, ExistenceRequirement::*, Get},
 	weights::Weight,
 };
@@ -494,7 +494,7 @@ impl<T: Config> Module<T> {
 			let token_address = result.params[0]
 				.value
 				.clone()
-				.to_address()
+				.into_address()
 				.ok_or(<Error<T>>::AddressCF)?;
 
 			ensure!(
@@ -511,7 +511,7 @@ impl<T: Config> Module<T> {
 			let amount = result.params[2]
 				.value
 				.clone()
-				.to_uint()
+				.into_uint()
 				.map(|x| x / U256::from(1_000_000_000u64))
 				.ok_or(<Error<T>>::IntCF)?;
 
@@ -521,13 +521,13 @@ impl<T: Config> Module<T> {
 			let raw_account_id = result.params[3]
 				.value
 				.clone()
-				.to_bytes()
+				.into_bytes()
 				.ok_or(<Error<T>>::BytesCF)?;
-			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Account: {:?}", raw_account_id);
+			log::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Account: {:?}", raw_account_id);
 
 			Self::account_id_try_from_bytes(&raw_account_id)?
 		};
-		debug::trace!(target: "ethereum-backing", "[ethereum-backing] Hyperspace Account: {:?}", hyperspace_account);
+		log::trace!(target: "ethereum-backing", "[ethereum-backing] Hyperspace Account: {:?}", hyperspace_account);
 
 		Ok((hyperspace_account, (is_etp, redeemed_amount), fee))
 	}
@@ -609,13 +609,13 @@ impl<T: Config> Module<T> {
 		let deposit_id = result.params[0]
 			.value
 			.clone()
-			.to_uint()
+			.into_uint()
 			.ok_or(<Error<T>>::IntCF)?;
 		let months = {
 			let months = result.params[2]
 				.value
 				.clone()
-				.to_uint()
+				.into_uint()
 				.ok_or(<Error<T>>::IntCF)?;
 
 			months.saturated_into()
@@ -625,7 +625,7 @@ impl<T: Config> Module<T> {
 			let start_at = result.params[3]
 				.value
 				.clone()
-				.to_uint()
+				.into_uint()
 				.ok_or(<Error<T>>::IntCF)?;
 
 			start_at.saturated_into()
@@ -636,7 +636,7 @@ impl<T: Config> Module<T> {
 			let redeemed_etp = result.params[5]
 				.value
 				.clone()
-				.to_uint()
+				.into_uint()
 				.map(|x| x / U256::from(1_000_000_000u64))
 				.ok_or(<Error<T>>::IntCF)?;
 
@@ -646,13 +646,13 @@ impl<T: Config> Module<T> {
 			let raw_account_id = result.params[6]
 				.value
 				.clone()
-				.to_bytes()
+				.into_bytes()
 				.ok_or(<Error<T>>::BytesCF)?;
-			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Account: {:?}", raw_account_id);
+			log::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Account: {:?}", raw_account_id);
 
 			Self::account_id_try_from_bytes(&raw_account_id)?
 		};
-		debug::trace!(target: "ethereum-backing", "[ethereum-backing] Hyperspace Account: {:?}", hyperspace_account);
+		log::trace!(target: "ethereum-backing", "[ethereum-backing] Hyperspace Account: {:?}", hyperspace_account);
 
 		Ok((
 			deposit_id,
@@ -713,7 +713,7 @@ impl<T: Config> Module<T> {
 		let term = log.params[0]
 			.value
 			.clone()
-			.to_uint()
+			.into_uint()
 			.ok_or(<Error<T>>::BytesCF)?
 			.saturated_into();
 		let authorities = {
@@ -722,10 +722,10 @@ impl<T: Config> Module<T> {
 			for token in log.params[1]
 				.value
 				.clone()
-				.to_array()
+				.into_array()
 				.ok_or(<Error<T>>::ArrayCF)?
 			{
-				authorities.push(token.to_address().ok_or(<Error<T>>::AddressCF)?);
+				authorities.push(token.into_address().ok_or(<Error<T>>::AddressCF)?);
 			}
 
 			authorities
@@ -734,10 +734,10 @@ impl<T: Config> Module<T> {
 			let raw_account_id = log.params[2]
 				.value
 				.clone()
-				.to_fixed_bytes()
+				.into_fixed_bytes()
 				.ok_or(<Error<T>>::BytesCF)?;
 
-			debug::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Account: {:?}", raw_account_id);
+			log::trace!(target: "ethereum-backing", "[ethereum-backing] Raw Account: {:?}", raw_account_id);
 
 			Self::account_id_try_from_bytes(&raw_account_id)?
 		};

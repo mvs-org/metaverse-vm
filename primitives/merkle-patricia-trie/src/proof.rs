@@ -27,7 +27,7 @@ pub struct Proof {
 
 impl Proof {
 	pub fn to_rlp(&self) -> Vec<u8> {
-		rlp::encode(self)
+		rlp::encode(self).to_vec()
 	}
 
 	pub fn len(&self) -> usize {

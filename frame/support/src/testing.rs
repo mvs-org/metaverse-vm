@@ -34,24 +34,4 @@ macro_rules! impl_test_account_data {
 			{}
 		}
 	};
-	(deprecated) => {
-		pub type EtpInstance = hyperspace_balances::Instance0;
-		pub type EtpError = hyperspace_balances::Error<Test, EtpInstance>;
-		pub type EtpConfig = hyperspace_balances::GenesisConfig<Test, EtpInstance>;
-		pub type Etp = hyperspace_balances::Module<Test, EtpInstance>;
-		pub type DnaInstance = hyperspace_balances::Instance1;
-		pub type DnaError = hyperspace_balances::Error<Test, DnaInstance>;
-		pub type DnaConfig = hyperspace_balances::GenesisConfig<Test, DnaInstance>;
-		pub type Dna = hyperspace_balances::Module<Test, DnaInstance>;
-
-		$crate::impl_account_data! {
-			struct AccountData<Balance>
-			for
-				EtpInstance,
-				DnaInstance
-			where
-				Balance = Balance
-			{}
-		}
-	};
 }

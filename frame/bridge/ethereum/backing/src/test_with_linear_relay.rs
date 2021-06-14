@@ -30,11 +30,9 @@ use ethereum_primitives::{
 	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumNetworkType,
 };
 
-type EthereumRelay = hyperspace_ethereum_linear_relay::Module<Test>;
+decl_tests!(EthereumRelay: hyperspace_ethereum_linear_relay::{Module, Call, Storage});
 
-decl_tests!();
-
-parameter_types! {
+frame_support::parameter_types! {
 	pub const EthereumLinearRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
@@ -59,7 +57,7 @@ impl ExtBuilder {
 			.build_storage::<Test>()
 			.unwrap();
 
-		GenesisConfig::<Test> {
+		hyperspace_ethereum_backing::GenesisConfig::<Test> {
 			token_redeem_address: array_bytes::hex2array_unchecked!(
 				"0x49262B932E439271d05634c32978294C7Ea15d0C",
 				20

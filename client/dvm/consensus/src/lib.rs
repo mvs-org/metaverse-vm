@@ -89,7 +89,7 @@ where
 	I::Error: Into<ConsensusError>,
 	C: ProvideRuntimeApi<B> + Send + Sync + HeaderBackend<B> + AuxStore + ProvideCache<B> + BlockOf,
 	C::Api: EthereumRuntimeRPCApi<B>,
-	C::Api: BlockBuilderApi<B, Error = sp_blockchain::Error>,
+	C::Api: BlockBuilderApi<B>,
 {
 	pub fn new(inner: I, client: Arc<C>, backend: Arc<dc_db::Backend<B>>) -> Self {
 		Self {
@@ -108,7 +108,7 @@ where
 	I::Error: Into<ConsensusError>,
 	C: ProvideRuntimeApi<B> + Send + Sync + HeaderBackend<B> + AuxStore + ProvideCache<B> + BlockOf,
 	C::Api: EthereumRuntimeRPCApi<B>,
-	C::Api: BlockBuilderApi<B, Error = sp_blockchain::Error>,
+	C::Api: BlockBuilderApi<B>,
 {
 	type Error = ConsensusError;
 	type Transaction = sp_api::TransactionFor<C, B>;

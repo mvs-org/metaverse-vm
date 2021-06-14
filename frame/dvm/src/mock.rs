@@ -16,36 +16,28 @@
 
 //! Test utilities
 
-use super::*;
-use crate::account_basic::DVMAccountBasicMapping;
-use crate::{Config, IntermediateStateRoot, Module};
+use crate::{self as dvm_ethereum, account_basic::DVMAccountBasicMapping, *};
+use codec::{Decode, Encode};
 use hyperspace_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
 use ethereum::{TransactionAction, TransactionSignature};
-use frame_support::{impl_outer_origin, parameter_types, ConsensusEngineId};
+use frame_support::ConsensusEngineId;
+use frame_system::mocking::*;
 use rlp::*;
 use sp_core::{H160, H256, U256};
-use sp_runtime::AccountId32;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	ModuleId, Perbill, RuntimeDebug,
+	AccountId32, ModuleId, Perbill, RuntimeDebug,
 };
 
-use codec::{Decode, Encode};
+hyperspace_support::impl_test_account_data! {}
 
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
-hyperspace_support::impl_test_account_data! { deprecated }
+type Block = MockBlock<Test>;
+type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 type Balance = u64;
 
-// For testing the pallet, we construct most of a mock runtime. This means
-// first constructing a configuration type (`Test`) which `impl`s each of the
-// configuration traits of pallets we want to use.
-#[derive(Clone, Eq, PartialEq)]
-pub struct Test;
-parameter_types! {
+frame_support::parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const MaximumBlockWeight: Weight = 1024;
 	pub const MaximumBlockLength: u32 = 2 * 1024;
@@ -58,7 +50,7 @@ impl frame_system::Config for Test {
 	type BlockLength = ();
 	type DbWeight = ();
 	type Origin = Origin;
-	type Call = ();
+	type Call = Call;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -69,7 +61,7 @@ impl frame_system::Config for Test {
 	type Event = ();
 	type BlockHashCount = ();
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
@@ -77,7 +69,7 @@ impl frame_system::Config for Test {
 	type SS58Prefix = ();
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	// For weight estimation, we assume that the most locks on an individual account will be 50.
 	// This number may need to be adjusted in the future if this assumption no longer holds true.
 	pub const MaxLocks: u32 = 10;
@@ -108,7 +100,7 @@ impl hyperspace_balances::Config<DnaInstance> for Test {
 	type BalanceInfo = AccountData<Balance>;
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
 }
 
@@ -136,7 +128,7 @@ impl FindAuthor<H160> for EthereumFindAuthor {
 	}
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const TransactionByteFee: u64 = 1;
 	pub const ChainId: u64 = 42;
 	pub const EVMModuleId: ModuleId = ModuleId(*b"py/evmpa");
@@ -167,7 +159,7 @@ impl hyperspace_evm::Config for Test {
 	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const BlockGasLimit: U256 = U256::MAX;
 }
 
@@ -179,9 +171,20 @@ impl Config for Test {
 	type EtpCurrency = Etp;
 }
 
-pub type System = frame_system::Module<Test>;
-pub type Ethereum = Module<Test>;
-pub type Evm = hyperspace_evm::Module<Test>;
+frame_support::construct_runtime! {
+	pub enum Test where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Module, Call, Config, Storage},
+		Timestamp: pallet_timestamp::{Module, Call, Storage},
+		Etp: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>},
+		Dna: hyperspace_balances::<Instance1>::{Module, Call, Storage},
+		EVM: hyperspace_evm::{Module, Call, Storage},
+		Ethereum: dvm_ethereum::{Module, Call, Storage},
+	}
+}
 
 pub struct AccountInfo {
 	pub address: H160,
@@ -221,7 +224,7 @@ pub fn new_test_ext(accounts_len: usize) -> (Vec<AccountInfo>, sp_io::TestExtern
 		.map(|i| (pairs[i].account_id.clone(), 100_000_000_000))
 		.collect();
 
-	EtpConfig { balances }
+	hyperspace_balances::GenesisConfig::<Test, EtpInstance> { balances }
 		.assimilate_storage(&mut ext)
 		.unwrap();
 

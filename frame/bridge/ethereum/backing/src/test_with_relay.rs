@@ -32,9 +32,7 @@ use ethereum_primitives::{
 	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumBlockNumber, EthereumNetworkType,
 };
 
-type EthereumRelay = hyperspace_ethereum_relay::Module<Test>;
-
-decl_tests!();
+decl_tests!(EthereumRelay: hyperspace_ethereum_relay::{Module, Call, Storage});
 
 pub struct UnusedTechnicalMembership;
 impl Contains<AccountId> for UnusedTechnicalMembership {
@@ -42,7 +40,7 @@ impl Contains<AccountId> for UnusedTechnicalMembership {
 		unimplemented!()
 	}
 }
-parameter_types! {
+frame_support::parameter_types! {
 	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethrl");
 	pub const EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
 }
@@ -119,7 +117,7 @@ impl ExtBuilder {
 			.build_storage::<Test>()
 			.unwrap();
 
-		GenesisConfig::<Test> {
+		hyperspace_ethereum_backing::GenesisConfig::<Test> {
 			token_redeem_address: array_bytes::hex2array_unchecked!(
 				"0x49262B932E439271d05634c32978294C7Ea15d0C",
 				20

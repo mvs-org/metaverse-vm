@@ -26,12 +26,13 @@ use std::{cell::RefCell, collections::HashSet};
 use frame_support::{
 	assert_ok, parameter_types,
 	storage::IterableStorageMap,
-	traits::{Currency, FindAuthor, Get, OnFinalize, OnInitialize},
+	traits::{Currency, FindAuthor, Get, OnFinalize, OnInitialize, OneSessionHandler},
 	weights::{constants::RocksDbWeight, Weight},
 	StorageValue,
 };
 use frame_system::mocking::*;
 use sp_core::H256;
+use sp_election_providers::onchain;
 use sp_npos_elections::{reduce, StakedAssignment};
 use sp_runtime::{
 	testing::{Header, TestXt, UintAuthorityId},
@@ -71,7 +72,7 @@ hyperspace_support::impl_test_account_data! {}
 
 /// Another session handler struct to test on_disabled.
 pub struct OtherSessionHandler;
-impl pallet_session::OneSessionHandler<AccountId> for OtherSessionHandler {
+impl OneSessionHandler<AccountId> for OtherSessionHandler {
 	type Key = UintAuthorityId;
 
 	fn on_genesis_session<'a, I: 'a>(_: I)
@@ -213,6 +214,13 @@ impl hyperspace_balances::Config<DnaInstance> for Test {
 	type WeightInfo = ();
 }
 
+impl onchain::Config for Test {
+	type AccountId = AccountId;
+	type BlockNumber = BlockNumber;
+	type Accuracy = Perbill;
+	type DataProvider = Staking;
+}
+
 parameter_types! {
 	pub const StakingModuleId: ModuleId = ModuleId(*b"da/staki");
 	pub const BondingDurationInEra: EraIndex = 3;
@@ -249,6 +257,7 @@ impl Config for Test {
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type UnsignedPriority = UnsignedPriority;
 	type OffchainSolutionWeightLimit = OffchainSolutionWeightLimit;
+	type ElectionProvider = onchain::OnChainSequentialPhragmen<Self>;
 	type EtpCurrency = Etp;
 	type EtpRewardRemainder = EtpRewardRemainderMock;
 	type EtpSlash = ();
@@ -961,7 +970,7 @@ pub(crate) fn horrible_npos_solution(
 	let score = {
 		let (_, _, better_score) = prepare_submission_with(true, true, 0, |_| {});
 
-		let support = to_support_map::<AccountId>(&winners, &staked_assignment).unwrap();
+		let support = to_supports::<AccountId>(&winners, &staked_assignment).unwrap();
 		let score = support.evaluate();
 
 		assert!(sp_npos_elections::is_score_better::<Perbill>(
@@ -1071,8 +1080,7 @@ pub(crate) fn prepare_submission_with(
 				Staking::power_of(stash) as _
 			});
 
-		let support_map =
-			to_support_map::<AccountId>(winners.as_slice(), staked.as_slice()).unwrap();
+		let support_map = to_supports(winners.as_slice(), staked.as_slice()).unwrap();
 		support_map.evaluate()
 	} else {
 		Default::default()
@@ -1147,10 +1155,10 @@ macro_rules! assert_session_era {
 			$session,
 		);
 		assert_eq!(
-			active_era(),
+			current_era(),
 			$era,
-			"wrong active era {} != {}",
-			active_era(),
+			"wrong current era {} != {}",
+			current_era(),
 			$era,
 		);
 	};

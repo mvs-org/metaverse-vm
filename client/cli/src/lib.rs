@@ -42,22 +42,6 @@ pub struct Configuration {
 	/// availability of local keys).
 	validator: Option<bool>,
 
-	/// Enable sentry mode.
-	///
-	/// The node will be started with the authority role and participate in
-	/// consensus tasks as an "observer", it will never actively participate
-	/// regardless of whether it could (e.g. keys are available locally). This
-	/// mode is useful as a secure proxy for validators (which would run
-	/// detached from the network), since we want this node to participate in
-	/// the full consensus protocols in order to have all needed consensus data
-	/// available to relay to private nodes.
-	// #[structopt(
-	// long = "sentry",
-	// conflicts_with_all = &[ "validator", "light" ],
-	// parse(try_from_str)
-	// )]
-	sentry: Option<Vec<sc_service::config::MultiaddrWithPeerId>>,
-
 	/// Disable GRANDPA voter when running in validator mode, otherwise disable the GRANDPA observer.
 	no_grandpa: Option<bool>,
 
@@ -214,17 +198,6 @@ pub struct Configuration {
 	/// The default value is 8 and the values higher than 256 are ignored.
 	max_runtime_instances: Option<usize>,
 
-	/// Specify a list of sentry node public addresses.
-	///
-	/// Can't be used with --public-addr as the sentry node would take precedence over the public address
-	/// specified there.
-	// #[structopt(
-	// long = "sentry-nodes",
-	// value_name = "ADDR",
-	// conflicts_with_all = &[ "sentry", "public-addr" ]
-	// )]
-	sentry_nodes: Option<Vec<sc_service::config::MultiaddrWithPeerId>>,
-
 	/// Run a temporary node.
 	///
 	/// A temporary directory will be created to store the configuration and will be deleted
@@ -279,7 +252,6 @@ impl Configuration {
 			let cmd = cli.mut_base();
 
 			quick_if_let!(cmd, self, validator);
-			quick_if_let!(cmd, self, sentry);
 			quick_if_let!(cmd, self, no_grandpa);
 			quick_if_let!(cmd, self, light);
 			quick_if_let!(cmd, self, rpc_external);
@@ -378,7 +350,6 @@ impl Configuration {
 			);
 
 			quick_if_let!(cmd, self, Some(max_runtime_instances));
-			quick_if_let!(cmd, self, sentry_nodes);
 			quick_if_let!(cmd, self, tmp);
 		}
 

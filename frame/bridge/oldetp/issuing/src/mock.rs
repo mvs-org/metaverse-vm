@@ -18,15 +18,10 @@
 
 #![allow(dead_code)]
 
-pub mod oldetp_issuing {
-	// --- hyperspace ---
-	pub use crate::Event;
-}
-
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{impl_outer_event, impl_outer_origin, parameter_types};
+use frame_system::mocking::*;
 use sp_io::TestExternalities;
 use sp_runtime::{
 	testing::{Header, H256},
@@ -34,41 +29,17 @@ use sp_runtime::{
 	RuntimeDebug,
 };
 // --- hyperspace ---
-use crate::*;
+use crate::{self as hyperspace_oldetp_issuing, *};
+
+pub type Block = MockBlock<Test>;
+pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 pub type AccountId = u64;
 pub type Balance = u128;
 
-pub type System = frame_system::Module<Test>;
-pub type OldetpIssuing = Module<Test>;
-
 pub type OldetpIssuingError = Error<Test>;
 
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
-
-impl_outer_event! {
-	pub enum Event for Test {
-		frame_system <T>,
-		hyperspace_balances Instance0<T>,
-		oldetp_issuing <T>,
-	}
-}
-
-hyperspace_support::impl_test_account_data! { deprecated }
-
-#[derive(Clone, Eq, PartialEq)]
-pub struct Test;
-parameter_types! {
-	pub const OldetpIssuingModuleId: ModuleId = ModuleId(*b"da/oldetpi");
-}
-impl Config for Test {
-	type Event = Event;
-	type ModuleId = OldetpIssuingModuleId;
-	type EtpCurrency = Etp;
-	type WeightInfo = ();
-}
+hyperspace_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
@@ -76,7 +47,7 @@ impl frame_system::Config for Test {
 	type BlockLength = ();
 	type DbWeight = ();
 	type Origin = Origin;
-	type Call = ();
+	type Call = Call;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -87,7 +58,7 @@ impl frame_system::Config for Test {
 	type Event = Event;
 	type BlockHashCount = ();
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
@@ -95,7 +66,7 @@ impl frame_system::Config for Test {
 	type SS58Prefix = ();
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const ExistentialDeposit: Balance = 0;
 }
 impl hyperspace_balances::Config<EtpInstance> for Test {
@@ -110,12 +81,35 @@ impl hyperspace_balances::Config<EtpInstance> for Test {
 	type WeightInfo = ();
 }
 
+frame_support::parameter_types! {
+	pub const OldetpIssuingModuleId: ModuleId = ModuleId(*b"da/oldetpi");
+}
+impl Config for Test {
+	type Event = Event;
+	type ModuleId = OldetpIssuingModuleId;
+	type EtpCurrency = Etp;
+	type WeightInfo = ();
+}
+
+frame_support::construct_runtime! {
+	pub enum Test
+	where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic
+	{
+		System: frame_system::{Module, Call, Storage, Config, Event<T>},
+		Etp: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+		OldetpIssuing: hyperspace_oldetp_issuing::{Module, Call, Storage, Config, Event<T>},
+	}
+}
+
 pub fn new_test_ext() -> TestExternalities {
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Test>()
 		.unwrap();
 
-	EtpConfig {
+	hyperspace_balances::GenesisConfig::<Test, EtpInstance> {
 		balances: (1..10)
 			.map(|i: AccountId| vec![(i, 100 * i as Balance), (10 * i, 1000 * i as Balance)])
 			.flatten()
@@ -123,7 +117,7 @@ pub fn new_test_ext() -> TestExternalities {
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	GenesisConfig {
+	hyperspace_oldetp_issuing::GenesisConfig {
 		total_mapped_etp: 4_000,
 	}
 	.assimilate_storage::<Test>(&mut t)
@@ -146,6 +140,6 @@ pub fn events() -> Vec<Event> {
 pub fn oldetp_issuing_events() -> Vec<Event> {
 	events()
 		.into_iter()
-		.filter(|e| matches!(e, Event::oldetp_issuing(_)))
+		.filter(|e| matches!(e, Event::hyperspace_oldetp_issuing(_)))
 		.collect()
 }

@@ -132,7 +132,7 @@ where
 	C::Api: hyperspace_header_mmr_rpc::HeaderMMRRuntimeApi<Block, Hash>,
 	C::Api: hyperspace_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
 	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
-	<C::Api as sp_api::ApiErrorExt>::Error: std::fmt::Debug,
+	// <C::Api as sp_api::ApiErrorExt>::Error: std::fmt::Debug,
 	P: 'static + Sync + Send + sp_transaction_pool::TransactionPool<Block = Block>,
 	SC: 'static + sp_consensus::SelectChain<Block>,
 	B: 'static + Send + Sync + sc_client_api::Backend<Block>,

@@ -3,7 +3,6 @@ use frame_support::{traits::FindAuthor, ConsensusEngineId};
 use sp_core::{crypto::Public, H160, U256};
 // --- hyperspace ---
 use crate::*;
-
 use dvm_ethereum::{Config, IntermediateStateRoot};
 
 pub struct EthereumFindAuthor<F>(sp_std::marker::PhantomData<F>);

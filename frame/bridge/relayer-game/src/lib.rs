@@ -58,7 +58,6 @@ mod types {
 
 // --- substrate ---
 use frame_support::{
-	debug::*,
 	decl_error, decl_module, decl_storage, ensure,
 	traits::{Currency, Get, OnUnbalanced},
 };
@@ -204,7 +203,7 @@ decl_module! {
 
 			if !game_ids.is_empty() {
 				if let Err(e) = Self::update_games_at(game_ids, now) {
-					error!(target: "relayer-game", "{:?}", e);
+					log::error!(target: "relayer-game", "{:?}", e);
 				}
 			}
 
@@ -274,8 +273,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		game_ids: Vec<RelayHeaderId<T, I>>,
 		moment: BlockNumber<T>,
 	) -> DispatchResult {
-		trace!(target: "relayer-game", "Found Closed Rounds at `{:?}`", moment);
-		trace!(target: "relayer-game", "---");
+		log::trace!(target: "relayer-game", "Found Closed Rounds at `{:?}`", moment);
+		log::trace!(target: "relayer-game", "---");
 
 		// let call = Call::update_games_unsigned(game_ids).into();
 		//
@@ -354,7 +353,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 			)
 		} else {
 			// Should never enter this condition
-			error!(target: "relayer-game", "   >  Relay Parcels Count - MISMATCHED");
+			log::error!(target: "relayer-game", "   >  Relay Parcels Count - MISMATCHED");
 
 			None
 		}
@@ -433,21 +432,21 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 						return Some(relay_header_parcels.pop().unwrap());
 					} else {
 						// Should never enter this condition
-						error!(target: "relayer-game", "   >  Relay Parcels - MORE THAN ONE");
+						log::error!(target: "relayer-game", "   >  Relay Parcels - MORE THAN ONE");
 
 						return None;
 					}
 				}
 			} else {
 				// Should never enter this condition
-				error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
+				log::error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
 
 				return None;
 			}
 		}
 
 		// Should never enter this condition
-		error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
+		log::error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
 
 		None
 	}
@@ -497,13 +496,13 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 							}
 						} else {
 							// Should never enter this condition
-							error!(target: "relayer-game", "   >  Index - NOT EXISTED");
+							log::error!(target: "relayer-game", "   >  Index - NOT EXISTED");
 
 							return None;
 						}
 					} else {
 						// Should never enter this condition
-						error!(target: "relayer-game", "   >  Round - NOT EXISTED");
+						log::error!(target: "relayer-game", "   >  Round - NOT EXISTED");
 
 						return None;
 					}
@@ -512,7 +511,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 				if T::RelayableChain::verify_relay_chain(relay_chain).is_ok() {
 					last_round_winning_relay_chain_indexes.push(index);
 				} else {
-					trace!(
+					log::trace!(
 						target: "relayer-game",
 						"   >  Relay Chain - INVALID",
 					);
@@ -611,34 +610,34 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 									return Some(relay_header_parcels[0].to_owned());
 								} else {
 									// Should never enter this condition
-									error!(target: "relayer-game", "   >  Relay Parcels - MORE THAN ONE");
+									log::error!(target: "relayer-game", "   >  Relay Parcels - MORE THAN ONE");
 
 									return None;
 								}
 							}
 						} else {
 							// Should never enter this condition
-							error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
+							log::error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
 
 							return None;
 						}
 					}
 
 					// Should never enter this condition
-					error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
+					log::error!(target: "relayer-game", "   >  Extended Relay Proposal - NOT EXISTED");
 
 					None
 				}
 				_ => {
 					// Should never enter this condition
-					error!(target: "relayer-game", "   >  Honesty Relayer - MORE THAN ONE");
+					log::error!(target: "relayer-game", "   >  Honesty Relayer - MORE THAN ONE");
 
 					None
 				}
 			}
 		} else {
 			// Should never enter this condition
-			error!(target: "relayer-game", "   >  Relay Affirmations - EMPTY");
+			log::error!(target: "relayer-game", "   >  Relay Affirmations - EMPTY");
 
 			None
 		}
@@ -663,7 +662,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	}
 
 	pub fn game_over(game_id: RelayHeaderId<T, I>) {
-		// TODO: error trace
+		// TODO: log::error log::trace
 		let _ = <RelayHeaderParcelToResolve<T, I>>::try_mutate(|relay_header_parcel_to_resolve| {
 			if let Some(i) = relay_header_parcel_to_resolve
 				.iter()
@@ -690,7 +689,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		let mut relay_header_parcels = vec![];
 
 		for game_id in game_ids {
-			trace!(
+			log::trace!(
 				target: "relayer-game",
 				">  Trying to Settle Game `{:?}`", game_id
 			);
@@ -700,7 +699,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 				last_round
 			} else {
 				// Should never enter this condition
-				error!(target: "relayer-game", "   >  Rounds - EMPTY");
+				log::error!(target: "relayer-game", "   >  Rounds - EMPTY");
 
 				continue;
 			};
@@ -708,10 +707,10 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 			match (last_round, relay_affirmations.len()) {
 				// Should never enter this condition
-				(0, 0) => error!(target: "relayer-game", "   >  Affirmations - EMPTY"),
+				(0, 0) => log::error!(target: "relayer-game", "   >  Affirmations - EMPTY"),
 				// At first round and only one affirmation found
 				(0, 1) => {
-					trace!(target: "relayer-game", "   >  Challenge - NOT EXISTED");
+					log::trace!(target: "relayer-game", "   >  Challenge - NOT EXISTED");
 
 					if let Some(relay_header_parcel) =
 						Self::settle_without_challenge(relay_affirmations.pop().unwrap())
@@ -721,13 +720,13 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 				}
 				// No relayer response for the latest round
 				(_, 0) => {
-					trace!(target: "relayer-game", "   >  All Relayers Abstain, Settle Abandon");
+					log::trace!(target: "relayer-game", "   >  All Relayers Abstain, Settle Abandon");
 
 					Self::settle_abandon(&game_id);
 				}
 				// No more challenge found at latest round, only one relayer win
 				(_, 1) => {
-					trace!(target: "relayer-game", "   >  No More Challenge, Settle With Challenge");
+					log::trace!(target: "relayer-game", "   >  No More Challenge, Settle With Challenge");
 
 					if let Some(relay_header_parcel) =
 						Self::settle_with_challenge(&game_id, relay_affirmations.pop().unwrap())
@@ -746,7 +745,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 					);
 
 					if distance == round_count {
-						trace!(target: "relayer-game", "   >  A Full Chain Gave, On Chain Arbitrate");
+						log::trace!(target: "relayer-game", "   >  A Full Chain Gave, On Chain Arbitrate");
 
 						// A whole chain gave, start continuous verification
 						if let Some(relay_header_parcel) = Self::on_chain_arbitrate(&game_id) {
@@ -755,7 +754,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 							Self::settle_abandon(&game_id);
 						}
 					} else {
-						trace!(target: "relayer-game", "   >  Still In Challenge, Update Games");
+						log::trace!(target: "relayer-game", "   >  Still In Challenge, Update Games");
 
 						// Update game, start new round
 						Self::update_game_at(&game_id, last_round, now);
@@ -768,10 +767,10 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 			Self::game_over(game_id);
 		}
 
-		// TODO: handle error
+		// TODO: handle log::error
 		let _ = T::RelayableChain::try_confirm_relay_header_parcels(relay_header_parcels);
 
-		trace!(target: "relayer-game", "---");
+		log::trace!(target: "relayer-game", "---");
 
 		Ok(())
 	}
@@ -807,7 +806,7 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		relay_header_parcel: Self::RelayHeaderParcel,
 		optional_relay_proofs: Option<Self::RelayProofs>,
 	) -> Result<Self::RelayHeaderId, DispatchError> {
-		trace!(
+		log::trace!(
 			target: "relayer-game",
 			"Relayer `{:?}` affirm:\n{:#?}",
 			relayer,
@@ -889,7 +888,7 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		relay_header_parcel: Self::RelayHeaderParcel,
 		optional_relay_proofs: Option<Self::RelayProofs>,
 	) -> Result<(Self::RelayHeaderId, u32), DispatchError> {
-		trace!(
+		log::trace!(
 			target: "relayer-game",
 			"Relayer `{:?}` dispute and affirm:\n{:#?}",
 			relayer,
@@ -1011,7 +1010,7 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		game_sample_points: Vec<Self::RelayHeaderParcel>,
 		optional_relay_proofs: Option<Vec<Self::RelayProofs>>,
 	) -> Result<(Self::RelayHeaderId, u32, u32), DispatchError> {
-		trace!(
+		log::trace!(
 			target: "relayer-game",
 			"Relayer `{:?}` extend affirmation: {:?} with: {:?}",
 			relayer,

@@ -174,7 +174,10 @@ impl EthereumHeader {
 					array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into();
 			}
 		}
-		eth_header.seal = vec![rlp::encode(&mix_hash), rlp::encode(&nonce)];
+		eth_header.seal = vec![
+			rlp::encode(&mix_hash).to_vec(),
+			rlp::encode(&nonce).to_vec(),
+		];
 
 		eth_header
 	}
@@ -388,7 +391,7 @@ impl EthereumHeader {
 	fn rlp(&self, with_seal: Seal) -> Bytes {
 		let mut s = RlpStream::new();
 		self.stream_rlp(&mut s, with_seal);
-		s.out()
+		s.out().to_vec()
 	}
 
 	/// Place this header into an RLP stream `s`, optionally `with_seal`.
@@ -777,7 +780,10 @@ mod tests {
 	#[test]
 	fn can_do_proof_of_work_verification_fail() {
 		let mut header: EthereumHeader = EthereumHeader::default();
-		header.set_seal(vec![rlp::encode(&H256::zero()), rlp::encode(&H64::zero())]);
+		header.set_seal(vec![
+			rlp::encode(&H256::zero()).to_vec(),
+			rlp::encode(&H64::zero()).to_vec(),
+		]);
 		header.set_difficulty(
 			U256::from_str("ffffffffffffffffffffffffffffffffffffffffffffaaaaaaaaaaaaaaaaaaaa")
 				.unwrap(),

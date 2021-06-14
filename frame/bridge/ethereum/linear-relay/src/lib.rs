@@ -72,7 +72,6 @@ use codec::{Decode, Encode};
 use ethereum_types::H128;
 // --- substrate ---
 use frame_support::{
-	debug::trace,
 	decl_error, decl_event, decl_module, decl_storage, ensure,
 	traits::Get,
 	traits::{Currency, ExistenceRequirement::KeepAlive, IsSubType, ReservableCurrency},
@@ -275,7 +274,7 @@ decl_module! {
 		/// # </weight>
 		#[weight = 200_000_000]
 		pub fn relay_header(origin, header: EthereumHeader, ethash_proof: Vec<EthashProof>) {
-			trace!(target: "ethereum-linear-relay", "{:?}", header);
+			log::trace!(target: "ethereum-linear-relay", "{:?}", header);
 			let relayer = ensure_signed(origin)?;
 
 			if Self::check_authority() {
@@ -551,13 +550,13 @@ impl<T: Config> Module<T> {
 			header.hash() == header.re_compute_hash(),
 			<Error<T>>::HeaderHashMis
 		);
-		trace!(target: "ethereum-linear-relay", "Hash OK");
+		log::trace!(target: "ethereum-linear-relay", "Hash OK");
 
 		let begin_header_number = Self::begin_header()
 			.ok_or(<Error<T>>::BeginHeaderNE)?
 			.number;
 		ensure!(header.number >= begin_header_number, <Error<T>>::HeaderTE);
-		trace!(target: "ethereum-linear-relay", "Number1 OK");
+		log::trace!(target: "ethereum-linear-relay", "Number1 OK");
 
 		// There must be a corresponding parent hash
 		let prev_header = Self::header(header.parent_hash).ok_or(<Error<T>>::HeaderNE)?;
@@ -566,7 +565,7 @@ impl<T: Config> Module<T> {
 			header.number == prev_header.number + 1,
 			<Error<T>>::BlockNumberMis
 		);
-		trace!(target: "ethereum-linear-relay", "Number2 OK");
+		log::trace!(target: "ethereum-linear-relay", "Number2 OK");
 
 		// check difficulty
 		let ethash_params = match T::EthereumNetwork::get() {
@@ -576,12 +575,12 @@ impl<T: Config> Module<T> {
 		ethash_params
 			.verify_block_basic(header)
 			.map_err(|_| <Error<T>>::BlockBasicVF)?;
-		trace!(target: "ethereum-linear-relay", "Basic OK");
+		log::trace!(target: "ethereum-linear-relay", "Basic OK");
 
 		// verify difficulty
 		let difficulty = ethash_params.calculate_difficulty(header, &prev_header);
 		ensure!(difficulty == *header.difficulty(), <Error<T>>::DifficultyVF);
-		trace!(target: "ethereum-linear-relay", "Difficulty OK");
+		log::trace!(target: "ethereum-linear-relay", "Difficulty OK");
 
 		Ok(())
 	}
@@ -601,7 +600,7 @@ impl<T: Config> Module<T> {
 		{
 			Err(<Error<T>>::MixHashMis)?;
 		};
-		trace!(target: "ethereum-linear-relay", "MixHash OK");
+		log::trace!(target: "ethereum-linear-relay", "MixHash OK");
 
 		// TODO: Check other verification condition
 		// See YellowPaper formula (50) in section 4.3.4

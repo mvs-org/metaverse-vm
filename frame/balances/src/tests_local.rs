@@ -37,10 +37,10 @@ use sp_runtime::{
 // --- hyperspace ---
 use crate::{self as hyperspace_balances, *};
 
-type Balance = u64;
-
 type Block = MockBlock<Test>;
 type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+
+type Balance = u64;
 
 hyperspace_support::impl_test_account_data! {}
 

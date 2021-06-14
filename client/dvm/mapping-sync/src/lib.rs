@@ -77,7 +77,7 @@ where
 	Ok(())
 }
 
-pub fn sync_one_level<Block: BlockT, C, B>(
+pub fn sync_one_block<Block: BlockT, C, B>(
 	client: &C,
 	substrate_backend: &B,
 	frontier_backend: &dc_db::Backend<Block>,
@@ -89,55 +89,58 @@ where
 {
 	let mut current_syncing_tips = frontier_backend.meta().current_syncing_tips()?;
 
-	if current_syncing_tips.len() == 0 {
-		// Sync genesis block.
-
-		let header = substrate_backend
-			.header(BlockId::Number(Zero::zero()))
-			.map_err(|e| format!("{:?}", e))?
-			.ok_or("Genesis header not found".to_string())?;
-		sync_genesis_block(client, frontier_backend, &header)?;
-
-		current_syncing_tips.push(header.hash());
-		frontier_backend
-			.meta()
-			.write_current_syncing_tips(current_syncing_tips)?;
-
-		Ok(true)
-	} else {
-		let mut syncing_tip_and_children = None;
-
-		for tip in &current_syncing_tips {
-			let children = substrate_backend
-				.children(*tip)
-				.map_err(|e| format!("{:?}", e))?;
-
-			if children.len() > 0 {
-				syncing_tip_and_children = Some((*tip, children));
-				break;
-			}
+	if current_syncing_tips.is_empty() {
+		let mut leaves = substrate_backend.leaves().map_err(|e| format!("{:?}", e))?;
+		if leaves.is_empty() {
+			return Ok(false);
 		}
 
-		if let Some((syncing_tip, children)) = syncing_tip_and_children {
-			current_syncing_tips.retain(|tip| tip != &syncing_tip);
+		current_syncing_tips.append(&mut leaves);
+	}
 
-			for child in children {
-				let header = substrate_backend
-					.header(BlockId::Hash(child))
-					.map_err(|e| format!("{:?}", e))?
-					.ok_or("Header not found".to_string())?;
+	let mut operating_tip = None;
 
-				sync_block(frontier_backend, &header)?;
-				current_syncing_tips.push(child);
-			}
+	while let Some(checking_tip) = current_syncing_tips.pop() {
+		if !frontier_backend
+			.mapping()
+			.is_synced(&checking_tip)
+			.map_err(|e| format!("{:?}", e))?
+		{
+			operating_tip = Some(checking_tip);
+			break;
+		}
+	}
+
+	let operating_tip = match operating_tip {
+		Some(operating_tip) => operating_tip,
+		None => {
 			frontier_backend
 				.meta()
 				.write_current_syncing_tips(current_syncing_tips)?;
-
-			Ok(true)
-		} else {
-			Ok(false)
+			return Ok(false);
 		}
+	};
+
+	let operating_header = substrate_backend
+		.header(BlockId::Hash(operating_tip))
+		.map_err(|e| format!("{:?}", e))?
+		.ok_or("Header not found".to_string())?;
+
+	if operating_header.number() == &Zero::zero() {
+		sync_genesis_block(client, frontier_backend, &operating_header)?;
+
+		frontier_backend
+			.meta()
+			.write_current_syncing_tips(current_syncing_tips)?;
+		Ok(true)
+	} else {
+		sync_block(frontier_backend, &operating_header)?;
+
+		current_syncing_tips.push(*operating_header.parent_hash());
+		frontier_backend
+			.meta()
+			.write_current_syncing_tips(current_syncing_tips)?;
+		Ok(true)
 	}
 }
 
@@ -155,7 +158,7 @@ where
 	let mut synced_any = false;
 
 	for _ in 0..limit {
-		synced_any = synced_any || sync_one_level(client, substrate_backend, frontier_backend)?;
+		synced_any = synced_any || sync_one_block(client, substrate_backend, frontier_backend)?;
 	}
 
 	Ok(synced_any)

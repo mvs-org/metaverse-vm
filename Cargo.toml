@@ -37,6 +37,7 @@ members = [
 	"frame/evm/precompile/contracts/modexp",
 	"frame/evm/precompile/contracts/simple",
 	"frame/evm/precompile/contracts/withdraw",
+	"frame/evm/precompile/contracts/sha3fips",
 	"frame/header-mmr",
 	"frame/header-mmr/rpc",
 	"frame/header-mmr/rpc/runtime-api",

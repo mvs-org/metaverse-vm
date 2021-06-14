@@ -395,7 +395,7 @@ where
 mod tests {
 	use crate::{self as hyperspace_vesting, *};
 
-	use frame_support::{assert_noop, assert_ok, parameter_types};
+	use frame_support::{assert_noop, assert_ok};
 	use frame_system::{mocking::*, RawOrigin};
 	use sp_core::H256;
 	use sp_runtime::{
@@ -403,10 +403,10 @@ mod tests {
 		traits::{BadOrigin, BlakeTwo256, Identity, IdentityLookup},
 	};
 
-	type Balance = u64;
-
 	type Block = MockBlock<Test>;
 	type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+
+	type Balance = u64;
 
 	hyperspace_support::impl_test_account_data! {}
 
@@ -435,7 +435,7 @@ mod tests {
 		type SS58Prefix = ();
 	}
 
-	parameter_types! {
+	frame_support::parameter_types! {
 		pub const MaxLocks: u32 = 10;
 	}
 	impl hyperspace_balances::Config<EtpInstance> for Test {
@@ -450,7 +450,7 @@ mod tests {
 		type WeightInfo = ();
 	}
 
-	parameter_types! {
+	frame_support::parameter_types! {
 		pub const MinVestedTransfer: u64 = 256 * 2;
 		pub static ExistentialDeposit: u64 = 0;
 	}

@@ -18,7 +18,9 @@
 //! Consensus extension module tests for BABE consensus.
 
 use super::*;
+use crate::Call;
 use codec::Decode;
+use hyperspace_evm::{Account, AddressMapping};
 use ethereum::TransactionSignature;
 use frame_support::{assert_err, assert_noop, assert_ok, unsigned::ValidateUnsigned};
 use mock::*;
@@ -59,6 +61,16 @@ fn default_withdraw_unsigned_transaction() -> UnsignedTransaction {
 
 fn sign_transaction(account: &AccountInfo, unsign_tx: UnsignedTransaction) -> Transaction {
 	unsign_tx.sign(&account.private_key)
+}
+
+macro_rules! assert_balance {
+	($account_id:expr, $left:expr, $right:expr) => {
+		assert_eq!(
+			<Test as hyperspace_evm::Config>::EtpCurrency::free_balance($account_id),
+			$left
+		);
+		assert_eq!(Ethereum::remaining_balance($account_id), $right);
+	};
 }
 
 #[test]
@@ -167,7 +179,7 @@ fn contract_constructor_should_get_executed() {
 			None,
 		));
 		assert_eq!(
-			Evm::account_storages(erc20_address, alice_storage_address),
+			EVM::account_storages(erc20_address, alice_storage_address),
 			H256::from_str("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 				.unwrap()
 		)
@@ -191,7 +203,7 @@ fn source_should_be_derived_from_signature() {
 
 		// We verify the transaction happened with alice account.
 		assert_eq!(
-			Evm::account_storages(erc20_address, alice_storage_address),
+			EVM::account_storages(erc20_address, alice_storage_address),
 			H256::from_str("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 				.unwrap()
 		)
@@ -237,7 +249,7 @@ fn contract_should_be_created_at_given_address() {
 			t.action,
 			None,
 		));
-		assert_ne!(Evm::account_codes(erc20_address).len(), 0);
+		assert_ne!(EVM::account_codes(erc20_address).len(), 0);
 	});
 }
 
@@ -410,7 +422,7 @@ fn withdraw_without_enough_balance_should_fail() {
 		assert_err!(
 			res,
 			DispatchError::Module {
-				index: 0,
+				index: 4,
 				error: 0,
 				message: Some("BalanceLow")
 			}
@@ -461,5 +473,244 @@ fn withdraw_with_invalid_input_length_should_failed() {
 		let dest =
 			<Test as frame_system::Config>::AccountId::decode(&mut &input_bytes[..]).unwrap();
 		assert_eq!(<Test as Config>::EtpCurrency::free_balance(&dest), 0);
+	});
+}
+
+#[test]
+fn mutate_account_works_well() {
+	let (_, mut ext) = new_test_ext(1);
+	ext.execute_with(|| {
+		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+		let account_id = <Test as hyperspace_evm::Config>::AddressMapping::into_account_id(test_addr);
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: U256::from(123_456_789_000_000_090u128),
+			},
+		);
+
+		assert_eq!(
+			<Test as hyperspace_evm::Config>::AccountBasicMapping::account_basic(&test_addr),
+			Account {
+				nonce: U256::from(10),
+				balance: U256::from(123_456_789_000_000_090u128),
+			}
+		);
+		assert_balance!(&account_id, 123456789, 90);
+	});
+}
+
+#[test]
+fn mutate_account_inc_balance_by_10() {
+	let (_, mut ext) = new_test_ext(1);
+	ext.execute_with(|| {
+		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+		let account_id = <Test as hyperspace_evm::Config>::AddressMapping::into_account_id(test_addr);
+		// origin
+		let origin_balance = U256::from(600_000_000_090u128);
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: origin_balance,
+			},
+		);
+
+		let balance1 = origin_balance.saturating_add(U256::from(10));
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: balance1,
+			},
+		);
+		assert_eq!(
+			<Test as hyperspace_evm::Config>::AccountBasicMapping::account_basic(&test_addr),
+			Account {
+				nonce: U256::from(10),
+				balance: U256::from(600_000_000_100u128),
+			}
+		);
+		assert_balance!(&account_id, 600, 100);
+	});
+}
+
+#[test]
+fn mutate_account_inc_balance_by_999_999_910() {
+	let (_, mut ext) = new_test_ext(1);
+	ext.execute_with(|| {
+		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+		let account_id = <Test as hyperspace_evm::Config>::AddressMapping::into_account_id(test_addr);
+		// origin
+		let origin_balance = U256::from(600_000_000_090u128);
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: origin_balance,
+			},
+		);
+
+		let balance1 = origin_balance.saturating_add(U256::from(999999910u128));
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: balance1,
+			},
+		);
+		assert_eq!(
+			<Test as hyperspace_evm::Config>::AccountBasicMapping::account_basic(&test_addr),
+			Account {
+				nonce: U256::from(10),
+				balance: U256::from(601_000_000_000u128),
+			}
+		);
+		assert_balance!(&account_id, 601, 0);
+	});
+}
+
+#[test]
+fn mutate_account_inc_by_1000_000_000() {
+	let (_, mut ext) = new_test_ext(1);
+	ext.execute_with(|| {
+		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+		let account_id = <Test as hyperspace_evm::Config>::AddressMapping::into_account_id(test_addr);
+		// origin
+		let origin_balance = U256::from(600_000_000_090u128);
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: origin_balance,
+			},
+		);
+
+		let balance1 = origin_balance.saturating_add(U256::from(1000_000_000u128));
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: balance1,
+			},
+		);
+		assert_eq!(
+			<Test as hyperspace_evm::Config>::AccountBasicMapping::account_basic(&test_addr),
+			Account {
+				nonce: U256::from(10),
+				balance: U256::from(601_000_000_090u128),
+			}
+		);
+		assert_balance!(&account_id, 601, 90);
+	});
+}
+
+#[test]
+fn mutate_account_dec_balance_by_90() {
+	let (_, mut ext) = new_test_ext(1);
+	ext.execute_with(|| {
+		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+		let account_id = <Test as hyperspace_evm::Config>::AddressMapping::into_account_id(test_addr);
+		// origin
+		let origin_balance = U256::from(600_000_000_090u128);
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: origin_balance,
+			},
+		);
+
+		let balance1 = origin_balance.saturating_sub(U256::from(90));
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: balance1,
+			},
+		);
+		assert_balance!(&account_id, 600, 0);
+	});
+}
+#[test]
+fn mutate_account_dec_balance_by_990() {
+	let (_, mut ext) = new_test_ext(1);
+	ext.execute_with(|| {
+		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+		let account_id = <Test as hyperspace_evm::Config>::AddressMapping::into_account_id(test_addr);
+		// origin
+		let origin_balance = U256::from(600_000_000_090u128);
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: origin_balance,
+			},
+		);
+
+		let balance1 = origin_balance.saturating_sub(U256::from(990));
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: balance1,
+			},
+		);
+		assert_balance!(&account_id, 599, 1_000_000_090 - 990);
+	});
+}
+#[test]
+fn mutate_account_dec_balance_existential_by_90() {
+	let (_, mut ext) = new_test_ext(1);
+	ext.execute_with(|| {
+		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+		let account_id = <Test as hyperspace_evm::Config>::AddressMapping::into_account_id(test_addr);
+		// origin
+		let origin_balance = U256::from(500_000_000_090u128);
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: origin_balance,
+			},
+		);
+
+		let balance1 = origin_balance.saturating_sub(U256::from(90));
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: balance1,
+			},
+		);
+		assert_balance!(&account_id, 500, 0);
+	});
+}
+#[test]
+fn mutate_account_dec_balance_existential_by_990() {
+	let (_, mut ext) = new_test_ext(1);
+	ext.execute_with(|| {
+		let test_addr = H160::from_str("1000000000000000000000000000000000000001").unwrap();
+		let account_id = <Test as hyperspace_evm::Config>::AddressMapping::into_account_id(test_addr);
+		// origin
+		let origin_balance = U256::from(500_000_000_090u128);
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: origin_balance,
+			},
+		);
+
+		let balance1 = origin_balance.saturating_sub(U256::from(990));
+		<Test as hyperspace_evm::Config>::AccountBasicMapping::mutate_account_basic(
+			&test_addr,
+			Account {
+				nonce: U256::from(10),
+				balance: balance1,
+			},
+		);
+		assert_balance!(&account_id, 0, 0);
 	});
 }

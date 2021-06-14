@@ -15,6 +15,7 @@ impl Config for Runtime {
 		AuthorityId,
 	)>>::IdentificationTuple;
 	type KeyOwnerProofSystem = Historical;
-	type HandleEquivocation = EquivocationHandler<Self::KeyOwnerIdentification, Offences>;
+	type HandleEquivocation =
+		EquivocationHandler<Self::KeyOwnerIdentification, Offences, ReportLongevity>;
 	type WeightInfo = ();
 }

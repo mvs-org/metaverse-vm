@@ -41,7 +41,7 @@ mod types {
 use codec::{Decode, Encode};
 // --- substrate ---
 #[cfg(feature = "std")]
-use frame_support::{debug::error, traits::WithdrawReasons};
+use frame_support::traits::WithdrawReasons;
 use frame_support::{
 	ensure,
 	traits::{Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, Get},
@@ -96,7 +96,7 @@ decl_error! {
 		/// Ethereum address has no claim.
 		SignerHasNoClaim,
 		/// There's not enough in the pot to pay out some unvested amount. Generally implies a logic
-		/// error.
+		/// log::error.
 		PotUnderflow,
 		/// Can NOT Move Claim to an EXISTED Address.
 		MoveToExistedAddress,
@@ -125,7 +125,7 @@ decl_storage! {
 			let mut total = <EtpBalance<T>>::zero();
 
 			if dot.is_empty() && eth.is_empty() && oldna.is_empty() {
-				error!("[hyperspace-claims] Genesis Claims List is Set to EMPTY");
+				log::error!("[hyperspace-claims] Genesis Claims List is Set to EMPTY");
 			} else {
 				// Eth Address
 				for Account { address, backed_etp } in dot {
@@ -594,10 +594,10 @@ mod tests {
 	// --- hyperspace ---
 	use crate::{self as hyperspace_claims, secp_utils::*, *};
 
-	type Balance = u64;
-
 	type Block = MockBlock<Test>;
 	type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+
+	type Balance = u64;
 
 	const ETHEREUM_SIGNED_MESSAGE: &'static [u8] = b"\x19Ethereum Signed Message:\n";
 	const OLDNA_SIGNED_MESSAGE: &'static [u8] = b"\x19OLDNA Signed Message:\n";

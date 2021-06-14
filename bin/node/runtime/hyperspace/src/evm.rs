@@ -8,7 +8,7 @@ use hyperspace_evm::{
 use hyperspace_evm_precompile::HyperspacePrecompiles;
 use dvm_ethereum::account_basic::DVMAccountBasicMapping;
 
-/// Fixed gas price of `1`.
+/// Fixed gas price.
 pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> U256 {
@@ -17,7 +17,7 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 frame_support::parameter_types! {
-	pub const ChainId: u64 mc= 23;
+	pub const ChainId: u64 = 23;
 }
 impl Config for Runtime {
 	type FeeCalculator = FixedGasPrice;

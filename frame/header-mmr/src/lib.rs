@@ -68,7 +68,7 @@ use merkle_mountain_range::{
 };
 // --- substrate ---
 use codec::{Decode, Encode};
-use frame_support::{debug::error, decl_module, decl_storage};
+use frame_support::{decl_module, decl_storage};
 use sp_runtime::{
 	generic::{DigestItem, OpaqueDigestItemId},
 	traits::{Hash, Header},
@@ -126,10 +126,10 @@ decl_module! {
 
 					<frame_system::Module<T>>::deposit_log(mmr_item.into());
 				} else {
-					error!("[hyperspace-header-mmr] FAILED to Commit MMR");
+					log::error!("[hyperspace-header-mmr] FAILED to Commit MMR");
 				}
 			} else {
-				error!("[hyperspace-header-mmr] FAILED to Calculate MMR");
+				log::error!("[hyperspace-header-mmr] FAILED to Calculate MMR");
 			}
 		}
 	}

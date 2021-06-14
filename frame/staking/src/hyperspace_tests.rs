@@ -550,6 +550,72 @@ fn punished_claim_should_work() {
 		assert_eq!(Staking::ledger(controller).unwrap(), ledger);
 		assert_eq!(Dna::free_balance(&stash), COIN - 3);
 	});
+
+	// slash value for unbond deposit claim after a duration should correct
+	ExtBuilder::default().build().execute_with(|| {
+		let (stash, controller) = (1001, 1000);
+		let promise_month = 36;
+		let bond_value = 10 * COIN;
+		let deposit_item_expire_time = INIT_TIMESTAMP + promise_month * MONTH_IN_MILLISECONDS;
+		let _ = Etp::deposit_creating(&stash, 1000 * COIN);
+
+		let mut ledger = StakingLedger {
+			stash,
+			active_etp: bond_value,
+			active_deposit_etp: bond_value,
+			deposit_items: vec![TimeDepositItem {
+				value: bond_value,
+				start_time: INIT_TIMESTAMP,
+				expire_time: deposit_item_expire_time,
+			}],
+			etp_staking_lock: StakingLock {
+				staking_amount: bond_value,
+				unbondings: vec![],
+			},
+			..Default::default()
+		};
+
+		// will emit RawEvent::BondEtp
+		assert_ok!(Staking::bond(
+			Origin::signed(stash),
+			controller,
+			StakingBalance::EtpBalance(bond_value),
+			RewardDestination::Stash,
+			promise_month as u8,
+		));
+		assert_eq!(Staking::ledger(controller).unwrap(), ledger);
+
+		// set a fake blockchain time to simulate elapsed time
+		Timestamp::set_timestamp(Timestamp::now() + 14 * MONTH_IN_MILLISECONDS);
+		assert_ok!(Staking::try_claim_deposits_with_punish(
+			Origin::signed(controller),
+			deposit_item_expire_time,
+		));
+		// ledger no change cause no dna for punishment
+		assert_eq!(Staking::ledger(controller).unwrap(), ledger);
+
+		// Set more dna balance to make it work.
+		let _ = Dna::deposit_creating(&stash, COIN);
+		let free_dna = Dna::free_balance(&stash);
+		assert_ok!(Staking::try_claim_deposits_with_punish(
+			Origin::signed(controller),
+			deposit_item_expire_time,
+		));
+
+		// should claim success
+		let slashed: DnaBalance<Test> = inflation::compute_dna_reward::<Test>(bond_value, 36)
+			- inflation::compute_dna_reward::<Test>(bond_value, 14);
+		assert_eq!(
+			staking_events()[1],
+			RawEvent::DepositsClaimedWithPunish(ledger.stash.clone(), slashed * 3)
+		);
+		// assert leger
+		ledger.active_deposit_etp -= bond_value;
+		ledger.deposit_items.clear();
+
+		assert_eq!(Staking::ledger(controller).unwrap(), ledger);
+		assert_eq!(Dna::free_balance(&stash), free_dna - slashed * 3);
+	});
 }
 
 #[test]
@@ -582,7 +648,7 @@ fn deposit_zero_should_do_nothing() {
 		// NO-OP
 		assert_ok!(Staking::deposit_extra(Origin::signed(stash), COIN, 1));
 		assert_eq!(Staking::ledger(&controller).unwrap().deposit_items.len(), 1);
-	})
+	});
 }
 
 #[test]

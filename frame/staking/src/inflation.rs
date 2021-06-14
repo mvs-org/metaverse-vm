@@ -22,7 +22,6 @@ use substrate_fixed::{
 	types::I64F64,
 };
 // --- substrate ---
-use frame_support::debug::*;
 use sp_arithmetic::helpers_128bit::multiply_by_rational;
 use sp_core::U256;
 use sp_runtime::Perbill;
@@ -45,7 +44,7 @@ pub fn compute_total_payout<T: Config>(
 	total_left: EtpBalance<T>,
 	payout_fraction: Perbill,
 ) -> (EtpBalance<T>, EtpBalance<T>) {
-	info!(
+	log::info!(
 		target: "hyperspace-staking",
 		"era_duration: {}, living_time: {}, total_left: {:?}, payout_fraction: {:?}",
 		era_duration,
@@ -111,10 +110,10 @@ pub fn compute_inflation(maximum: Balance, year: u32) -> Option<u128> {
 
 			return Some(e.floor().to_num());
 		} else {
-			error!(target: "darwniia-staking", "Compute Inflation Failed at Step 1");
+			log::error!(target: "darwniia-staking", "Compute Inflation Failed at Step 1");
 		}
 	} else {
-		error!(target: "darwniia-staking", "Compute Inflation Failed at Step 0");
+		log::error!(target: "darwniia-staking", "Compute Inflation Failed at Step 0");
 	}
 
 	None

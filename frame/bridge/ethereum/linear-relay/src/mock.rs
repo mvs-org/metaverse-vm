@@ -23,49 +23,22 @@ use std::fs::File;
 // --- crates ---
 use serde::Deserialize;
 // --- substrate ---
-use frame_support::{impl_outer_dispatch, impl_outer_origin, parameter_types};
+use frame_system::mocking::*;
 use sp_core::H256;
 use sp_runtime::{testing::Header, traits::IdentityLookup, RuntimeDebug};
 // --- hyperspace ---
-use crate::*;
+use crate::{self as hyperspace_ethereum_linear_relay, *};
 use ethereum_primitives::receipt::LogEntry;
 use ethereum_types::H512;
+
+type Block = MockBlock<Test>;
+type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 type AccountId = u64;
 type BlockNumber = u64;
 type Balance = u128;
 
-pub type System = frame_system::Module<Test>;
-pub type EthereumRelay = Module<Test>;
-
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
-
-impl_outer_dispatch! {
-	pub enum Call for Test where origin: Origin {
-		frame_system::System,
-		hyperspace_ethereum_relay::EthereumRelay,
-	}
-}
-
-hyperspace_support::impl_test_account_data! { deprecated }
-
-// Workaround for https://github.com/rust-lang/rust/issues/26925 . Remove when sorted.
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Test;
-parameter_types! {
-	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
-	pub static EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
-}
-impl Config for Test {
-	type ModuleId = EthereumRelayModuleId;
-	type Event = ();
-	type EthereumNetwork = EthereumNetwork;
-	type Call = Call;
-	type Currency = Etp;
-	type WeightInfo = ();
-}
+hyperspace_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
@@ -84,7 +57,7 @@ impl frame_system::Config for Test {
 	type Event = ();
 	type BlockHashCount = ();
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
@@ -102,6 +75,32 @@ impl hyperspace_balances::Config<EtpInstance> for Test {
 	type MaxLocks = ();
 	type OtherCurrencies = ();
 	type WeightInfo = ();
+}
+
+frame_support::parameter_types! {
+	pub const EthereumRelayModuleId: ModuleId = ModuleId(*b"da/ethli");
+	pub static EthereumNetwork: EthereumNetworkType = EthereumNetworkType::Ropsten;
+}
+impl Config for Test {
+	type ModuleId = EthereumRelayModuleId;
+	type Event = ();
+	type EthereumNetwork = EthereumNetwork;
+	type Call = Call;
+	type Currency = Etp;
+	type WeightInfo = ();
+}
+
+frame_support::construct_runtime! {
+	pub enum Test
+	where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic
+	{
+		System: frame_system::{Module, Call, Storage, Config},
+		Etp: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>},
+		EthereumRelay: hyperspace_ethereum_linear_relay::{Module, Call, Storage, Config<T>},
+	}
 }
 
 #[derive(Debug)]
@@ -263,7 +262,7 @@ impl ExtBuilder {
 			.build_storage::<Test>()
 			.unwrap();
 
-		GenesisConfig::<Test> {
+		hyperspace_ethereum_linear_relay::GenesisConfig::<Test> {
 			number_of_blocks_finality: 30,
 			number_of_blocks_safe: 10,
 			dags_merkle_roots_loader: DagsMerkleRootsLoader::from_file(

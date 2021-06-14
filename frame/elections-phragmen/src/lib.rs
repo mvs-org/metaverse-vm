@@ -106,8 +106,6 @@ use hyperspace_support::balance::lock::*;
 pub mod weights;
 pub use weights::WeightInfo;
 
-pub mod migrations_2_0_0;
-
 /// The maximum votes allowed per voter.
 pub const MAXIMUM_VOTE: usize = 16;
 
@@ -687,8 +685,9 @@ impl<T: Config> Module<T> {
 				} else {
 					// overlap. This can never happen. If so, it seems like our intended replacement
 					// is already a member, so not much more to do.
-					frame_support::debug::error!(
-						"pallet-elections-phragmen: a member seems to also be a runner-up."
+					log::error!(
+						target: "runtime::elections-phragmen",
+						"A member seems to also be a runner-up.",
 					);
 				}
 				next_best
@@ -1007,7 +1006,11 @@ impl<T: Config> Module<T> {
 			},
 		)
 		.map_err(|e| {
-			frame_support::debug::error!("elections-phragmen: failed to run election [{:?}].", e);
+			log::error!(
+				target: "runtime::elections-phragmen",
+				"Failed to run election [{:?}].",
+				e,
+			);
 			Self::deposit_event(RawEvent::ElectionError);
 		});
 
@@ -1056,9 +1059,8 @@ impl<T: Config> ContainsLengthBound for Module<T> {
 
 #[cfg(test)]
 mod tests {
-	use super::*;
-	use crate as elections_phragmen;
-	use frame_support::{assert_noop, assert_ok, parameter_types, traits::OnInitialize};
+	use crate::{self as elections_phragmen, *};
+	use frame_support::{assert_noop, assert_ok, traits::OnInitialize};
 	use sp_core::H256;
 	use sp_runtime::{
 		testing::Header,
@@ -1068,8 +1070,10 @@ mod tests {
 	use substrate_test_utils::assert_eq_uvec;
 
 	type Balance = u64;
-	hyperspace_support::impl_test_account_data! { deprecated }
-	parameter_types! {
+
+	hyperspace_support::impl_test_account_data! {}
+
+	frame_support::parameter_types! {
 		pub const ExistentialDeposit: Balance = 1;
 		pub const MaxLocks: u32 = 1024;
 	}
@@ -1085,7 +1089,7 @@ mod tests {
 		type WeightInfo = ();
 	}
 
-	parameter_types! {
+	frame_support::parameter_types! {
 		pub const BlockHashCount: u64 = 250;
 		pub BlockWeights: frame_system::limits::BlockWeights =
 			frame_system::limits::BlockWeights::simple_max(1024);
@@ -1108,7 +1112,7 @@ mod tests {
 		type Event = Event;
 		type BlockHashCount = BlockHashCount;
 		type Version = ();
-		type PalletInfo = ();
+		type PalletInfo = PalletInfo;
 		type AccountData = AccountData<Balance>;
 		type OnNewAccount = ();
 		type OnKilledAccount = ();
@@ -1174,7 +1178,7 @@ mod tests {
 		}
 	}
 
-	parameter_types! {
+	frame_support::parameter_types! {
 		pub const ElectionsPhragmenModuleId: LockIdentifier = *b"phrelect";
 	}
 
@@ -1266,7 +1270,7 @@ mod tests {
 					.collect::<Vec<_>>()
 			});
 			let mut ext: sp_io::TestExternalities = GenesisConfig {
-				hyperspace_balances_Instance0: Some(EtpConfig {
+				hyperspace_balances_Instance0: hyperspace_balances::GenesisConfig::<Test, EtpInstance> {
 					balances: vec![
 						(1, 10 * self.balance_factor),
 						(2, 20 * self.balance_factor),
@@ -1275,10 +1279,10 @@ mod tests {
 						(5, 50 * self.balance_factor),
 						(6, 60 * self.balance_factor),
 					],
-				}),
-				elections_phragmen: Some(elections_phragmen::GenesisConfig::<Test> {
+				},
+				elections_phragmen: elections_phragmen::GenesisConfig::<Test> {
 					members: self.genesis_members,
-				}),
+				},
 			}
 			.build_storage()
 			.unwrap()
@@ -2551,17 +2555,14 @@ mod tests {
 
 			// no replacement yet.
 			let unwrapped_error = Elections::remove_member(Origin::root(), 4, true).unwrap_err();
-			matches!(
+			assert!(matches!(
 				unwrapped_error.error,
 				DispatchError::Module {
 					message: Some("InvalidReplacement"),
 					..
 				}
-			);
-			matches!(
-				unwrapped_error.post_info.actual_weight,
-				Some(x) if x < <Test as frame_system::Config>::BlockWeights::get().max_block
-			);
+			));
+			assert!(unwrapped_error.post_info.actual_weight.is_some());
 		});
 
 		ExtBuilder::default()
@@ -2583,17 +2584,14 @@ mod tests {
 				// there is a replacement! and this one needs a weight refund.
 				let unwrapped_error =
 					Elections::remove_member(Origin::root(), 4, false).unwrap_err();
-				matches!(
+				assert!(matches!(
 					unwrapped_error.error,
 					DispatchError::Module {
 						message: Some("InvalidReplacement"),
 						..
 					}
-				);
-				matches!(
-					unwrapped_error.post_info.actual_weight,
-					Some(x) if x < <Test as frame_system::Config>::BlockWeights::get().max_block
-				);
+				));
+				assert!(unwrapped_error.post_info.actual_weight.is_some());
 			});
 	}
 

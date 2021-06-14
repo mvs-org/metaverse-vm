@@ -645,7 +645,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	/// Update the account entry for `who`, given the locks.
 	fn update_locks(who: &T::AccountId, locks: &[BalanceLock<T::Balance, T::BlockNumber>]) {
 		if locks.len() as u32 > T::MaxLocks::get() {
-			frame_support::debug::warn!(
+			log::warn!(
+				target: "runtime::balances",
 				"Warning: A user has more currency locks than expected. \
 				A runtime configuration adjustment may be needed."
 			);
@@ -666,7 +667,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 					// No providers for the locks. This is impossible under normal circumstances
 					// since the funds that are under the lock will themselves be stored in the
 					// account and therefore will need a reference.
-					frame_support::debug::warn!(
+					log::warn!(
+						target: "runtime::balances",
 						"Warning: Attempt to introduce lock consumer reference, yet no providers. \
 						This is unexpected but should be safe."
 					);
@@ -1539,7 +1541,7 @@ impl<T: Config<I>, I: Instance> DustCollector<T::AccountId> for Module<T, I> {
 		if !dropped.is_zero() {
 			T::DustRemoval::on_unbalanced(NegativeImbalance::new(dropped));
 			if let Err(e) = <frame_system::Module<T>>::dec_providers(who) {
-				frame_support::debug::print!("Logic error: Unexpected {:?}", e);
+				log::error!("Logic error: Unexpected {:?}", e);
 			}
 			Self::deposit_event(RawEvent::DustLost(who.clone(), dropped));
 		}

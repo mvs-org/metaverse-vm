@@ -573,7 +573,7 @@ impl MerklePatriciaTrie {
 				let mut stream = RlpStream::new_list(2);
 				stream.append(&borrow_leaf.key.encode_compact());
 				stream.append(&borrow_leaf.value);
-				stream.out()
+				stream.out().to_vec()
 			}
 			Node::Branch(branch) => {
 				let borrow_branch = branch.borrow();
@@ -593,7 +593,7 @@ impl MerklePatriciaTrie {
 					Some(v) => stream.append(v),
 					None => stream.append_empty_data(),
 				};
-				stream.out()
+				stream.out().to_vec()
 			}
 			Node::Extension(ext) => {
 				let borrow_ext = ext.borrow();
@@ -606,7 +606,7 @@ impl MerklePatriciaTrie {
 				} else {
 					stream.append_raw(&data, 1);
 				}
-				stream.out()
+				stream.out().to_vec()
 			}
 			Node::Hash(_hash) => unreachable!(),
 		}
@@ -829,7 +829,11 @@ mod tests {
 		let mut trie = MerklePatriciaTrie::new(memdb);
 
 		for _ in 0..1000 {
-			let rand_str: String = thread_rng().sample_iter(&Alphanumeric).take(30).collect();
+			let rand_str: String = thread_rng()
+				.sample_iter(Alphanumeric)
+				.map(char::from)
+				.take(30)
+				.collect();
 			let val = rand_str.as_bytes();
 			trie.insert(val.to_vec(), val.to_vec()).unwrap();
 
@@ -862,7 +866,11 @@ mod tests {
 		let mut trie = MerklePatriciaTrie::new(memdb);
 
 		for _ in 0..1000 {
-			let rand_str: String = thread_rng().sample_iter(&Alphanumeric).take(30).collect();
+			let rand_str: String = thread_rng()
+				.sample_iter(Alphanumeric)
+				.map(char::from)
+				.take(30)
+				.collect();
 			let val = rand_str.as_bytes();
 			trie.insert(val.to_vec(), val.to_vec()).unwrap();
 
@@ -943,9 +951,9 @@ mod tests {
 
 	#[test]
 	fn test_multiple_trie_roots() {
-		let k0: ethereum_types::H256 = 0.into();
-		let k1: ethereum_types::H256 = 1.into();
-		let v: ethereum_types::H256 = 0x1234.into();
+		let k0 = ethereum_types::H256::from_low_u64_be(0);
+		let k1 = ethereum_types::H256::from_low_u64_be(1);
+		let v = ethereum_types::H256::from_low_u64_be(0x1234);
 
 		let root1 = {
 			let memdb = Rc::new(MemoryDB::new());
@@ -995,7 +1003,7 @@ mod tests {
 		let mut rng = rand::thread_rng();
 		let mut keys = vec![];
 		for _ in 0..100 {
-			let random_bytes: Vec<u8> = (0..rng.gen_range(2, 30))
+			let random_bytes: Vec<u8> = (0..rng.gen_range(2..30))
 				.map(|_| rand::random::<u8>())
 				.collect();
 			trie.insert(random_bytes.clone(), random_bytes.clone())

@@ -1,8 +1,8 @@
 #![cfg(test)]
 
-use super::*;
-
-use frame_support::{assert_ok, impl_outer_dispatch, impl_outer_origin, parameter_types};
+use crate::{self as hyperspace_evm, *};
+use frame_support::assert_ok;
+use frame_system::mocking::*;
 use sp_core::{Blake2Hasher, H256};
 use sp_runtime::{
 	testing::Header,
@@ -11,22 +11,12 @@ use sp_runtime::{
 };
 use std::{collections::BTreeMap, str::FromStr};
 
+type Block = MockBlock<Test>;
+type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
+
 type Balance = u64;
 
-impl_outer_origin! {
-	pub enum Origin for Test where system = frame_system {}
-}
-
-impl_outer_dispatch! {
-	pub enum OuterCall for Test where origin: Origin {
-		self::EVM,
-	}
-}
-
-hyperspace_support::impl_test_account_data! { deprecated }
-
-#[derive(Clone, Eq, PartialEq, Debug)]
-pub struct Test;
+hyperspace_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
@@ -37,15 +27,15 @@ impl frame_system::Config for Test {
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
-	type Call = OuterCall;
+	type Call = Call;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId32;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = ();
+	type Event = Event;
 	type BlockHashCount = ();
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
@@ -53,13 +43,13 @@ impl frame_system::Config for Test {
 	type SS58Prefix = ();
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
 impl hyperspace_balances::Config<EtpInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = ();
+	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
@@ -70,7 +60,7 @@ impl hyperspace_balances::Config<EtpInstance> for Test {
 impl hyperspace_balances::Config<DnaInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
-	type Event = ();
+	type Event = Event;
 	type ExistentialDeposit = ExistentialDeposit;
 	type BalanceInfo = AccountData<Balance>;
 	type AccountStore = System;
@@ -79,7 +69,7 @@ impl hyperspace_balances::Config<DnaInstance> for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const MinimumPeriod: u64 = 1000;
 }
 impl pallet_timestamp::Config for Test {
@@ -108,15 +98,26 @@ impl Config for Test {
 	type EtpCurrency = Etp;
 	type DnaCurrency = Dna;
 
-	type Event = Event<Test>;
+	type Event = Event;
 	type Precompiles = ();
 	type ChainId = ();
 	type Runner = crate::runner::stack::Runner<Self>;
 	type AccountBasicMapping = RawAccountBasicMapping<Test>;
 }
 
-type System = frame_system::Module<Test>;
-type EVM = Module<Test>;
+frame_support::construct_runtime! {
+	pub enum Test where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Module, Call, Config, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Module, Call, Storage},
+		Etp: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
+		Dna: hyperspace_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>},
+		EVM: hyperspace_evm::{Module, Call, Storage, Config, Event<T>},
+	}
+}
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default()
@@ -147,8 +148,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		},
 	);
 
-	EtpConfig::default().assimilate_storage(&mut t).unwrap();
-	GenesisConfig { accounts }
+	<hyperspace_balances::GenesisConfig<Test, EtpInstance>>::default()
+		.assimilate_storage(&mut t)
+		.unwrap();
+	<hyperspace_balances::GenesisConfig<Test, DnaInstance>>::default()
+		.assimilate_storage(&mut t)
+		.unwrap();
+	hyperspace_evm::GenesisConfig { accounts }
 		.assimilate_storage::<Test>(&mut t)
 		.unwrap();
 	t.into()
@@ -178,28 +184,5 @@ fn fail_call_return_ok() {
 			U256::default(),
 			None,
 		));
-	});
-}
-
-#[test]
-fn mutate_account_works() {
-	new_test_ext().execute_with(|| {
-		<Test as Config>::AccountBasicMapping::mutate_account_basic(
-			&H160::from_str("1000000000000000000000000000000000000001").unwrap(),
-			Account {
-				nonce: U256::from(10),
-				balance: U256::from(1000),
-			},
-		);
-
-		assert_eq!(
-			<Test as Config>::AccountBasicMapping::account_basic(
-				&H160::from_str("1000000000000000000000000000000000000001").unwrap()
-			),
-			Account {
-				nonce: U256::from(10),
-				balance: U256::from(1000),
-			}
-		);
 	});
 }

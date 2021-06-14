@@ -7,11 +7,11 @@ license     = "GPL-3.0"
 name        = "dp-rpc"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.0.0"
+version     = "2.1.0"
 
 [dependencies]
 # crates
-ethereum-types      = { version = "0.10.0" }
+ethereum-types      = { version = "0.11.0" }
 jsonrpc-core        = { version = "15.1.0" }
 jsonrpc-core-client = { version = "15.1.0" }
 jsonrpc-derive      = { version = "15.1.0" }

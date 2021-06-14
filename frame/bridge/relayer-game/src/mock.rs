@@ -241,48 +241,24 @@ use std::time::Instant;
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{impl_outer_origin, parameter_types, traits::OnFinalize};
+use frame_support::traits::OnFinalize;
+use frame_system::mocking::*;
 use sp_runtime::RuntimeDebug;
 // --- hyperspace ---
-use crate::*;
+use crate::{self as hyperspace_relayer_game, *};
 use hyperspace_relay_primitives::relayer_game::*;
 use mock_relay::{MockRelayBlockNumber, MockRelayHeader};
+
+pub type Block = MockBlock<Test>;
+pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 pub type AccountId = u64;
 pub type BlockNumber = u64;
 pub type Balance = u128;
 
-pub type System = frame_system::Module<Test>;
-pub type Relay = mock_relay::Module<Test>;
-
 pub type RelayerGameError = Error<Test, DefaultInstance>;
-pub type RelayerGame = Module<Test, DefaultInstance>;
 
-impl_outer_origin! {
-	pub enum Origin for Test
-	where
-		system = frame_system
-	{}
-}
-
-hyperspace_support::impl_test_account_data! { deprecated }
-
-#[derive(Clone, Eq, PartialEq)]
-pub struct Test;
-parameter_types! {
-	pub const RelayerGameLockId: LockIdentifier = *b"da/rgame";
-	pub static GenesisTime: Instant = Instant::now();
-	pub static ChallengeTime: BlockNumber = 6;
-	pub static EstimateBond: Balance = 1;
-}
-impl Config for Test {
-	type EtpCurrency = Etp;
-	type LockId = RelayerGameLockId;
-	type EtpSlash = ();
-	type RelayerGameAdjustor = RelayerGameAdjustor;
-	type RelayableChain = Relay;
-	type WeightInfo = ();
-}
+hyperspace_support::impl_test_account_data! {}
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = ();
@@ -290,7 +266,7 @@ impl frame_system::Config for Test {
 	type BlockLength = ();
 	type DbWeight = ();
 	type Origin = Origin;
-	type Call = ();
+	type Call = Call;
 	type Index = u64;
 	type BlockNumber = BlockNumber;
 	type Hash = sp_core::H256;
@@ -301,7 +277,7 @@ impl frame_system::Config for Test {
 	type Event = ();
 	type BlockHashCount = ();
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
@@ -309,7 +285,7 @@ impl frame_system::Config for Test {
 	type SS58Prefix = ();
 }
 
-parameter_types! {
+frame_support::parameter_types! {
 	pub const ExistentialDeposit: Balance = 1;
 }
 impl hyperspace_balances::Config<EtpInstance> for Test {
@@ -348,6 +324,34 @@ impl AdjustableRelayerGame for RelayerGameAdjustor {
 
 	fn estimate_stake(_: u32, _: u32) -> Self::Balance {
 		ESTIMATE_BOND.with(|v| v.borrow().to_owned())
+	}
+}
+frame_support::parameter_types! {
+	pub const RelayerGameLockId: LockIdentifier = *b"da/rgame";
+	pub static GenesisTime: Instant = Instant::now();
+	pub static ChallengeTime: BlockNumber = 6;
+	pub static EstimateBond: Balance = 1;
+}
+impl Config for Test {
+	type EtpCurrency = Etp;
+	type LockId = RelayerGameLockId;
+	type EtpSlash = ();
+	type RelayerGameAdjustor = RelayerGameAdjustor;
+	type RelayableChain = Relay;
+	type WeightInfo = ();
+}
+
+frame_support::construct_runtime! {
+	pub enum Test
+	where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic
+	{
+		System: frame_system::{Module, Call, Storage, Config},
+		Etp: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>},
+		Relay: mock_relay::{Module, Storage},
+		RelayerGame: hyperspace_relayer_game::{Module, Storage},
 	}
 }
 

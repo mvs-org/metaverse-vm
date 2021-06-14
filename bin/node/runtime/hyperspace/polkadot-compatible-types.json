@@ -1,8 +1,4 @@
-{	
-	"Address": "MultiAddress",
-	"LookupSource": "MultiAddress",
-	"BlockWeights": "BlockNumber",
-	"BlockLength": "BlockNumber",
+{
 	"__[pallet.balances]__": {},
 	"BalanceInfo": null,
 	"BalanceLock": {
