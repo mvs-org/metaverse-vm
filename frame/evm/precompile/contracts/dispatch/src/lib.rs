@@ -23,7 +23,7 @@ use alloc::vec::Vec;
 use codec::Decode;
 use core::marker::PhantomData;
 use hyperspace_evm::{AddressMapping, GasWeightMapping};
-use hyperspace_evm_primitives::Precompile;
+use dp_evm::Precompile;
 use evm::{Context, ExitError, ExitSucceed};
 use frame_support::{
 	dispatch::{Dispatchable, GetDispatchInfo, PostDispatchInfo},

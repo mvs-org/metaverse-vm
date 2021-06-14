@@ -138,7 +138,7 @@ impl FindAuthor<H160> for EthereumFindAuthor {
 
 parameter_types! {
 	pub const TransactionByteFee: u64 = 1;
-	pub const ChainId: u64 = 22;
+	pub const ChainId: u64 = 42;
 	pub const EVMModuleId: ModuleId = ModuleId(*b"py/evmpa");
 }
 
@@ -176,7 +176,6 @@ impl Config for Test {
 	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;
 	type BlockGasLimit = BlockGasLimit;
-	type AddressMapping = HashedAddressMapping;
 	type EtpCurrency = Etp;
 }
 

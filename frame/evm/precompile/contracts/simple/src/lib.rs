@@ -21,7 +21,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use core::cmp::min;
-use hyperspace_evm_primitives::LinearCostPrecompile;
+use dp_evm::LinearCostPrecompile;
 use evm::{ExitError, ExitSucceed};
 
 /// The identity precompile.

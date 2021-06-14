@@ -1,0 +1,26 @@
+[package]
+authors     = ["Hyperspace Network <contact@mvs.org>"]
+description = "Mapping sync logic for dvm."
+edition     = "2018"
+homepage    = "https://mvs.org/"
+license     = "GPL-3.0"
+name        = "dc-mapping-sync"
+readme      = "README.md"
+repository  = "https://github.com/mvs-org/Hyperspace"
+version     = "2.0.0"
+
+[dependencies]
+# substrate
+sp-api          = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sp-blockchain   = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sc-client-api   = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sp-runtime      = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+# hyperspace
+dc-consensus           = { path = "../consensus" }
+dc-db                  = { path = "../db" }
+dp_consensus           = { path = "../../../primitives/consensus/" }
+dvm-rpc-runtime-api    = { path = "../../../frame/dvm/rpc/runtime-api"}
+# crates
+futures         = { version = "0.3.1", features = ["compat"] }
+futures-timer   = "3.0.1"
+log             = "0.4.8" 

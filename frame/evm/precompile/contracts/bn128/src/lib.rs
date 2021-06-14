@@ -20,7 +20,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use hyperspace_evm_primitives::LinearCostPrecompile;
+use dp_evm::LinearCostPrecompile;
 use evm::{ExitError, ExitSucceed};
 use sp_core::U256;
 
