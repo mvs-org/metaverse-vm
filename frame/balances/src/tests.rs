@@ -403,10 +403,10 @@ macro_rules! decl_tests {
 		#[test]
 		fn balance_works() {
 			<$ext_builder>::default().build().execute_with(|| {
-				let _ = Etp::deposit_creating(&1, 42);
-				assert_eq!(Etp::free_balance(1), 42);
+				let _ = Etp::deposit_creating(&1, 150);
+				assert_eq!(Etp::free_balance(1), 150);
 				assert_eq!(Etp::reserved_balance(1), 0);
-				assert_eq!(Etp::total_balance(&1), 42);
+				assert_eq!(Etp::total_balance(&1), 150);
 				assert_eq!(Etp::free_balance(2), 0);
 				assert_eq!(Etp::reserved_balance(2), 0);
 				assert_eq!(Etp::total_balance(&2), 0);
@@ -418,7 +418,7 @@ macro_rules! decl_tests {
 			<$ext_builder>::default().build().execute_with(|| {
 				let _ = Etp::deposit_creating(&1, 111);
 				assert_ok!(Etp::transfer(Some(1).into(), 2, 69));
-				assert_eq!(Etp::total_balance(&1), 42);
+				assert_eq!(Etp::total_balance(&1), 150);
 				assert_eq!(Etp::total_balance(&2), 69);
 			});
 		}
@@ -429,7 +429,7 @@ macro_rules! decl_tests {
 				let _ = Etp::deposit_creating(&1, 111);
 				assert_noop!(Etp::force_transfer(Some(2).into(), 1, 2, 69), BadOrigin,);
 				assert_ok!(Etp::force_transfer(RawOrigin::Root.into(), 1, 2, 69));
-				assert_eq!(Etp::total_balance(&1), 42);
+				assert_eq!(Etp::total_balance(&1), 150);
 				assert_eq!(Etp::total_balance(&2), 69);
 			});
 		}

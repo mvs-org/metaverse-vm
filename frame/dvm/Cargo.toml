@@ -7,35 +7,34 @@ license     = "GPL-3.0"
 name        = "dvm-ethereum"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.0.0"
+version     = "1.4.0"
 
 [dependencies]
 # crates
-array-bytes    = { version = "1.1.0" }
 codec          = { package = "parity-scale-codec", version = "1.3.7", default-features = false }
 ethereum       = { version = "0.6.0", default-features = false, features = ["with-codec"] }
 ethereum-types = { version = "0.10.0", default-features = false }
-evm            = { version = "0.23.0", default-features = false, features = ["with-codec"] }
+evm            = { version = "0.22.0", default-features = false, features = ["with-codec"] }
 libsecp256k1   = { version = "0.3", default-features = false }
 rlp            = { version = "0.5.0", default-features = false }
 serde          = { version = "1.0.124", optional = true, default-features = false }
 sha3           = { version = "0.8", default-features = false }
+array-bytes = { version = "1.1.0" }
 # hyperspace
 hyperspace-balances        = { default-features = false, path = "../balances" }
 hyperspace-evm             = { default-features = false, path = "../evm" }
+hyperspace-evm-primitives  = { default-features = false, path = "../../primitives/evm" }
 hyperspace-support         = { default-features = false, path = "../support" }
-dp_consensus             = { default-features = false, path = "../../primitives/consensus" }
-dp-evm                   = { default-features = false, path = "../../primitives/evm" }
-dp-storage               = { default-features = false, path = "../../primitives/storage" }
+dvm-consensus-primitives = { default-features = false, path = "../../primitives/consensus" }
 dvm-rpc-runtime-api      = { default-features = false, path = "./rpc/runtime-api" }
 # substrate
-frame-support    = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-frame-system     = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-timestamp = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-core          = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-io            = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-runtime       = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-std           = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+frame-support    = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+frame-system     = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-timestamp = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-core          = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-io            = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-runtime       = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-std           = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [dev-dependencies]
 # crates
@@ -63,9 +62,9 @@ crates-std    = [
 hyperspace-std  = [
 	"hyperspace-balances/std",
 	"hyperspace-evm/std",
+	"hyperspace-evm-primitives/std",
 	"hyperspace-support/std",
-	"dp-evm/std",
-	"dp_consensus/std",
+	"dvm-consensus-primitives/std",
 	"dvm-rpc-runtime-api/std",
 ]
 substrate-std = [

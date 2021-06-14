@@ -18,7 +18,7 @@
 
 //! Prototype module for cross chain assets backing.
 
-// TODO: https://github.com/mvs-org/Hyperspaceissues/372
+// TODO: https://github.com/new-mvs/darwinia-common/issues/372
 #![allow(unused)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "128"]
@@ -74,6 +74,7 @@ use sp_runtime::{
 use sp_std::borrow::ToOwned;
 use sp_std::{convert::TryFrom, prelude::*};
 // --- hyperspace ---
+
 use hyperspace_relay_primitives::relay_authorities::*;
 use hyperspace_support::{
 	balance::lock::*,
@@ -268,7 +269,7 @@ decl_module! {
 			let fee_account = Self::fee_account_id();
 			let locked = utilities::with_transaction_result(|| {
 				// 50 Etp for fee
-				// https://github.com/mvs-org/Hyperspacepull/377#issuecomment-730369387
+				// https://github.com/new-mvs/darwinia-common/pull/377#issuecomment-730369387
 				T::EtpCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
 
 				let mut locked = false;
@@ -366,11 +367,11 @@ decl_module! {
 			}
 		}
 
-		/// Set a new ring redeem address.
+		/// Set a new  redeem address.
 		///
 		/// The dispatch origin of this call must be _Root_.
 		///
-		/// - `new`: The new ring redeem address.
+		/// - `new`: The new  redeem address.
 		///
 		/// # <weight>
 		/// - `O(1)`.
@@ -665,7 +666,7 @@ impl<T: Config> Module<T> {
 	}
 
 	// event SetAuthritiesEvent(uint32 nonce, address[] authorities, bytes32 benifit);
-	// https://github.com/hyperspace-network/hyperspace-bridge-on-ethereum/blob/51839e614c0575e431eabfd5c70b84f6aa37826a/contracts/Relay.sol#L22
+	// https://github.com/new-mvs/hyperspace-bridge-on-ethereum/blob/51839e614c0575e431eabfd5c70b84f6aa37826a/contracts/Relay.sol#L22
 	// https://ropsten.etherscan.io/tx/0x652528b9421ecb495610a734a4ab70d054b5510dbbf3a9d5c7879c43c7dde4e9#eventlog
 	fn parse_authorities_set_proof(
 		proof_record: &EthereumReceiptProofThing<T>,

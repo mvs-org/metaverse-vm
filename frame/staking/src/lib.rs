@@ -269,7 +269,7 @@
 #![feature(drain_filter)]
 #![recursion_limit = "128"]
 
-// TODO: offchain phragmen test https://github.com/mvs-org/Hyperspaceissues/97
+// TODO: offchain phragmen test https://github.com/new-mvs/darwinia-common/issues/97
 // #[cfg(features = "testing-utils")]
 // pub mod testing_utils;
 #[cfg(test)]
@@ -1040,7 +1040,7 @@ decl_module! {
 		fn on_runtime_upgrade() -> frame_support::weights::Weight {
 			if StorageVersion::get() == Releases::V4_0_0 || !StorageVersion::exists() {
 				log!(info, "Migrating Staking...");
-
+				
 				StorageVersion::put(Releases::V5_0_0);
 				migrations::migrate_to_blockable::<T>()
 			} else {
@@ -1527,8 +1527,8 @@ decl_module! {
 
 			Self::update_ledger(&controller, &mut ledger);
 
-			// TODO: https://github.com/mvs-org/Hyperspaceissues/96
-			// FIXME: https://github.com/mvs-org/Hyperspaceissues/121
+			// TODO: https://github.com/new-mvs/darwinia-common/issues/96
+			// FIXME: https://github.com/new-mvs/darwinia-common/issues/121
 			// let StakingLedger {
 			// 	active_etp,
 			// 	active_dna,
@@ -3084,14 +3084,14 @@ impl<T: Config> Module<T> {
 	}
 
 	/// Compute payout for era.
-	#[allow(dead_code)]
+	#[allow(unused_variables, unused_mut)]
 	fn end_era(active_era: ActiveEraInfo, _session_index: SessionIndex) {
+		// Temporary Disable era reward payout
 		// Note: active_era_start can be None if end era is called during genesis config.
-		// Temporary Disable era reward
-		if let Some(active_era_start) = active_era.start {
-			let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
-			let living_time = Self::living_time();
-			let era_duration = now - active_era_start;
+		//if let Some(active_era_start) = active_era.start {
+			//let now = T::UnixTime::now().as_millis().saturated_into::<TsInMs>();
+			//let living_time = Self::living_time();
+			//let era_duration = now - active_era_start;
 
 			//let (validator_payout, max_payout) = inflation::compute_total_payout::<T>(
 			//	era_duration,
@@ -3107,12 +3107,13 @@ impl<T: Config> Module<T> {
 			//	rest,
 			//));
 
-			LivingTime::put(living_time + era_duration);
+			//LivingTime::put(living_time + era_duration);
 			// Set ending era reward.
+			
 			//<ErasValidatorReward<T>>::insert(&active_era.index, validator_payout);
 			//T::EtpCurrency::deposit_creating(&Self::account_id(), validator_payout);
 			//T::EtpRewardRemainder::on_unbalanced(T::EtpCurrency::issue(rest));
-		}
+		//}
 	}
 
 	/// Plan a new era. Return the potential new staking set.

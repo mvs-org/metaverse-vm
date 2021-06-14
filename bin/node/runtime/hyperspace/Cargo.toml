@@ -6,8 +6,8 @@ homepage   = "https://mvs.org/"
 license    = "Unlicense"
 name       = "hyperspace-runtime"
 readme     = "README.md"
-repository = "https://github.com/mvs-org/Hyperspace"
-version    = "2.0.0"
+repository = "https://github.com/new-mvs/darwinia-common/"
+version    = "1.0.13"
 
 [dependencies]
 # crates
@@ -19,8 +19,8 @@ static_assertions = { version = "1.1.0" }
 hyperspace-balances                   = { default-features = false, path = "../../../../frame/balances" }
 hyperspace-balances-rpc-runtime-api   = { default-features = false, path = "../../../../frame/balances/rpc/runtime-api" }
 hyperspace-claims                     = { default-features = false, path = "../../../../frame/claims" }
-hyperspace-oldetp-backing               = { default-features = false, path = "../../../../frame/bridge/oldetp/backing" }
-hyperspace-oldetp-issuing               = { default-features = false, path = "../../../../frame/bridge/oldetp/issuing" }
+hyperspace-oldna-backing               = { default-features = false, path = "../../../../frame/bridge/oldna/backing" }
+hyperspace-oldna-issuing               = { default-features = false, path = "../../../../frame/bridge/oldna/issuing" }
 hyperspace-democracy                  = { default-features = false, path = "../../../../frame/democracy" }
 hyperspace-elections-phragmen         = { default-features = false, path = "../../../../frame/elections-phragmen" }
 hyperspace-ethereum-backing           = { default-features = false, path = "../../../../frame/bridge/ethereum/backing" }
@@ -36,57 +36,54 @@ hyperspace-staking                    = { default-features = false, path = "../.
 hyperspace-staking-rpc-runtime-api    = { default-features = false, path = "../../../../frame/staking/rpc/runtime-api" }
 hyperspace-support                    = { default-features = false, path = "../../../../frame/support" }
 hyperspace-treasury                   = { default-features = false, path = "../../../../frame/treasury" }
-hyperspace-oldna-backing               = { default-features = false, path = "../../../../frame/bridge/oldna/backing" }
+hyperspace-oldetp-backing               = { default-features = false, path = "../../../../frame/bridge/oldetp/backing" }
 hyperspace-vesting                    = { default-features = false, path = "../../../../frame/vesting" }
 hyperspace-primitives                     = { default-features = false, path = "../../primitives" }
 dvm-ethereum                        = { default-features = false, path = "../../../../frame/dvm" }
 dvm-rpc-runtime-api                 = { default-features = false, path = "../../../../frame/dvm/rpc/runtime-api" }
 ethereum-primitives                 = { default-features = false, path = "../../../../primitives/ethereum-primitives" }
 # substrate
-frame-executive                            = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-frame-support                              = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-frame-system                               = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-frame-system-rpc-runtime-api               = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-authority-discovery                 = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-authorship                          = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-babe                                = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-collective                          = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-grandpa                             = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-identity                            = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-im-online                           = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-membership                          = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-multisig                            = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-offences                            = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-proxy                               = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-randomness-collective-flip          = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-recovery                            = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-scheduler                           = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-session                             = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-society                             = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-sudo                                = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-timestamp                           = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-transaction-payment                 = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-utility                             = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-api                                     = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-application-crypto                      = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-authority-discovery                     = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-block-builder                           = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-consensus-babe                          = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-core                                    = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-inherents                               = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-io                                      = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-offchain                                = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-runtime                                 = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-session                                 = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-staking                                 = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-std                                     = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-transaction-pool                        = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-version                                 = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+frame-executive                            = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+frame-support                              = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+frame-system                               = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+frame-system-rpc-runtime-api               = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-authority-discovery                 = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-authorship                          = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-babe                                = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-collective                          = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-grandpa                             = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-im-online                           = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-membership                          = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+# Multisig
+pallet-multisig                            = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-offences                            = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-proxy                               = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-randomness-collective-flip          = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-scheduler                           = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-session                             = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-sudo                                = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-timestamp                           = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-transaction-payment                 = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-api                                     = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-application-crypto                      = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-authority-discovery                     = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-block-builder                           = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-consensus-babe                          = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-core                                    = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-inherents                               = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-io                                      = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-offchain                                = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-runtime                                 = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-session                                 = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-staking                                 = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-std                                     = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-transaction-pool                        = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-version                                 = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [build-dependencies]
 # substrate
-substrate-wasm-builder = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+substrate-wasm-builder = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [features]
 default = ["std"]
@@ -96,8 +93,8 @@ std     = [
 	"hyperspace-balances/std",
 	"hyperspace-balances-rpc-runtime-api/std",
 	"hyperspace-claims/std",
-	"hyperspace-oldetp-backing/std",
-	"hyperspace-oldetp-issuing/std",
+	"hyperspace-oldna-backing/std",
+	"hyperspace-oldna-issuing/std",
 	"hyperspace-democracy/std",
 	"hyperspace-elections-phragmen/std",
 	"hyperspace-ethereum-backing/std",
@@ -113,7 +110,7 @@ std     = [
 	"hyperspace-staking-rpc-runtime-api/std",
 	"hyperspace-support/std",
 	"hyperspace-treasury/std",
-	"hyperspace-oldna-backing/std",
+	"hyperspace-oldetp-backing/std",
 	"hyperspace-vesting/std",
 	"hyperspace-primitives/std",
 	"dvm-ethereum/std",
@@ -128,22 +125,18 @@ std     = [
 	"pallet-babe/std",
 	"pallet-collective/std",
 	"pallet-grandpa/std",
-	"pallet-identity/std",
 	"pallet-im-online/std",
 	"pallet-membership/std",
 	"pallet-multisig/std",
 	"pallet-offences/std",
 	"pallet-proxy/std",
 	"pallet-randomness-collective-flip/std",
-	"pallet-recovery/std",
 	"pallet-scheduler/std",
 	"pallet-session/std",
-	"pallet-society/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
-	"pallet-utility/std",
 	"sp-api/std",
 	"sp-application-crypto/std",
 	"sp-authority-discovery/std",

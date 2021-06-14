@@ -24,32 +24,28 @@ pub mod runner;
 mod tests;
 
 pub use crate::runner::Runner;
-// --- hyperspace ---
-pub use dp_evm::{
+pub use hyperspace_evm_primitives::{
 	Account, CallInfo, CreateInfo, ExecutionInfo, LinearCostPrecompile, Log, Precompile,
 	PrecompileSet, Vicinity,
 };
-// --- substrate ---
-use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage,
-	dispatch::DispatchResultWithPostInfo,
-	traits::{Currency, Get},
-	weights::{Pays, PostDispatchInfo, Weight},
-};
+pub use evm::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
+
+#[cfg(feature = "std")]
+use codec::{Decode, Encode};
+use evm::Config as EvmConfig;
+use frame_support::dispatch::DispatchResultWithPostInfo;
+use frame_support::traits::{Currency, Get};
+use frame_support::weights::{Pays, PostDispatchInfo, Weight};
+use frame_support::{decl_error, decl_event, decl_module, decl_storage};
 use frame_system::RawOrigin;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 use sp_core::{Hasher, H160, H256, U256};
 use sp_runtime::{
 	traits::{BadOrigin, UniqueSaturatedInto},
 	AccountId32,
 };
 use sp_std::vec::Vec;
-// --- std ---
-#[cfg(feature = "std")]
-use codec::{Decode, Encode};
-use evm::Config as EvmConfig;
-pub use evm::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 
 /// Type alias for currency balance.
 pub type BalanceOf<T> =
@@ -307,9 +303,9 @@ pub struct GenesisAccount {
 }
 
 decl_storage! {
-	trait Store for Module<T: Config> as EVM {
-		pub AccountCodes get(fn account_codes): map hasher(blake2_128_concat) H160 => Vec<u8>;
-		pub AccountStorages get(fn account_storages):
+	trait Store for Module<T: Config> as HyperspaceEVM {
+		AccountCodes get(fn account_codes): map hasher(blake2_128_concat) H160 => Vec<u8>;
+		AccountStorages get(fn account_storages):
 			double_map hasher(blake2_128_concat) H160, hasher(blake2_128_concat) H256 => H256;
 	}
 
@@ -513,27 +509,8 @@ decl_module! {
 
 impl<T: Config> Module<T> {
 	fn remove_account(address: &H160) {
-		if AccountCodes::contains_key(address) {
-			let account_id = T::AddressMapping::into_account_id(*address);
-			let _ = frame_system::Module::<T>::dec_consumers(&account_id);
-		}
-
 		AccountCodes::remove(address);
 		AccountStorages::remove_prefix(address);
-	}
-
-	/// Create an account.
-	pub fn create_account(address: H160, code: Vec<u8>) {
-		if code.is_empty() {
-			return;
-		}
-
-		if !AccountCodes::contains_key(&address) {
-			let account_id = T::AddressMapping::into_account_id(address);
-			let _ = frame_system::Module::<T>::inc_consumers(&account_id);
-		}
-
-		AccountCodes::insert(address, code);
 	}
 
 	/// Check whether an account is empty.

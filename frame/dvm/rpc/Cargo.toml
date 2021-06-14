@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "dvm-rpc-core"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.0.0"
+version     = "1.4.0"
 
 [dependencies]
 # crates
@@ -19,14 +19,14 @@ jsonrpc-derive = { version = "15.1.0" }
 jsonrpc-pubsub = { version = "15.1.0" }
 
 # hyperspace
-hyperspace-evm    = { default-features = false, path = "../../evm" }
-dp-evm          = { default-features = false, path = "../../../primitives/evm" }
-dp-rpc          = { default-features = false, path = "../../../primitives/rpc" }
+hyperspace-evm            = { default-features = false, path = "../../evm" }
+hyperspace-evm-primitives = { default-features = false, path = "../../../primitives/evm" }
+dvm-rpc-core-primitives = { default-features = false, path = "../../../primitives/dvm-rpc-core" }
 # substrate
-sp-api     = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-core    = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-runtime = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-std     = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sp-api     = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-core    = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-runtime = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-std     = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [features]
 default = ["std"]
@@ -44,7 +44,7 @@ crates-std    = [
 ]
 hyperspace-std  = [
 	"hyperspace-evm/std",
-	"dp-evm/std",
+	"hyperspace-evm-primitives/std",
 ]
 substrate-std = [
 	"sp-api/std",

@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "hyperspace-staking"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.0.0"
+version     = "1.4.0"
 
 [dependencies]
 # crates
@@ -21,17 +21,17 @@ hyperspace-support                 = { default-features = false, path = "../supp
 # github
 substrate-fixed = { default-features = false, git = "https://github.com/encointer/substrate-fixed", branch = "master" }
 # substrate
-frame-support     = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-frame-system      = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-authorship = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-pallet-session    = { default-features = false, features = ["historical"], git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-arithmetic     = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-core           = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-io             = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-npos-elections = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-runtime        = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-staking        = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-std            = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+frame-support     = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+frame-system      = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-authorship = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+pallet-session    = { default-features = false, features = ["historical"], git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-arithmetic     = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-core           = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-io             = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-npos-elections = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-runtime        = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-staking        = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-std            = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [dev-dependencies]
 # crates
@@ -40,10 +40,10 @@ rand_chacha = { version = "0.2" }
 hyperspace-balances = { path = "../../frame/balances" }
 hyperspace-support  = { features = ["easy-testing"], path = "../support" }
 # substrate
-pallet-timestamp     = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-storage           = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-tracing           = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-substrate-test-utils = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+pallet-timestamp     = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-storage           = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-tracing           = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+substrate-test-utils = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [features]
 default = ["std"]

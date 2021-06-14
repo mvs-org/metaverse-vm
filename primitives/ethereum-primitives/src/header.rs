@@ -30,6 +30,9 @@ use sp_std::prelude::*;
 // --- hyperspace ---
 use crate::*;
 
+
+
+
 #[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 enum Seal {
 	/// The seal/signature is included.
@@ -93,6 +96,8 @@ impl EthereumHeader {
 	pub fn from_str_unchecked(s: &str) -> Self {
 		// --- std ---
 		use std::str::FromStr;
+		
+		
 
 		fn parse_value_unchecked(s: &str) -> &str {
 			s.splitn(2, ':')
@@ -147,8 +152,7 @@ impl EthereumHeader {
 				let s = if s.starts_with("0x") { &s[2..] } else { s };
 				eth_header.log_bloom = Bloom::from_str(s).unwrap_or_default();
 			} else if s.starts_with("\"miner") {
-				eth_header.author =
-					array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 20).into();
+				eth_header.author = array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 20).into();
 			} else if s.starts_with("\"mixHash") {
 				mix_hash = array_bytes::hex2array_unchecked!(parse_value_unchecked(s), 32).into();
 			} else if s.starts_with("\"nonce") {
@@ -551,6 +555,7 @@ mod tests {
 	use std::str::FromStr;
 	// --- hyperspace ---
 	use super::*;
+	
 	use error::EthereumError;
 	use pow::EthashPartial;
 

@@ -20,7 +20,7 @@ use jsonrpc_core::Result;
 use jsonrpc_derive::rpc;
 use jsonrpc_pubsub::{typed, SubscriptionId};
 
-use dp_rpc::pubsub;
+use dvm_rpc_core_primitives::pubsub;
 
 pub use rpc_impl_EthPubSubApi::gen_server::EthPubSubApi as EthPubSubApiServer;
 

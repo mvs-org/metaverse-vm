@@ -16,21 +16,12 @@
 
 mod eth;
 mod eth_pubsub;
-mod overrides;
 
-pub use overrides::{SchemaV1Override, StorageOverride};
-// --- hyperspace ---
-use hyperspace_evm::ExitReason;
-// --- std ---
-pub use eth::{
-	EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthTask, NetApi, NetApiServer, Web3Api,
-	Web3ApiServer,
-};
+pub use eth::{EthApi, EthApiServer, NetApi, NetApiServer, Web3Api, Web3ApiServer};
 pub use eth_pubsub::{EthPubSubApi, EthPubSubApiServer, HexEncodedIdProvider};
-use ethereum::{
-	Transaction as EthereumTransaction, TransactionMessage as EthereumTransactionMessage,
-};
 use ethereum_types::H160;
+
+use hyperspace_evm::ExitReason;
 use jsonrpc_core::{Error, ErrorCode, Value};
 
 pub fn internal_err<T: ToString>(message: T) -> Error {
@@ -72,17 +63,6 @@ pub fn error_on_execution_failure(reason: &ExitReason, data: &[u8]) -> Result<()
 			data: Some(Value::String("0x".to_string())),
 		}),
 	}
-}
-
-pub fn public_key(transaction: &EthereumTransaction) -> Result<[u8; 64], sp_io::EcdsaVerifyError> {
-	let mut sig = [0u8; 65];
-	let mut msg = [0u8; 32];
-	sig[0..32].copy_from_slice(&transaction.signature.r()[..]);
-	sig[32..64].copy_from_slice(&transaction.signature.s()[..]);
-	sig[64] = transaction.signature.standard_v();
-	msg.copy_from_slice(&EthereumTransactionMessage::from(transaction.clone()).hash()[..]);
-
-	sp_io::crypto::secp256k1_ecdsa_recover(&sig, &msg)
 }
 
 /// A generic Ethereum signer.

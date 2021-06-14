@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "hyperspace-elections-phragmen"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.0.0"
+version     = "1.4.0"
 
 [dependencies]
 # crates
@@ -16,11 +16,11 @@ serde = { version = "1.0.124", optional = true }
 # hyperspace
 hyperspace-support = { default-features = false, path = "../support" }
 # substrate
-frame-support     = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-frame-system      = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-npos-elections = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-runtime        = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-std            = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+frame-support     = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+frame-system      = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-npos-elections = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-runtime        = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-std            = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [dev-dependencies]
 # crates
@@ -29,9 +29,9 @@ hex-literal = { version = "0.3.1" }
 hyperspace-balances = { path = "../balances" }
 hyperspace-support  = { path = "../support", features = ["easy-testing"] }
 # substrate
-sp-core              = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sp-io                = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-substrate-test-utils = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sp-core              = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-io                = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+substrate-test-utils = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
 
 [features]
 default = ["std"]

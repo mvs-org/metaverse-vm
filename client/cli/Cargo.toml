@@ -7,14 +7,14 @@ license     = "GPL-3.0"
 name        = "hyperspace-cli"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.0.0"
+version     = "1.4.0"
 
 [dependencies]
 # crates
 serde = { version = "1.0.124", features = ["derive"] }
 toml  = { version = "0.5.7" }
 # substrate
-sc-cli        = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-client-api = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-service    = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
-sc-tracing    = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sc-cli        = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-client-api = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-service    = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sc-tracing    = { git = "https://github.com/new-mvs/substrate", branch = "latest" }

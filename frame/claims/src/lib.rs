@@ -110,8 +110,8 @@ decl_storage! {
 		ClaimsFromEth
 			get(fn claims_from_eth)
 			: map hasher(identity) AddressT => Option<EtpBalance<T>>;
-		ClaimsFromOldna
-			get(fn claims_from_oldna)
+		ClaimsFromOldetp
+			get(fn claims_from_oldetp)
 			: map hasher(identity) AddressT => Option<EtpBalance<T>>;
 	}
 	add_extra_genesis {
@@ -120,11 +120,11 @@ decl_storage! {
 			let ClaimsList {
 				dot,
 				eth,
-				oldna,
+				oldetp,
 			} = &config.claims_list;
 			let mut total = <EtpBalance<T>>::zero();
 
-			if dot.is_empty() && eth.is_empty() && oldna.is_empty() {
+			if dot.is_empty() && eth.is_empty() && oldetp.is_empty() {
 				error!("[hyperspace-claims] Genesis Claims List is Set to EMPTY");
 			} else {
 				// Eth Address
@@ -140,10 +140,10 @@ decl_storage! {
 					total += backed_etp;
 				}
 
-				// Oldna Address
-				for Account { address, backed_etp } in oldna {
+				// Oldetp Address
+				for Account { address, backed_etp } in oldetp {
 					let backed_etp = (*backed_etp).saturated_into();
-					<ClaimsFromOldna<T>>::insert(address.0, backed_etp);
+					<ClaimsFromOldetp<T>>::insert(address.0, backed_etp);
 					total += backed_etp;
 				}
 			}
@@ -241,10 +241,10 @@ decl_module! {
 
 					Self::deposit_event(RawEvent::Claimed(dest, signer, balance_due));
 				}
-				OtherSignature::Oldna(signature) => {
-					let signer = Self::oldna_recover(&signature, &data)
+				OtherSignature::Oldetp(signature) => {
+					let signer = Self::oldetp_recover(&signature, &data)
 						.ok_or(<Error<T>>::InvalidSignature)?;
-					let balance_due = <ClaimsFromOldna<T>>::get(&signer)
+					let balance_due = <ClaimsFromOldetp<T>>::get(&signer)
 						.ok_or(<Error<T>>::SignerHasNoClaim)?;
 
 					ensure!(
@@ -258,7 +258,7 @@ decl_module! {
 						KeepAlive,
 					)?;
 
-					<ClaimsFromOldna<T>>::remove(&signer);
+					<ClaimsFromOldetp<T>>::remove(&signer);
 
 					Self::deposit_event(RawEvent::Claimed(dest, signer, balance_due));
 				}
@@ -300,9 +300,9 @@ decl_module! {
 					T::EtpCurrency::deposit_creating(&Self::account_id(), value);
 					<ClaimsFromEth<T>>::insert(who, value);
 				}
-				OtherAddress::Oldna(who) => {
+				OtherAddress::Oldetp(who) => {
 					T::EtpCurrency::deposit_creating(&Self::account_id(), value);
-					<ClaimsFromOldna<T>>::insert(who, value);
+					<ClaimsFromOldetp<T>>::insert(who, value);
 				}
 			}
 		}
@@ -329,13 +329,13 @@ decl_module! {
 				} else {
 					Err(<Error<T>>::NewAddressTypeMis)?;
 				},
-				OtherAddress::Oldna(old) => if let OtherAddress::Oldna(new) = new {
+				OtherAddress::Oldetp(old) => if let OtherAddress::Oldetp(new) = new {
 					ensure!(
-						!<ClaimsFromOldna<T>>::contains_key(&new),
+						!<ClaimsFromOldetp<T>>::contains_key(&new),
 						<Error<T>>::MoveToExistedAddress
 					);
 
-					<ClaimsFromOldna<T>>::take(&old).map(|c| <ClaimsFromOldna<T>>::insert(&new, c));
+					<ClaimsFromOldetp<T>>::take(&old).map(|c| <ClaimsFromOldetp<T>>::insert(&new, c));
 				} else {
 					Err(<Error<T>>::NewAddressTypeMis)?;
 				}
@@ -371,8 +371,8 @@ impl<T: Config> Module<T> {
 	}
 
 	// Constructs the message that RPC's `personal_sign` and `sign` would sign.
-	// Oldna have different signing specs: https://github.com/oldnaprotocol/tips/issues/104
-	fn oldna_signable_message(what: &[u8], signed_message: &[u8]) -> Vec<u8> {
+	// Oldetp have different signing specs: https://github.com/oldetpprotocol/tips/issues/104
+	fn oldetp_signable_message(what: &[u8], signed_message: &[u8]) -> Vec<u8> {
 		let prefix = T::Prefix::get();
 		let mut l = 32;
 		let mut rev = Vec::new();
@@ -399,12 +399,12 @@ impl<T: Config> Module<T> {
 		Some(res)
 	}
 
-	// Attempts to recover the Oldna address from a message signature signed by using
-	// the Oldna RPC's `personal_sign` and `oldna_sign`.
-	fn oldna_recover(s: &EcdsaSignature, what: &[u8]) -> Option<AddressT> {
-		let msg = keccak_256(&Self::oldna_signable_message(
+	// Attempts to recover the Oldetp address from a message signature signed by using
+	// the Oldetp RPC's `personal_sign` and `oldetp_sign`.
+	fn oldetp_recover(s: &EcdsaSignature, what: &[u8]) -> Option<AddressT> {
+		let msg = keccak_256(&Self::oldetp_signable_message(
 			what,
-			b"\x19OLDNA Signed Message:\n",
+			b"\x19OLDETP Signed Message:\n",
 		));
 		let mut res = AddressT::default();
 		res.copy_from_slice(&keccak_256(&secp256k1_ecdsa_recover(&s.0, &msg).ok()?[..])[12..]);
@@ -449,8 +449,8 @@ impl<T: Config> sp_runtime::traits::ValidateUnsigned for Module<T> {
 							propagate: true,
 						})
 					}
-					OtherSignature::Oldna(signature) => {
-						let maybe_signer = Self::oldna_recover(&signature, &data);
+					OtherSignature::Oldetp(signature) => {
+						let maybe_signer = Self::oldetp_recover(&signature, &data);
 						let signer = if let Some(s) = maybe_signer {
 							s
 						} else {
@@ -460,7 +460,7 @@ impl<T: Config> sp_runtime::traits::ValidateUnsigned for Module<T> {
 							.into();
 						};
 
-						if !<ClaimsFromOldna<T>>::contains_key(&signer) {
+						if !<ClaimsFromOldetp<T>>::contains_key(&signer) {
 							return Err(InvalidTransaction::Custom(
 								ValidityError::SignerHasNoClaim as _,
 							)
@@ -493,13 +493,13 @@ enum ValidityError {
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub enum OtherSignature {
 	Eth(EcdsaSignature),
-	Oldna(EcdsaSignature),
+	Oldetp(EcdsaSignature),
 }
 
 #[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug)]
 pub enum OtherAddress {
 	Eth(AddressT),
-	Oldna(AddressT),
+	Oldetp(AddressT),
 }
 
 #[derive(Clone, Encode, Decode)]
@@ -559,12 +559,12 @@ mod secp_utils {
 		EcdsaSignature(r)
 	}
 
-	pub fn oldna_sig<T: Config>(
+	pub fn oldetp_sig<T: Config>(
 		secret: &secp256k1::SecretKey,
 		what: &[u8],
 		signed_message: &[u8],
 	) -> EcdsaSignature {
-		let msg = keccak_256(&<super::Module<T>>::oldna_signable_message(
+		let msg = keccak_256(&<super::Module<T>>::oldetp_signable_message(
 			&to_ascii_hex(what)[..],
 			signed_message,
 		));
@@ -593,6 +593,7 @@ mod tests {
 	};
 	// --- hyperspace ---
 	use crate::{self as hyperspace_claims, secp_utils::*, *};
+	
 
 	type Balance = u64;
 
@@ -600,7 +601,7 @@ mod tests {
 	type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
 
 	const ETHEREUM_SIGNED_MESSAGE: &'static [u8] = b"\x19Ethereum Signed Message:\n";
-	const OLDNA_SIGNED_MESSAGE: &'static [u8] = b"\x19OLDNA Signed Message:\n";
+	const OLDETP_SIGNED_MESSAGE: &'static [u8] = b"\x19OLDETP Signed Message:\n";
 
 	hyperspace_support::impl_test_account_data! {}
 
@@ -702,8 +703,8 @@ mod tests {
 					address: EthereumAddress(addr(&bob())),
 					backed_etp: 200,
 				}],
-				oldna: vec![Account {
-					address: OldnaAddress(addr(&carol())),
+				oldetp: vec![Account {
+					address: OldetpAddress(addr(&carol())),
 					backed_etp: 300,
 				}],
 			},
@@ -723,13 +724,13 @@ mod tests {
 			assert_eq!(Etp::usable_balance(&Claims::account_id()), 600);
 
 			assert_eq!(Claims::claims_from_eth(&addr(&alice())), Some(100));
-			assert_eq!(Claims::claims_from_oldna(&addr(&alice())), None);
+			assert_eq!(Claims::claims_from_oldetp(&addr(&alice())), None);
 
 			assert_eq!(Claims::claims_from_eth(&addr(&bob())), Some(200));
-			assert_eq!(Claims::claims_from_oldna(&addr(&bob())), None);
+			assert_eq!(Claims::claims_from_oldetp(&addr(&bob())), None);
 
 			assert_eq!(Claims::claims_from_eth(&addr(&carol())), None);
-			assert_eq!(Claims::claims_from_oldna(&addr(&carol())), Some(300));
+			assert_eq!(Claims::claims_from_oldetp(&addr(&carol())), Some(300));
 		});
 	}
 
@@ -744,13 +745,13 @@ mod tests {
 		let z: EthereumAddress = serde_json::from_str(&y).unwrap();
 		assert_eq!(x.0, z.0);
 
-		let x = OldnaAddress(array_bytes::hex2array_unchecked!(
+		let x = OldetpAddress(array_bytes::hex2array_unchecked!(
 			"0x0123456789abcdef0123456789abcdef01234567",
 			20
 		));
 		let y = serde_json::to_string(&x).unwrap();
 		assert_eq!(y, "\"410123456789abcdef0123456789abcdef01234567\"");
-		let z: OldnaAddress = serde_json::from_str(&y).unwrap();
+		let z: OldetpAddress = serde_json::from_str(&y).unwrap();
 		assert_eq!(x.0, z.0);
 	}
 
@@ -787,10 +788,10 @@ mod tests {
 			assert_ok!(Claims::claim(
 				Origin::none(),
 				3,
-				OtherSignature::Oldna(oldna_sig::<Test>(
+				OtherSignature::Oldetp(oldetp_sig::<Test>(
 					&carol(),
 					&3u64.encode(),
-					OLDNA_SIGNED_MESSAGE
+					OLDETP_SIGNED_MESSAGE
 				)),
 			));
 			assert_eq!(Etp::free_balance(&3), 300);
@@ -814,7 +815,7 @@ mod tests {
 				Claims::move_claim(
 					Origin::signed(6),
 					OtherAddress::Eth(addr(&alice())),
-					OtherAddress::Oldna(addr(&carol())),
+					OtherAddress::Oldetp(addr(&carol())),
 				),
 				<Error<Test>>::NewAddressTypeMis
 			);
@@ -998,13 +999,13 @@ mod tests {
 	}
 
 	#[test]
-	fn real_oldna_sig_works() {
+	fn real_oldetp_sig_works() {
 		new_test_ext().execute_with(|| {
 			// "Pay RUSTs to the TEST account:0c0529c66a44e1861e5e1502b4a87009f23c792518a7a2091363f5a0e38abd57"
 			let sig = array_bytes::hex2array_unchecked!("0x34c3d5afc7f8fa08f9d00a1ec4ac274c63ebce99460b556de85258c94f41ab2f52ad5188bd9fc51251cf5dcdd53751b1bd577828db3f2e8fe8ef77907d7f3f6a1b", 65);
 			let sig = EcdsaSignature(sig);
 			let who = array_bytes::hex2array_unchecked!("0x0c0529c66a44e1861e5e1502b4a87009f23c792518a7a2091363f5a0e38abd57", 32).using_encoded(to_ascii_hex);
-			let signer = Claims::oldna_recover(&sig, &who).unwrap();
+			let signer = Claims::oldetp_recover(&sig, &who).unwrap();
 			assert_eq!(signer, array_bytes::hex2array_unchecked!("0x11974bce18a43243ede78beec2fd8e0ba4fe17ae", 20));
 		});
 	}

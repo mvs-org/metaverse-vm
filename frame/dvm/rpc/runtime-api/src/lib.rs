@@ -53,7 +53,7 @@ sp_api::decl_runtime_apis! {
 		/// Returns runtime defined hyperspace_evm::ChainId.
 		fn chain_id() -> u64;
 		/// Returns hyperspace_evm::Accounts by address.
-		fn account_basic(address: H160) -> dp_evm::Account;
+		fn account_basic(address: H160) -> hyperspace_evm_primitives::Account;
 		/// Returns FixedGasPrice::min_gas_price
 		fn gas_price() -> U256;
 		/// For a given account address, returns hyperspace_evm::AccountCodes.
@@ -62,7 +62,7 @@ sp_api::decl_runtime_apis! {
 		fn author() -> H160;
 		/// For a given account address and index, returns hyperspace_evm::AccountStorages.
 		fn storage_at(address: H160, index: U256) -> H256;
-		/// Returns a dvm_ethereum::call response.
+		/// Returns a pallet_ethereum::call response.
 		fn call(
 			from: H160,
 			to: H160,
@@ -72,7 +72,7 @@ sp_api::decl_runtime_apis! {
 			gas_price: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
-		) -> Result<dp_evm::CallInfo, sp_runtime::DispatchError>;
+		) -> Result<hyperspace_evm_primitives::CallInfo, sp_runtime::DispatchError>;
 		/// Returns a frame_ethereum::create response.
 		fn create(
 			from: H160,
@@ -82,7 +82,7 @@ sp_api::decl_runtime_apis! {
 			gas_price: Option<U256>,
 			nonce: Option<U256>,
 			estimate: bool,
-		) -> Result<dp_evm::CreateInfo, sp_runtime::DispatchError>;
+		) -> Result<hyperspace_evm_primitives::CreateInfo, sp_runtime::DispatchError>;
 		/// Return the current block.
 		fn current_block() -> Option<EthereumBlock>;
 		/// Return the current receipt.
