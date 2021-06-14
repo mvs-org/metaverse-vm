@@ -19,7 +19,7 @@ hyperspace-header-mmr-rpc-runtime-api = { default-features = false, path = "./rp
 hyperspace-relay-primitives           = { default-features = false, path = "../../primitives/relay" }
 hyperspace-support                    = { default-features = false, path = "../support" }
 # github
-merkle-mountain-range = { package = "ckb-merkle-mountain-range", default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range.git" }
+mmr = { package = "ckb-merkle-mountain-range", default-features = false, git = "https://github.com/darwinia-network/merkle-mountain-range.git" }
 # substrate
 frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 frame-system  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
@@ -53,10 +53,14 @@ hyperspace-std  = [
 	"hyperspace-relay-primitives/std",
 	"hyperspace-support/std",
 ]
-github-std    = ["merkle-mountain-range/std"]
+github-std    = ["mmr/std"]
 substrate-std = [
 	"frame-support/std",
 	"frame-system/std",
 	"sp-runtime/std",
 	"sp-std/std",
+]
+
+try-runtime = [
+	"frame-support/try-runtime",
 ]

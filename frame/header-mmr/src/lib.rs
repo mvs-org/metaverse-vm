@@ -52,66 +52,56 @@
 //! https://github.com/mimblewimble/grin/blob/0ff6763ee64e5a14e70ddd4642b99789a1648a32/core/src/core/pmmr.rs#L606
 //! https://github.com/nervosnetwork/merkle-mountain-range/blob/master/src/tests/test_accumulate_headers.rs
 //! https://eprint.iacr.org/2019/226.pdf
-//!
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(test)]
 mod mock;
+#[cfg(test)]
 mod tests;
 
-#[cfg(feature = "std")]
-use serde::Serialize;
+#[frame_support::pallet]
+pub mod pallet {
+	// --- crates.io ---
+	#[cfg(feature = "std")]
+	use serde::Serialize;
+	// --- github.com ---
+	use mmr::{Error, MMRStore, Merge, Result as MMRResult, MMR};
+	// --- substrate ---
+	use frame_support::pallet_prelude::*;
+	use frame_system::pallet_prelude::*;
+	use sp_runtime::{
+		generic::{DigestItem, OpaqueDigestItemId},
+		traits::{Hash, Header, SaturatedConversion},
+	};
+	use sp_std::prelude::*;
+	// --- hyperspace ---
+	use hyperspace_header_mmr_rpc_runtime_api::{Proof, RuntimeDispatchInfo};
+	use hyperspace_relay_primitives::MMR as MMRT;
 
-// --- github ---
-use merkle_mountain_range::{
-	leaf_index_to_mmr_size, leaf_index_to_pos, MMRStore, Result as MMRResult, MMR,
-};
-// --- substrate ---
-use codec::{Decode, Encode};
-use frame_support::{decl_module, decl_storage};
-use sp_runtime::{
-	generic::{DigestItem, OpaqueDigestItemId},
-	traits::{Hash, Header},
-	RuntimeDebug, SaturatedConversion,
-};
-use sp_std::{marker::PhantomData, prelude::*};
-// --- hyperspace ---
-use hyperspace_header_mmr_rpc_runtime_api::{Proof, RuntimeDispatchInfo};
-use hyperspace_relay_primitives::MMR as MMRT;
-use hyperspace_support::impl_rpc;
+	pub const PARENT_MMR_ROOT_LOG_ID: [u8; 4] = *b"MMRR";
 
-pub const PARENT_MMR_ROOT_LOG_ID: [u8; 4] = *b"MMRR";
+	#[pallet::config]
+	pub trait Config: frame_system::Config {}
 
-#[cfg_attr(feature = "std", derive(Serialize))]
-#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
-pub struct MerkleMountainRangeRootLog<Hash> {
-	/// Specific prefix to identify the mmr root log in the digest items with Other type.
-	pub prefix: [u8; 4],
-	/// The merkle mountain range root hash.
-	pub parent_mmr_root: Hash,
-}
+	/// The MMR size and length of the mmr node list
+	#[pallet::storage]
+	#[pallet::getter(fn mmr_counter)]
+	pub type MMRCounter<T> = StorageValue<_, u64, ValueQuery>;
 
-pub trait Config: frame_system::Config {}
+	/// MMR struct of the previous blocks, from first(genesis) to parent hash.
+	#[pallet::storage]
+	#[pallet::getter(fn mmr_node_list)]
+	pub type MMRNodeList<T: Config> = StorageMap<_, Identity, u64, T::Hash, OptionQuery>;
 
-decl_storage! {
-	trait Store for Module<T: Config> as HyperspaceHeaderMMR {
-		/// MMR struct of the previous blocks, from first(genesis) to parent hash.
-		pub MMRNodeList get(fn mmr_node_list): map hasher(identity) u64 => Option<T::Hash>;
-
-		/// The MMR size and length of the mmr node list
-		pub MMRCounter get(fn mmr_counter): u64;
-	}
-}
-
-decl_module! {
-	pub struct Module<T: Config> for enum Call
-	where
-		origin: T::Origin
-	{
-		fn on_finalize(_block_number: T::BlockNumber) {
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_finalize(_: T::BlockNumber) {
 			let store = <ModuleMMRStore<T>>::default();
 			let parent_hash = <frame_system::Pallet<T>>::parent_hash();
-			let mut mmr = <MMR<_, MMRMerge<T>, _>>::new(MMRCounter::get(), store);
+			let mut mmr = <MMR<_, MMRMerge<T>, _>>::new(<MMRCounter<T>>::get(), store);
 
 			// Update MMR and add mmr root to digest of block header
 			let _ = mmr.push(parent_hash);
@@ -120,120 +110,146 @@ decl_module! {
 				if mmr.commit().is_ok() {
 					let mmr_root_log = MerkleMountainRangeRootLog::<T::Hash> {
 						prefix: PARENT_MMR_ROOT_LOG_ID,
-						parent_mmr_root: parent_mmr_root.into()
+						parent_mmr_root: parent_mmr_root.into(),
 					};
 					let mmr_item = DigestItem::Other(mmr_root_log.encode());
 
 					<frame_system::Pallet<T>>::deposit_log(mmr_item.into());
 				} else {
-					log::error!("[hyperspace-header-mmr] FAILED to Commit MMR");
+					log::error!("Commit MMR - FAILED");
 				}
 			} else {
-				log::error!("[hyperspace-header-mmr] FAILED to Calculate MMR");
+				log::error!("Calculate MMR - FAILED");
 			}
 		}
 	}
-}
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		hyperspace_support::impl_rpc! {
+			pub fn gen_proof_rpc(
+				block_number_of_member_leaf: u64,
+				block_number_of_last_leaf: u64,
+			) -> RuntimeDispatchInfo<T::Hash> {
+				if block_number_of_member_leaf <= block_number_of_last_leaf {
+					let store = <ModuleMMRStore<T>>::default();
+					let mmr_size = mmr::leaf_index_to_mmr_size(block_number_of_last_leaf);
+					if mmr_size <= <MMRCounter<T>>::get() {
+						let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
+						let pos = mmr::leaf_index_to_pos(block_number_of_member_leaf);
 
-impl<T: Config> Module<T> {
-	impl_rpc! {
-		pub fn gen_proof_rpc(
-			block_number_of_member_leaf: u64,
-			block_number_of_last_leaf: u64,
-		) -> RuntimeDispatchInfo<T::Hash> {
-			if block_number_of_member_leaf <= block_number_of_last_leaf {
-				let store = <ModuleMMRStore<T>>::default();
-				let mmr_size = leaf_index_to_mmr_size(block_number_of_last_leaf);
-				if mmr_size <= MMRCounter::get() {
-					let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
-					let pos = leaf_index_to_pos(block_number_of_member_leaf);
-
-					if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
-						return RuntimeDispatchInfo {
-							mmr_size,
-							proof: Proof(merkle_proof.proof_items().to_vec()),
-						};
+						if let Ok(merkle_proof) = mmr.gen_proof(vec![pos]) {
+							return RuntimeDispatchInfo {
+								mmr_size,
+								proof: Proof(merkle_proof.proof_items().to_vec()),
+							};
+						}
 					}
 				}
+
+				RuntimeDispatchInfo {
+					mmr_size: 0,
+					proof: Proof(vec![]),
+				}
+			}
+		}
+
+		// TODO: For future rpc calls
+		pub fn _find_parent_mmr_root(header: T::Header) -> Option<T::Hash> {
+			let id = OpaqueDigestItemId::Other;
+
+			let filter_log = |MerkleMountainRangeRootLog {
+			                      prefix,
+			                      parent_mmr_root,
+			                  }: MerkleMountainRangeRootLog<T::Hash>| match prefix
+			{
+				PARENT_MMR_ROOT_LOG_ID => Some(parent_mmr_root),
+				_ => None,
+			};
+
+			// find the first other digest with the right prefix which converts to
+			// the right kind of mmr root log.
+			header
+				.digest()
+				.convert_first(|l| l.try_to(id).and_then(filter_log))
+		}
+	}
+	impl<T: Config> MMRT<T::BlockNumber, T::Hash> for Pallet<T> {
+		fn get_root(block_number: T::BlockNumber) -> Option<T::Hash> {
+			let store = <ModuleMMRStore<T>>::default();
+			let mmr_size = mmr::leaf_index_to_mmr_size(block_number.saturated_into::<u64>() as _);
+			let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
+
+			if let Ok(mmr_root) = mmr.get_root() {
+				Some(mmr_root)
+			} else {
+				None
+			}
+		}
+	}
+
+	pub struct ModuleMMRStore<T>(PhantomData<T>);
+	impl<T> Default for ModuleMMRStore<T> {
+		fn default() -> Self {
+			ModuleMMRStore(sp_std::marker::PhantomData)
+		}
+	}
+	impl<T: Config> MMRStore<T::Hash> for ModuleMMRStore<T> {
+		fn get_elem(&self, pos: u64) -> MMRResult<Option<T::Hash>> {
+			Ok(<Pallet<T>>::mmr_node_list(pos))
+		}
+
+		fn append(&mut self, pos: u64, elems: Vec<T::Hash>) -> MMRResult<()> {
+			let mmr_count = <MMRCounter<T>>::get();
+			if pos != mmr_count {
+				// Must be append only.
+				Err(Error::InconsistentStore)?;
+			}
+			let elems_len = elems.len() as u64;
+
+			for (i, elem) in elems.into_iter().enumerate() {
+				<MMRNodeList<T>>::insert(mmr_count + i as u64, elem);
 			}
 
-			RuntimeDispatchInfo {
-				mmr_size: 0,
-				proof: Proof(vec![]),
-			}
+			// increment counter
+			<MMRCounter<T>>::put(mmr_count + elems_len);
+
+			Ok(())
 		}
 	}
 
-	// TODO: For future rpc calls
-	fn _find_parent_mmr_root(header: T::Header) -> Option<T::Hash> {
-		let id = OpaqueDigestItemId::Other;
+	pub struct MMRMerge<T>(PhantomData<T>);
+	impl<T: Config> Merge for MMRMerge<T> {
+		type Item = <T as frame_system::Config>::Hash;
 
-		let filter_log = |MerkleMountainRangeRootLog {
-		                      prefix,
-		                      parent_mmr_root,
-		                  }: MerkleMountainRangeRootLog<T::Hash>| match prefix {
-			PARENT_MMR_ROOT_LOG_ID => Some(parent_mmr_root),
-			_ => None,
-		};
-
-		// find the first other digest with the right prefix which converts to
-		// the right kind of mmr root log.
-		header
-			.digest()
-			.convert_first(|l| l.try_to(id).and_then(filter_log))
-	}
-}
-
-pub struct MMRMerge<T>(PhantomData<T>);
-impl<T: Config> merkle_mountain_range::Merge for MMRMerge<T> {
-	type Item = <T as frame_system::Config>::Hash;
-
-	fn merge(lhs: &Self::Item, rhs: &Self::Item) -> Self::Item {
-		let encodable = (lhs, rhs);
-		<T as frame_system::Config>::Hashing::hash_of(&encodable)
-	}
-}
-
-pub struct ModuleMMRStore<T>(PhantomData<T>);
-impl<T> Default for ModuleMMRStore<T> {
-	fn default() -> Self {
-		ModuleMMRStore(sp_std::marker::PhantomData)
-	}
-}
-impl<T: Config> MMRStore<T::Hash> for ModuleMMRStore<T> {
-	fn get_elem(&self, pos: u64) -> MMRResult<Option<T::Hash>> {
-		Ok(<Module<T>>::mmr_node_list(pos))
-	}
-
-	fn append(&mut self, pos: u64, elems: Vec<T::Hash>) -> MMRResult<()> {
-		let mmr_count = MMRCounter::get();
-		if pos != mmr_count {
-			// Must be append only.
-			Err(merkle_mountain_range::Error::InconsistentStore)?;
+		fn merge(lhs: &Self::Item, rhs: &Self::Item) -> Self::Item {
+			let encodable = (lhs, rhs);
+			<T as frame_system::Config>::Hashing::hash_of(&encodable)
 		}
-		let elems_len = elems.len() as u64;
+	}
 
-		for (i, elem) in elems.into_iter().enumerate() {
-			<MMRNodeList<T>>::insert(mmr_count + i as u64, elem);
-		}
-
-		// increment counter
-		MMRCounter::put(mmr_count + elems_len);
-
-		Ok(())
+	#[cfg_attr(feature = "std", derive(Serialize))]
+	#[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug)]
+	pub struct MerkleMountainRangeRootLog<Hash> {
+		/// Specific prefix to identify the mmr root log in the digest items with Other type.
+		pub prefix: [u8; 4],
+		/// The merkle mountain range root hash.
+		pub parent_mmr_root: Hash,
 	}
 }
+pub use pallet::*;
 
-impl<T: Config> MMRT<T::BlockNumber, T::Hash> for Module<T> {
-	fn get_root(block_number: T::BlockNumber) -> Option<T::Hash> {
-		let store = <ModuleMMRStore<T>>::default();
-		let mmr_size = leaf_index_to_mmr_size(block_number.saturated_into::<u64>() as _);
-		let mmr = <MMR<_, MMRMerge<T>, _>>::new(mmr_size, store);
+pub mod migration {
+	const OLD_PALLET_NAME: &[u8] = b"HyperspaceHeaderMMR";
 
-		if let Ok(mmr_root) = mmr.get_root() {
-			Some(mmr_root)
-		} else {
-			None
+	#[cfg(feature = "try-runtime")]
+	pub mod try_runtime {
+		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
+			Ok(())
 		}
+	}
+
+	pub fn migrate(new_pallet_name: &[u8]) {
+		frame_support::migration::move_pallet(OLD_PALLET_NAME, new_pallet_name);
 	}
 }

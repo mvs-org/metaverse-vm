@@ -18,14 +18,18 @@
 
 //! Tests for the module.
 
-#![cfg(test)]
-
+// --- crates.io ---
+use codec::{Decode, Encode};
+// --- github.com ---
+use mmr::{Merge, MMR};
 // --- substrate ---
 use frame_support::traits::OnFinalize;
-use sp_runtime::testing::{Digest, H256};
+use sp_runtime::{
+	generic::DigestItem,
+	testing::{Digest, H256},
+};
 // --- hyperspace ---
-use crate::{mock::*, *};
-use merkle_mountain_range::{leaf_index_to_pos, Merge};
+use crate::{mock::*, pallet::*};
 
 #[test]
 fn first_header_mmr() {
@@ -72,14 +76,14 @@ fn test_insert_header() {
 		let prove_elem = headers[h1 as usize - 1].hash();
 
 		let pos = 19;
-		assert_eq!(pos, leaf_index_to_pos(h1));
+		assert_eq!(pos, mmr::leaf_index_to_pos(h1));
 		assert_eq!(prove_elem, HeaderMMR::mmr_node_list(pos).unwrap());
 
 		let parent_mmr_root = HeaderMMR::_find_parent_mmr_root(headers[h2 as usize - 1].clone())
 			.expect("Header mmr get failed");
 
 		let store = <ModuleMMRStore<Test>>::default();
-		let mmr = MMR::<_, MMRMerge<Test>, _>::new(leaf_index_to_mmr_size(h2 - 1), store);
+		let mmr = MMR::<_, MMRMerge<Test>, _>::new(mmr::leaf_index_to_mmr_size(h2 - 1), store);
 
 		assert_eq!(mmr.get_root().expect("Get Root Failed"), parent_mmr_root);
 

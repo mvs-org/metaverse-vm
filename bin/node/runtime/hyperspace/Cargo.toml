@@ -180,6 +180,7 @@ try-runtime = [
 	"hyperspace-balances/try-runtime",
 	"hyperspace-oldetp-issuing/try-runtime",
 	"hyperspace-ethereum-backing/try-runtime",
+	"hyperspace-header-mmr/try-runtime",
 	"hyperspace-staking/try-runtime",
 	"dvm-ethereum/try-runtime",
 ]

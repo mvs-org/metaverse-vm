@@ -18,8 +18,6 @@
 
 //! Test utilities
 
-#![cfg(test)]
-
 // --- crates ---
 use codec::Encode;
 // --- substrate ---
