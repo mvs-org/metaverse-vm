@@ -23,7 +23,7 @@ use crate::{
 	mock::{mock_relay::*, BlockNumber, *},
 	*,
 };
-use hyperspace_support::balance::lock::*;
+use hyperspace_support::balance::*;
 
 // #[test]
 // fn events_should_work() {

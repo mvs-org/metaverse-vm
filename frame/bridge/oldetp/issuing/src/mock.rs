@@ -21,8 +21,10 @@
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
+use frame_support::traits::GenesisBuild;
 use frame_system::mocking::*;
 use sp_io::TestExternalities;
+use sp_runtime::ModuleId;
 use sp_runtime::{
 	testing::{Header, H256},
 	traits::{BlakeTwo256, IdentityLookup},
@@ -31,12 +33,12 @@ use sp_runtime::{
 // --- hyperspace ---
 use crate::{self as hyperspace_oldetp_issuing, *};
 
+// Global primitives
 pub type Block = MockBlock<Test>;
 pub type UncheckedExtrinsic = MockUncheckedExtrinsic<Test>;
-
 pub type AccountId = u64;
 pub type Balance = u128;
-
+// Pallet primitives
 pub type OldetpIssuingError = Error<Test>;
 
 hyperspace_support::impl_test_account_data! {}
@@ -98,9 +100,9 @@ frame_support::construct_runtime! {
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system::{Module, Call, Storage, Config, Event<T>},
-		Etp: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
-		OldetpIssuing: hyperspace_oldetp_issuing::{Module, Call, Storage, Config, Event<T>},
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
+		Etp: hyperspace_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		HyperspaceOldetpIssuing: hyperspace_oldetp_issuing::{Pallet, Call, Storage, Config, Event<T>},
 	}
 }
 
@@ -117,10 +119,12 @@ pub fn new_test_ext() -> TestExternalities {
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	hyperspace_oldetp_issuing::GenesisConfig {
-		total_mapped_etp: 4_000,
-	}
-	.assimilate_storage::<Test>(&mut t)
+	<hyperspace_oldetp_issuing::GenesisConfig as GenesisBuild<Test>>::assimilate_storage(
+		&hyperspace_oldetp_issuing::GenesisConfig {
+			total_mapped_etp: 4_000,
+		},
+		&mut t,
+	)
 	.unwrap();
 
 	t.into()

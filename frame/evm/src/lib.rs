@@ -37,23 +37,18 @@ use frame_support::{
 	weights::{Pays, PostDispatchInfo, Weight},
 };
 use frame_system::RawOrigin;
-use sp_core::{Hasher, H160, H256, U256};
+use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	traits::{BadOrigin, UniqueSaturatedInto},
-	AccountId32,
+	AccountId32, DispatchResult,
 };
 use sp_std::vec::Vec;
 // --- std ---
 #[cfg(feature = "std")]
 use codec::{Decode, Encode};
-use evm::Config as EvmConfig;
-pub use evm::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed};
+use evm::{Config as EvmConfig, ExitError, ExitReason};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-
-/// Type alias for currency balance.
-pub type BalanceOf<T> =
-	<<T as Config>::EtpCurrency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 /// Config that outputs the current transaction gas price.
 pub trait FeeCalculator {
@@ -86,52 +81,6 @@ pub trait EnsureAddressOrigin<OuterOrigin> {
 	) -> Result<Self::Success, OuterOrigin>;
 }
 
-/// Ensure that the EVM address is the same as the Substrate address. This only works if the account
-/// ID is `H160`.
-pub struct EnsureAddressSame;
-
-impl<OuterOrigin> EnsureAddressOrigin<OuterOrigin> for EnsureAddressSame
-where
-	OuterOrigin: Into<Result<RawOrigin<H160>, OuterOrigin>> + From<RawOrigin<H160>>,
-{
-	type Success = H160;
-
-	fn try_address_origin(address: &H160, origin: OuterOrigin) -> Result<H160, OuterOrigin> {
-		origin.into().and_then(|o| match o {
-			RawOrigin::Signed(who) if &who == address => Ok(who),
-			r => Err(OuterOrigin::from(r)),
-		})
-	}
-}
-
-/// Ensure that the origin is root.
-pub struct EnsureAddressRoot<AccountId>(sp_std::marker::PhantomData<AccountId>);
-
-impl<OuterOrigin, AccountId> EnsureAddressOrigin<OuterOrigin> for EnsureAddressRoot<AccountId>
-where
-	OuterOrigin: Into<Result<RawOrigin<AccountId>, OuterOrigin>> + From<RawOrigin<AccountId>>,
-{
-	type Success = ();
-
-	fn try_address_origin(_address: &H160, origin: OuterOrigin) -> Result<(), OuterOrigin> {
-		origin.into().and_then(|o| match o {
-			RawOrigin::Root => Ok(()),
-			r => Err(OuterOrigin::from(r)),
-		})
-	}
-}
-
-/// Ensure that the origin never happens.
-pub struct EnsureAddressNever<AccountId>(sp_std::marker::PhantomData<AccountId>);
-
-impl<OuterOrigin, AccountId> EnsureAddressOrigin<OuterOrigin> for EnsureAddressNever<AccountId> {
-	type Success = AccountId;
-
-	fn try_address_origin(_address: &H160, origin: OuterOrigin) -> Result<AccountId, OuterOrigin> {
-		Err(origin)
-	}
-}
-
 /// Ensure that the address is truncated hash of the origin. Only works if the account id is
 /// `AccountId32`.
 pub struct EnsureAddressTruncated;
@@ -156,29 +105,6 @@ pub trait AddressMapping<A> {
 	fn into_account_id(address: H160) -> A;
 }
 
-/// Identity address mapping.
-pub struct IdentityAddressMapping;
-
-impl AddressMapping<H160> for IdentityAddressMapping {
-	fn into_account_id(address: H160) -> H160 {
-		address
-	}
-}
-
-/// Hashed address mapping.
-pub struct HashedAddressMapping<H>(sp_std::marker::PhantomData<H>);
-
-impl<H: Hasher<Out = H256>> AddressMapping<AccountId32> for HashedAddressMapping<H> {
-	fn into_account_id(address: H160) -> AccountId32 {
-		let mut data = [0u8; 24];
-		data[0..4].copy_from_slice(b"evm:");
-		data[4..24].copy_from_slice(&address[..]);
-		let hash = H::hash(&data);
-
-		AccountId32::from(Into::<[u8; 32]>::into(hash))
-	}
-}
-
 pub struct ConcatAddressMapping;
 
 /// The ConcatAddressMapping used for transfer from evm 20-length to substrate 32-length address
@@ -197,47 +123,10 @@ impl AddressMapping<AccountId32> for ConcatAddressMapping {
 	}
 }
 
-pub trait AccountBasicMapping {
+pub trait AccountBasic {
 	fn account_basic(address: &H160) -> Account;
 	fn mutate_account_basic(address: &H160, new: Account);
-}
-
-pub struct RawAccountBasicMapping<T>(sp_std::marker::PhantomData<T>);
-
-impl<T: Config> AccountBasicMapping for RawAccountBasicMapping<T> {
-	/// Get the account basic in EVM format.
-	fn account_basic(address: &H160) -> Account {
-		let account_id = T::AddressMapping::into_account_id(*address);
-
-		let nonce = frame_system::Module::<T>::account_nonce(&account_id);
-		let balance = T::EtpCurrency::free_balance(&account_id);
-
-		Account {
-			nonce: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(nonce)),
-			balance: U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(balance)),
-		}
-	}
-
-	fn mutate_account_basic(address: &H160, new: Account) {
-		let account_id = T::AddressMapping::into_account_id(*address);
-		let current = T::AccountBasicMapping::account_basic(address);
-
-		if current.nonce < new.nonce {
-			// ASSUME: in one single EVM transaction, the nonce will not increase more than
-			// `u128::max_value()`.
-			for _ in 0..(new.nonce - current.nonce).low_u128() {
-				frame_system::Module::<T>::inc_account_nonce(&account_id);
-			}
-		}
-
-		if current.balance > new.balance {
-			let diff = current.balance - new.balance;
-			T::EtpCurrency::slash(&account_id, diff.low_u128().unique_saturated_into());
-		} else if current.balance < new.balance {
-			let diff = new.balance - current.balance;
-			T::EtpCurrency::deposit_creating(&account_id, diff.low_u128().unique_saturated_into());
-		}
-	}
+	fn transfer(source: &H160, target: &H160, value: U256) -> Result<(), ExitError>;
 }
 
 /// A mapping function that converts Ethereum gas to Substrate weight
@@ -252,6 +141,11 @@ impl GasWeightMapping for () {
 	fn weight_to_gas(weight: Weight) -> u64 {
 		weight
 	}
+}
+
+/// A contract handle for ethereum issuing
+pub trait IssuingHandler {
+	fn handle(address: H160, caller: H160, input: &[u8]) -> DispatchResult;
 }
 
 static ISTANBUL_CONFIG: EvmConfig = EvmConfig::istanbul();
@@ -281,10 +175,15 @@ pub trait Config: frame_system::Config + pallet_timestamp::Config {
 	type Precompiles: PrecompileSet;
 	/// Chain ID of EVM.
 	type ChainId: Get<u64>;
+	/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another pallet.
+	type BlockGasLimit: Get<U256>;
 	/// EVM execution runner.
 	type Runner: Runner<Self>;
 	/// The account basic mapping way
-	type AccountBasicMapping: AccountBasicMapping;
+	type EtpAccountBasic: AccountBasic;
+	type DnaAccountBasic: AccountBasic;
+	/// Issuing contracts handler
+	type IssuingHandler: IssuingHandler;
 
 	/// EVM config used in the module.
 	fn config() -> &'static EvmConfig {
@@ -317,7 +216,11 @@ decl_storage! {
 		config(accounts): std::collections::BTreeMap<H160, GenesisAccount>;
 		build(|config: &GenesisConfig| {
 			for (address, account) in &config.accounts {
-				T::AccountBasicMapping::mutate_account_basic(&address, Account {
+				T::EtpAccountBasic::mutate_account_basic(&address, Account {
+					balance: account.balance,
+					nonce: account.nonce,
+				});
+				T::DnaAccountBasic::mutate_account_basic(&address, Account {
 					balance: account.balance,
 					nonce: account.nonce,
 				});
@@ -515,7 +418,7 @@ impl<T: Config> Module<T> {
 	fn remove_account(address: &H160) {
 		if AccountCodes::contains_key(address) {
 			let account_id = T::AddressMapping::into_account_id(*address);
-			let _ = frame_system::Module::<T>::dec_consumers(&account_id);
+			let _ = <frame_system::Pallet<T>>::dec_consumers(&account_id);
 		}
 
 		AccountCodes::remove(address);
@@ -530,7 +433,7 @@ impl<T: Config> Module<T> {
 
 		if !AccountCodes::contains_key(&address) {
 			let account_id = T::AddressMapping::into_account_id(address);
-			let _ = frame_system::Module::<T>::inc_consumers(&account_id);
+			let _ = <frame_system::Pallet<T>>::inc_consumers(&account_id);
 		}
 
 		AccountCodes::insert(address, code);
@@ -538,10 +441,15 @@ impl<T: Config> Module<T> {
 
 	/// Check whether an account is empty.
 	pub fn is_account_empty(address: &H160) -> bool {
-		let account = T::AccountBasicMapping::account_basic(address);
+		let account = T::EtpAccountBasic::account_basic(address);
 		let code_len = AccountCodes::decode_len(address).unwrap_or(0);
 
 		account.nonce == U256::zero() && account.balance == U256::zero() && code_len == 0
+	}
+
+	pub fn is_contract_code_empty(address: &H160) -> bool {
+		let code_len = AccountCodes::decode_len(address).unwrap_or(0);
+		code_len == 0
 	}
 
 	/// Remove an account if its empty.
@@ -553,10 +461,10 @@ impl<T: Config> Module<T> {
 
 	/// Withdraw fee.
 	pub fn withdraw_fee(address: &H160, value: U256) {
-		let account = T::AccountBasicMapping::account_basic(address);
+		let account = T::EtpAccountBasic::account_basic(address);
 		let new_account_balance = account.balance.saturating_sub(value);
 
-		T::AccountBasicMapping::mutate_account_basic(
+		T::EtpAccountBasic::mutate_account_basic(
 			&address,
 			Account {
 				nonce: account.nonce,
@@ -567,10 +475,10 @@ impl<T: Config> Module<T> {
 
 	/// Deposit fee.
 	pub fn deposit_fee(address: &H160, value: U256) {
-		let account = T::AccountBasicMapping::account_basic(address);
+		let account = T::EtpAccountBasic::account_basic(address);
 		let new_account_balance = account.balance.saturating_add(value);
 
-		T::AccountBasicMapping::mutate_account_basic(
+		T::EtpAccountBasic::mutate_account_basic(
 			&address,
 			Account {
 				nonce: account.nonce,

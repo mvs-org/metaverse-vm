@@ -28,62 +28,11 @@
 //! + If you want to delete some functions, please left some comments
 //! explaining why you delete them.
 
-mod offchain_election {
-	// --- hyperspace ---
-	use crate::{mock::*, *};
-
-	/// setup a new set of validators and nominator storage items independent of the parent mock
-	/// file. This produces a edge graph that can be reduced.
-	pub fn build_offchain_election_test_ext() {
-		for i in (10..=40).step_by(10) {
-			// Note: we respect the convention of the mock (10, 11 pairs etc.) since these accounts
-			// have corresponding keys in session which makes everything more ergonomic and
-			// realistic.
-			bond_validator(i + 1, i, StakingBalance::EtpBalance(100));
-		}
-
-		let mut voter = 1;
-		bond_nominator(
-			voter,
-			1000 + voter,
-			StakingBalance::EtpBalance(100),
-			vec![11],
-		);
-		voter = 2;
-		bond_nominator(
-			voter,
-			1000 + voter,
-			StakingBalance::EtpBalance(100),
-			vec![11, 11],
-		);
-		voter = 3;
-		bond_nominator(
-			voter,
-			1000 + voter,
-			StakingBalance::EtpBalance(100),
-			vec![21, 41],
-		);
-		voter = 4;
-		bond_nominator(
-			voter,
-			1000 + voter,
-			StakingBalance::EtpBalance(100),
-			vec![21, 31, 41],
-		);
-		voter = 5;
-		bond_nominator(
-			voter,
-			1000 + voter,
-			StakingBalance::EtpBalance(100),
-			vec![21, 31, 41],
-		);
-	}
-}
-
 // --- substrate ---
+use frame_election_provider_support::Support;
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{Currency, OnFinalize, OnInitialize, ReservableCurrency},
+	traits::{Currency, OnInitialize, ReservableCurrency},
 	StorageMap,
 };
 use sp_runtime::{assert_eq_error_rate, traits::BadOrigin};
@@ -94,7 +43,7 @@ use crate::{
 	mock::{AccountId, Balance, *},
 	*,
 };
-use hyperspace_support::balance::lock::*;
+use hyperspace_support::balance::*;
 
 #[test]
 fn force_unstake_works() {
@@ -216,15 +165,13 @@ fn basic_setup_works() {
 				own_dna_balance: 0,
 				own_power: Staking::power_of(&11),
 				// Allow error rate 1
-				total_power: Staking::power_of(&11)
-					+ Staking::currency_to_power(125, Staking::etp_pool())
-					+ 1,
+				total_power: Staking::power_of(&11) + etp_power(125) + 1,
 				others: vec![IndividualExposure {
 					who: 101,
 					etp_balance: 125,
 					dna_balance: 0,
 					// Allow error rate 1
-					power: Staking::currency_to_power(125, Staking::etp_pool()) + 1,
+					power: etp_power(125) + 1,
 				}]
 			}
 		);
@@ -236,16 +183,14 @@ fn basic_setup_works() {
 				own_dna_balance: 0,
 				own_power: Staking::power_of(&21),
 				// Allow error rate 1
-				total_power: Staking::power_of(&21)
-					+ Staking::currency_to_power(375, Staking::etp_pool())
-					- 1,
+				total_power: Staking::power_of(&21) + etp_power(375) - 1,
 				others: vec![IndividualExposure {
 					who: 101,
 					// Allow error rate 1
 					etp_balance: 375 - 1,
 					dna_balance: 0,
 					// Allow error rate 1
-					power: Staking::currency_to_power(375, Staking::etp_pool()) - 1,
+					power: etp_power(375) - 1,
 				}]
 			}
 		);
@@ -341,10 +286,10 @@ fn rewards_should_work() {
 					individual: vec![(11, 100), (21, 50)].into_iter().collect(),
 				}
 			);
-			let part_for_10 = Perbill::from_rational_approximation::<u32>(1000, 1125);
-			let part_for_20 = Perbill::from_rational_approximation::<u32>(1000, 1375);
-			let part_for_100_from_10 = Perbill::from_rational_approximation::<u32>(125, 1125);
-			let part_for_100_from_20 = Perbill::from_rational_approximation::<u32>(375, 1375);
+			let part_for_10 = Perbill::from_rational::<u32>(1000, 1125);
+			let part_for_20 = Perbill::from_rational::<u32>(1000, 1375);
+			let part_for_100_from_10 = Perbill::from_rational::<u32>(125, 1125);
+			let part_for_100_from_20 = Perbill::from_rational::<u32>(375, 1375);
 
 			start_session(2);
 			start_session(3);
@@ -682,21 +627,20 @@ fn nominating_and_rewards_should_work() {
 				Exposure {
 					own_etp_balance: 1000,
 					own_dna_balance: 0,
-					own_power: Staking::currency_to_power(1000, Staking::etp_pool()),
-					total_power: Staking::currency_to_power(1000, Staking::etp_pool())
-						+ Staking::currency_to_power(800, Staking::etp_pool()),
+					own_power: etp_power(1000),
+					total_power: etp_power(1000) + etp_power(800),
 					others: vec![
 						IndividualExposure {
 							who: 3,
 							etp_balance: 400,
 							dna_balance: 0,
-							power: Staking::currency_to_power(400, Staking::etp_pool()),
+							power: etp_power(400),
 						},
 						IndividualExposure {
 							who: 1,
 							etp_balance: 400,
 							dna_balance: 0,
-							power: Staking::currency_to_power(400, Staking::etp_pool()),
+							power: etp_power(400),
 						},
 					],
 				},
@@ -706,23 +650,22 @@ fn nominating_and_rewards_should_work() {
 				Exposure {
 					own_etp_balance: 1000,
 					own_dna_balance: 0,
-					own_power: Staking::currency_to_power(1000, Staking::etp_pool()),
-					total_power: Staking::currency_to_power(1000, Staking::etp_pool())
-						+ Staking::currency_to_power(1200, Staking::etp_pool()),
+					own_power: etp_power(1000),
+					total_power: etp_power(1000) + etp_power(1200),
 					others: vec![
 						IndividualExposure {
 							who: 3,
 							// expect 600, error rate 1
 							etp_balance: 599,
 							dna_balance: 0,
-							power: Staking::currency_to_power(600, Staking::etp_pool()),
+							power: etp_power(600),
 						},
 						IndividualExposure {
 							who: 1,
 							// expect 600, error rate 1
 							etp_balance: 599,
 							dna_balance: 0,
-							power: Staking::currency_to_power(600, Staking::etp_pool()),
+							power: etp_power(600),
 						},
 					],
 				},
@@ -802,9 +745,9 @@ fn nominators_also_get_slashed_pro_rata() {
 
 		let slash_amount = slash_percent * exposed_stake;
 		let validator_share =
-			Perbill::from_rational_approximation(exposed_validator, exposed_stake) * slash_amount;
+			Perbill::from_rational(exposed_validator, exposed_stake) * slash_amount;
 		let nominator_share =
-			Perbill::from_rational_approximation(exposed_nominator, exposed_stake) * slash_amount;
+			Perbill::from_rational(exposed_nominator, exposed_stake) * slash_amount;
 
 		// both slash amounts need to be positive for the test to make sense.
 		assert!(validator_share > 0);
@@ -812,9 +755,9 @@ fn nominators_also_get_slashed_pro_rata() {
 
 		// both stakes must have been decreased pro-rata.
 		let nominator_share =
-			Perbill::from_rational_approximation(nominator_share, exposed_stake) * nominator_stake;
+			Perbill::from_rational(nominator_share, exposed_stake) * nominator_stake;
 		let validator_share =
-			Perbill::from_rational_approximation(validator_share, exposed_stake) * validator_stake;
+			Perbill::from_rational(validator_share, exposed_stake) * validator_stake;
 
 		assert_eq_error_rate!(
 			Staking::ledger(100).unwrap().active_etp,
@@ -1780,8 +1723,8 @@ fn reward_to_stake_works() {
 				Exposure {
 					own_etp_balance: 69,
 					own_dna_balance: 0,
-					total_power: Staking::currency_to_power(69, Staking::etp_pool()),
-					own_power: Staking::currency_to_power(69, Staking::etp_pool()),
+					total_power: etp_power(69),
+					own_power: etp_power(69),
 					others: vec![],
 				},
 			);
@@ -2219,7 +2162,7 @@ fn bond_with_little_staked_value_bounded() {
 }
 
 #[test]
-fn bond_with_duplicate_vote_should_be_ignored_by_npos_election() {
+fn bond_with_duplicate_vote_should_be_ignored_by_election_provider() {
 	ExtBuilder::default()
 		.validator_count(2)
 		.nominate(false)
@@ -2234,13 +2177,14 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election() {
 				StakingBalance::EtpBalance(999),
 				0
 			));
-
+			// ensure all have equal stake.
 			assert_eq!(
 				<Validators<Test>>::iter()
-					.map(|(v, _)| (v, Staking::ledger(v - 1).unwrap().active_etp))
+					.map(|(v, _)| (v, Staking::power_of(&v)))
 					.collect::<Vec<_>>(),
-				vec![(31, 1000), (21, 1000), (11, 1000)],
+				vec![(31, 111111111), (21, 111111111), (11, 111111111)],
 			);
+			// no nominators shall exist.
 			assert!(<Nominators<Test>>::iter()
 				.map(|(n, _)| n)
 				.collect::<Vec<_>>()
@@ -2259,10 +2203,9 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election() {
 				RewardDestination::Controller,
 				0
 			));
-			// 11 should not be elected. All of these count as ONE vote.
 			assert_ok!(Staking::nominate(
 				Origin::signed(2),
-				vec![11, 11, 11, 21, 31,]
+				vec![11, 11, 11, 21, 31]
 			));
 
 			assert_ok!(Staking::bond(
@@ -2274,29 +2217,42 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election() {
 			));
 			assert_ok!(Staking::nominate(Origin::signed(4), vec![21, 31]));
 
-			// winners should be 21 and 31. Otherwise this election is taking duplicates into account.
-			let sp_npos_elections::ElectionResult {
-				winners,
-				assignments,
-			} = Staking::do_phragmen::<Perbill>(0).unwrap();
-			let winners = sp_npos_elections::to_without_backing(winners);
-
-			assert_eq!(winners, vec![31, 21]);
-			// only distribution to 21 and 31.
+			// winners should be 21 and 31. Otherwise this election is taking duplicates into
+			// account.
+			let supports = <Test as Config>::ElectionProvider::elect().unwrap().0;
 			assert_eq!(
-				assignments
-					.iter()
-					.find(|a| a.who == 1)
-					.unwrap()
-					.distribution
-					.len(),
-				2
+				supports,
+				vec![
+					(
+						21,
+						Support {
+							// error rate 1
+							total: (etp_power(1800) + 1) as _,
+							voters: vec![
+								(21, etp_power(1000) as _),
+								(3, etp_power(400) as _),
+								(1, etp_power(400) as _)
+							]
+						}
+					),
+					(
+						31,
+						Support {
+							total: etp_power(2200) as _,
+							voters: vec![
+								(31, etp_power(1000) as _),
+								(3, etp_power(600) as _),
+								(1, etp_power(600) as _)
+							]
+						}
+					)
+				],
 			);
 		});
 }
 
 #[test]
-fn bond_with_duplicate_vote_should_be_ignored_by_npos_election_elected() {
+fn bond_with_duplicate_vote_should_be_ignored_by_election_provider_elected() {
 	// same as above but ensures that even when the duple is being elected, everything is sane.
 	ExtBuilder::default()
 		.validator_count(2)
@@ -2306,19 +2262,20 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election_elected() {
 		.execute_with(|| {
 			// disable the nominator
 			assert_ok!(Staking::chill(Origin::signed(100)));
-			// make stakes equal.
+			// 31/30 will have less stake
 			assert_ok!(Staking::bond_extra(
 				Origin::signed(31),
 				StakingBalance::EtpBalance(99),
 				0
 			));
-
+			// ensure all have equal stake.
 			assert_eq!(
 				<Validators<Test>>::iter()
 					.map(|(v, _)| (v, Staking::ledger(v - 1).unwrap().active_etp))
 					.collect::<Vec<_>>(),
 				vec![(31, 100), (21, 1000), (11, 1000)],
 			);
+			// no nominators shall exist.
 			assert!(<Nominators<Test>>::iter()
 				.map(|(n, _)| n)
 				.collect::<Vec<_>>()
@@ -2339,7 +2296,7 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election_elected() {
 			));
 			assert_ok!(Staking::nominate(
 				Origin::signed(2),
-				vec![11, 11, 11, 21, 31,]
+				vec![11, 11, 11, 21, 31]
 			));
 
 			assert_ok!(Staking::bond(
@@ -2351,24 +2308,31 @@ fn bond_with_duplicate_vote_should_be_ignored_by_npos_election_elected() {
 			));
 			assert_ok!(Staking::nominate(Origin::signed(4), vec![21, 31]));
 
-			// winners should be 21 and 31. Otherwise this election is taking duplicates into account.
-
-			let sp_npos_elections::ElectionResult {
-				winners,
-				assignments,
-			} = Staking::do_phragmen::<Perbill>(0).unwrap();
-
-			let winners = sp_npos_elections::to_without_backing(winners);
-			assert_eq!(winners, vec![21, 11]);
-			// only distribution to 21 and 31.
+			// winners should be 21 and 11.
+			let supports = <Test as Config>::ElectionProvider::elect().unwrap().0;
 			assert_eq!(
-				assignments
-					.iter()
-					.find(|a| a.who == 1)
-					.unwrap()
-					.distribution
-					.len(),
-				2
+				supports,
+				vec![
+					(
+						11,
+						Support {
+							total: etp_power(1500) as _,
+							voters: vec![(11, etp_power(1000) as _), (1, etp_power(500) as _)]
+						}
+					),
+					(
+						21,
+						Support {
+							// error rate 1
+							total: (etp_power(2500) - 1) as _,
+							voters: vec![
+								(21, etp_power(1000) as _),
+								(3, etp_power(1000) as _),
+								(1, etp_power(500) as _)
+							]
+						}
+					)
+				],
 			);
 		});
 }
@@ -2434,8 +2398,8 @@ fn reward_validator_slashing_validator_does_not_overflow() {
 		let exposure = Exposure::<AccountId, Balance, Balance> {
 			own_etp_balance: stake,
 			own_dna_balance: 0,
-			own_power: Staking::currency_to_power(stake, Staking::etp_pool()),
-			total_power: Staking::currency_to_power(stake, Staking::etp_pool()),
+			own_power: etp_power(stake),
+			total_power: etp_power(stake),
 			others: vec![],
 		};
 		let reward = EraRewardPoints::<AccountId> {
@@ -2472,14 +2436,14 @@ fn reward_validator_slashing_validator_does_not_overflow() {
 			&11,
 			Exposure {
 				own_etp_balance: 1,
-				total_power: Staking::currency_to_power(stake, Staking::etp_pool()),
+				total_power: etp_power(stake),
 				own_dna_balance: 0,
-				own_power: Staking::currency_to_power(1, Staking::etp_pool()),
+				own_power: etp_power(1),
 				others: vec![IndividualExposure {
 					who: 2,
 					etp_balance: stake - 1,
 					dna_balance: 0,
-					power: Staking::currency_to_power(stake - 1, Staking::etp_pool()),
+					power: etp_power(stake - 1),
 				}],
 			},
 		);
@@ -2674,7 +2638,7 @@ fn slashing_performed_according_exposure() {
 				offender: (
 					11,
 					Exposure {
-						total_power: Staking::currency_to_power(500, Staking::etp_pool()),
+						total_power: etp_power(500),
 						own_etp_balance: 500,
 						own_dna_balance: 0,
 						own_power: 0,
@@ -3450,16 +3414,8 @@ fn slash_kicks_validators_not_nominators_and_disables_nominator_for_kicked_valid
 		let exposure_11 = Staking::eras_stakers(active_era(), &11);
 		let exposure_21 = Staking::eras_stakers(active_era(), &21);
 
-		assert_eq_error_rate!(
-			exposure_11.total_power,
-			Staking::currency_to_power(1000 + 125, Staking::etp_pool()),
-			1
-		);
-		assert_eq_error_rate!(
-			exposure_21.total_power,
-			Staking::currency_to_power(1000 + 375, Staking::etp_pool()),
-			1
-		);
+		assert_eq_error_rate!(exposure_11.total_power, etp_power(1000 + 125), 1);
+		assert_eq_error_rate!(exposure_21.total_power, etp_power(1000 + 375), 1);
 
 		on_offence_now(
 			&[OffenceDetails {
@@ -3497,18 +3453,12 @@ fn slash_kicks_validators_not_nominators_and_disables_nominator_for_kicked_valid
 		let exposure_21 = Staking::eras_stakers(active_era(), &21);
 
 		// 10 is re-elected, but without the support of 100
-		assert_eq!(
-			exposure_11.total_power,
-			Staking::currency_to_power(900, Staking::etp_pool())
-		);
+		assert_eq!(exposure_11.total_power, etp_power(900));
 
 		// 20 is re-elected, with the (almost) entire support of 100
 		assert_eq_error_rate!(
 			exposure_21.total_power,
-			Staking::currency_to_power(
-				1000 + 500 - nominator_slash_amount_11,
-				Staking::etp_pool()
-			),
+			etp_power(1000 + 500 - nominator_slash_amount_11),
 			10
 		);
 	});
@@ -3524,8 +3474,8 @@ fn claim_reward_at_the_last_era_and_no_double_claim_and_invalid_claim() {
 		let init_balance_10 = Etp::free_balance(&10);
 		let init_balance_100 = Etp::free_balance(&100);
 
-		let part_for_10 = Perbill::from_rational_approximation::<u32>(1000, 1125);
-		let part_for_100 = Perbill::from_rational_approximation::<u32>(125, 1125);
+		let part_for_10 = Perbill::from_rational::<u32>(1000, 1125);
+		let part_for_100 = Perbill::from_rational::<u32>(125, 1125);
 
 		// Check state
 		<Payee<Test>>::insert(11, RewardDestination::Controller);
@@ -4069,42 +4019,6 @@ fn offences_weight_calculated_correctly() {
 }
 
 #[test]
-fn on_initialize_weight_is_correct() {
-	ExtBuilder::default()
-		.has_stakers(false)
-		.build_and_execute(|| {
-			assert_eq!(<Validators<Test>>::iter().count(), 0);
-			assert_eq!(<Nominators<Test>>::iter().count(), 0);
-			// When this pallet has nothing, we do 4 reads each block
-			let base_weight = <Test as frame_system::Config>::DbWeight::get().reads(4);
-			assert_eq!(base_weight, Staking::on_initialize(0));
-		});
-
-	ExtBuilder::default()
-		.offchain_election_ext()
-		.validator_count(4)
-		.has_stakers(false)
-		.build()
-		.execute_with(|| {
-			crate::substrate_tests::offchain_election::build_offchain_election_test_ext();
-			run_to_block(11);
-			Staking::on_finalize(System::block_number());
-			System::set_block_number((System::block_number() + 1).into());
-			Timestamp::set_timestamp(System::block_number() * 1000 + INIT_TIMESTAMP);
-			Session::on_initialize(System::block_number());
-
-			assert_eq!(<Validators<Test>>::iter().count(), 4);
-			assert_eq!(<Nominators<Test>>::iter().count(), 5);
-			// With 4 validators and 5 nominator, we should increase weight by:
-			// - (4 + 5) reads
-			// - 3 Writes
-			let final_weight =
-				<Test as frame_system::Config>::DbWeight::get().reads_writes(4 + 9, 3);
-			assert_eq!(final_weight, Staking::on_initialize(System::block_number()));
-		});
-}
-
-#[test]
 fn payout_creates_controller() {
 	ExtBuilder::default()
 		.has_stakers(false)
@@ -4371,7 +4285,43 @@ fn cannot_bond_to_lower_than_ed() {
 
 mod election_data_provider {
 	use super::*;
-	use sp_election_providers::ElectionDataProvider;
+	use frame_election_provider_support::ElectionDataProvider;
+
+	#[test]
+	fn targets_2sec_block() {
+		let mut validators = 1000;
+		while <Test as Config>::WeightInfo::get_npos_targets(validators)
+			< 2 * frame_support::weights::constants::WEIGHT_PER_SECOND
+		{
+			validators += 1;
+		}
+
+		println!(
+			"Can create a snapshot of {} validators in 2sec block",
+			validators
+		);
+	}
+
+	#[test]
+	fn voters_2sec_block() {
+		// we assume a network only wants up to 1000 validators in most cases, thus having 2000
+		// candidates is as high as it gets.
+		let validators = 2000;
+		// we assume the worse case: each validator also has a slashing span.
+		let slashing_spans = validators;
+		let mut nominators = 1000;
+
+		while <Test as Config>::WeightInfo::get_npos_voters(validators, nominators, slashing_spans)
+			< 2 * frame_support::weights::constants::WEIGHT_PER_SECOND
+		{
+			nominators += 1;
+		}
+
+		println!(
+			"Can create a snapshot of {} nominators [{} validators, each 1 slashing] in 2sec block",
+			nominators, validators
+		);
+	}
 
 	#[test]
 	fn voters_include_self_vote() {
@@ -4381,7 +4331,9 @@ mod election_data_provider {
 			.execute_with(|| {
 				assert!(<Validators<Test>>::iter()
 					.map(|(x, _)| x)
-					.all(|v| Staking::voters()
+					.all(|v| Staking::voters(None)
+						.unwrap()
+						.0
 						.into_iter()
 						.find(|(w, _, t)| { v == *w && t[0] == *w })
 						.is_some()))
@@ -4393,7 +4345,9 @@ mod election_data_provider {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_eq!(Staking::nominators(101).unwrap().targets, vec![11, 21]);
 			assert_eq!(
-				<Staking as ElectionDataProvider<AccountId, BlockNumber>>::voters()
+				<Staking as ElectionDataProvider<AccountId, BlockNumber>>::voters(None)
+					.unwrap()
+					.0
 					.iter()
 					.find(|x| x.0 == 101)
 					.unwrap()
@@ -4407,7 +4361,9 @@ mod election_data_provider {
 			// 11 is gone.
 			start_active_era(2);
 			assert_eq!(
-				<Staking as ElectionDataProvider<AccountId, BlockNumber>>::voters()
+				<Staking as ElectionDataProvider<AccountId, BlockNumber>>::voters(None)
+					.unwrap()
+					.0
 					.iter()
 					.find(|x| x.0 == 101)
 					.unwrap()
@@ -4418,7 +4374,9 @@ mod election_data_provider {
 			// resubmit and it is back
 			assert_ok!(Staking::nominate(Origin::signed(100), vec![11, 21]));
 			assert_eq!(
-				<Staking as ElectionDataProvider<AccountId, BlockNumber>>::voters()
+				<Staking as ElectionDataProvider<AccountId, BlockNumber>>::voters(None)
+					.unwrap()
+					.0
 					.iter()
 					.find(|x| x.0 == 101)
 					.unwrap()
@@ -4426,6 +4384,20 @@ mod election_data_provider {
 				vec![11, 21]
 			);
 		})
+	}
+
+	#[test]
+	fn respects_len_limits() {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_eq!(
+				Staking::voters(Some(1)).unwrap_err(),
+				"Voter snapshot too big"
+			);
+			assert_eq!(
+				Staking::targets(Some(1)).unwrap_err(),
+				"Target snapshot too big"
+			);
+		});
 	}
 
 	#[test]
@@ -4451,10 +4423,7 @@ mod election_data_provider {
 					45
 				);
 				assert_eq!(staking_events().len(), 1);
-				assert_eq!(
-					*staking_events().last().unwrap(),
-					RawEvent::StakingElection(ElectionCompute::OnChain)
-				);
+				assert_eq!(*staking_events().last().unwrap(), RawEvent::StakingElection);
 
 				for b in 21..45 {
 					run_to_block(b);
@@ -4471,10 +4440,7 @@ mod election_data_provider {
 					70
 				);
 				assert_eq!(staking_events().len(), 3);
-				assert_eq!(
-					*staking_events().last().unwrap(),
-					RawEvent::StakingElection(ElectionCompute::OnChain)
-				);
+				assert_eq!(*staking_events().last().unwrap(), RawEvent::StakingElection);
 			})
 	}
 }

@@ -7,17 +7,17 @@ license     = "Apache-2.0"
 name        = "dp-evm"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.1.0"
+version     = "2.2.0"
 
 [dependencies]
 # crates
 codec                 = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
-evm                   = { version = "0.24.0", default-features = false, features = ["with-codec"] }
+evm                   = { version = "0.25.0", default-features = false, features = ["with-codec"] }
 impl-trait-for-tuples = { version = "0.2.1" }
-serde                 = { version = "1.0.124", optional = true, features = ["derive"] }
+serde                 = { version = "1.0.125", optional = true, features = ["derive"] }
 # substrate
-sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-std  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-std  = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 
 [features]
 default = ["std"]

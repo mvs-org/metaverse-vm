@@ -19,12 +19,12 @@
 
 use crate::runner::Runner as RunnerT;
 use crate::{
-	AccountBasicMapping, AccountCodes, AccountStorages, AddressMapping, Config, Error, Event,
+	AccountBasic, AccountCodes, AccountStorages, AddressMapping, Config, Error, Event,
 	FeeCalculator, Module, PrecompileSet,
 };
 
 // --- hyperspace ---
-use dp_evm::{Account, CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
+use dp_evm::{CallInfo, CreateInfo, ExecutionInfo, Log, Vicinity};
 // --- substrate ---
 use frame_support::{
 	ensure,
@@ -89,7 +89,7 @@ impl<T: Config> Runner<T> {
 		let total_payment = value
 			.checked_add(total_fee)
 			.ok_or(Error::<T>::PaymentOverflow)?;
-		let source_account = T::AccountBasicMapping::account_basic(&source);
+		let source_account = T::EtpAccountBasic::account_basic(&source);
 		ensure!(
 			source_account.balance >= total_payment,
 			Error::<T>::BalanceLow
@@ -356,12 +356,12 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 			H256::default()
 		} else {
 			let number = T::BlockNumber::from(number.as_u32());
-			H256::from_slice(frame_system::Module::<T>::block_hash(number).as_ref())
+			H256::from_slice(<frame_system::Pallet<T>>::block_hash(number).as_ref())
 		}
 	}
 
 	fn block_number(&self) -> U256 {
-		let number: u128 = frame_system::Module::<T>::block_number().unique_saturated_into();
+		let number: u128 = <frame_system::Pallet<T>>::block_number().unique_saturated_into();
 		U256::from(number)
 	}
 
@@ -370,7 +370,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	}
 
 	fn block_timestamp(&self) -> U256 {
-		let now: u128 = pallet_timestamp::Module::<T>::get().unique_saturated_into();
+		let now: u128 = <pallet_timestamp::Pallet<T>>::get().unique_saturated_into();
 		U256::from(now / 1000)
 	}
 
@@ -391,7 +391,7 @@ impl<'vicinity, 'config, T: Config> BackendT for SubstrateStackState<'vicinity, 
 	}
 
 	fn basic(&self, address: H160) -> evm::backend::Basic {
-		let account = T::AccountBasicMapping::account_basic(&address);
+		let account = T::EtpAccountBasic::account_basic(&address);
 
 		evm::backend::Basic {
 			balance: account.balance,
@@ -449,7 +449,7 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 
 	fn inc_nonce(&mut self, address: H160) {
 		let account_id = T::AddressMapping::into_account_id(address);
-		frame_system::Module::<T>::inc_account_nonce(&account_id);
+		<frame_system::Pallet<T>>::inc_account_nonce(&account_id);
 	}
 
 	fn set_storage(&mut self, address: H160, index: H256, value: H256) {
@@ -496,29 +496,8 @@ impl<'vicinity, 'config, T: Config> StackStateT<'config>
 	}
 
 	fn transfer(&mut self, transfer: Transfer) -> Result<(), ExitError> {
-		let source_account = T::AccountBasicMapping::account_basic(&transfer.source);
-		ensure!(
-			source_account.balance >= transfer.value,
-			ExitError::Other("Insufficient balance".into())
-		);
-		let new_source_balance = source_account.balance.saturating_sub(transfer.value);
-		T::AccountBasicMapping::mutate_account_basic(
-			&transfer.source,
-			Account {
-				nonce: source_account.nonce,
-				balance: new_source_balance,
-			},
-		);
-
-		let target_account = T::AccountBasicMapping::account_basic(&transfer.target);
-		let new_target_balance = target_account.balance.saturating_add(transfer.value);
-		T::AccountBasicMapping::mutate_account_basic(
-			&transfer.target,
-			Account {
-				nonce: target_account.nonce,
-				balance: new_target_balance,
-			},
-		);
+		// Use Etp transfer
+		T::EtpAccountBasic::transfer(&transfer.source, &transfer.target, transfer.value)?;
 
 		Ok(())
 	}

@@ -75,9 +75,9 @@
 //!
 //! ### Module Information
 //!
-//! - [`election_sp_phragmen::Config`](./trait.Config.html)
-//! - [`Call`](./enum.Call.html)
-//! - [`Module`](./struct.Module.html)
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Module`]
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -89,7 +89,7 @@ use frame_support::{
 	storage::{IterableStorageMap, StorageMap},
 	traits::{
 		ChangeMembers, Contains, ContainsLengthBound, Currency, CurrencyToVote, Get,
-		InitializeMembers, OnUnbalanced, ReservableCurrency,
+		InitializeMembers, LockIdentifier, OnUnbalanced, ReservableCurrency, WithdrawReasons,
 	},
 	weights::Weight,
 };
@@ -101,7 +101,7 @@ use sp_runtime::{
 };
 use sp_std::{cmp::Ordering, prelude::*};
 
-use hyperspace_support::balance::lock::*;
+use hyperspace_support::balance::*;
 
 pub mod weights;
 pub use weights::WeightInfo;
@@ -1209,9 +1209,9 @@ mod tests {
 			NodeBlock = Block,
 			UncheckedExtrinsic = UncheckedExtrinsic
 		{
-			System: frame_system::{Module, Call, Event<T>},
-			Balances: hyperspace_balances::<Instance0>::{Module, Call, Event<T>, Config<T>},
-			Elections: elections_phragmen::{Module, Call, Event<T>, Config<T>},
+			System: frame_system::{Pallet, Call, Event<T>},
+			Balances: hyperspace_balances::<Instance0>::{Pallet, Call, Event<T>, Config<T>},
+			Elections: elections_phragmen::{Pallet, Call, Event<T>, Config<T>},
 		}
 	}
 

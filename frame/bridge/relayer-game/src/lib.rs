@@ -59,7 +59,7 @@ mod types {
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_module, decl_storage, ensure,
-	traits::{Currency, Get, OnUnbalanced},
+	traits::{Currency, Get, LockIdentifier, OnUnbalanced, WithdrawReasons},
 };
 use sp_runtime::{
 	traits::{Saturating, Zero},
@@ -70,7 +70,7 @@ use sp_std::borrow::ToOwned;
 use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 // --- hyperspace ---
 use hyperspace_relay_primitives::relayer_game::*;
-use hyperspace_support::balance::lock::*;
+use hyperspace_support::balance::*;
 use types::*;
 
 pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
@@ -685,7 +685,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	}
 
 	pub fn update_games(game_ids: Vec<RelayHeaderId<T, I>>) -> DispatchResult {
-		let now = <frame_system::Module<T>>::block_number();
+		let now = <frame_system::Pallet<T>>::block_number();
 		let mut relay_header_parcels = vec![];
 
 		for game_id in game_ids {
@@ -827,7 +827,7 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			<Error<T, I>>::RoundMis
 		);
 
-		let now = <frame_system::Module<T>>::block_number();
+		let now = <frame_system::Pallet<T>>::block_number();
 		let proposed_relay_header_parcels = vec![relay_header_parcel];
 
 		// Check if it is a new game
@@ -904,7 +904,7 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 			<Error<T, I>>::RelayParcelAR
 		);
 
-		let now = <frame_system::Module<T>>::block_number();
+		let now = <frame_system::Pallet<T>>::block_number();
 
 		ensure!(
 			Self::is_game_open_at(&game_id, now, 0),
@@ -1026,7 +1026,7 @@ impl<T: Config<I>, I: Instance> RelayerGameProtocol for Module<T, I> {
 		let round = previous_round + 1;
 
 		ensure!(
-			Self::is_game_open_at(&game_id, <frame_system::Module<T>>::block_number(), round),
+			Self::is_game_open_at(&game_id, <frame_system::Pallet<T>>::block_number(), round),
 			<Error<T, I>>::GameAtThisRoundC
 		);
 

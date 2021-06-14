@@ -7,24 +7,25 @@ license     = "GPL-3.0"
 name        = "hyperspace-evm-precompile-withdraw"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.1.0"
+version     = "2.2.0"
 
 [dependencies]
 # crates
 codec     = { package = "parity-scale-codec", version = "2.0.1", default-features = false }
-evm       = { version = "0.24.0", features = ["with-codec"], default-features = false }
+evm       = { version = "0.25.0", features = ["with-codec"], default-features = false }
 ripemd160 = { version = "0.9", default-features = false }
 # hyperspace
-hyperspace-evm = { default-features = false, path = "../../../" }
-dp-evm       = { default-features = false, path = "../../../../../primitives/evm" }
+hyperspace-evm     = { default-features = false, path = "../../../" }
+hyperspace-support = { default-features = false, path = "../../../../support" }
+dp-evm           = { default-features = false, path = "../../../../../primitives/evm" }
 # substrate
-frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+frame-support    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+frame-system     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-core          = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-io            = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-runtime       = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-std           = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 
 [features]
 default = ["std"]
@@ -43,6 +44,7 @@ crates-std = [
 
 hyperspace-std = [
 	"hyperspace-evm/std",
+	"hyperspace-support/std",
 	"dp-evm/std",
 ]
 

@@ -21,8 +21,8 @@
 //! The Treasury module provides a "pot" of funds that can be managed by stakeholders in the
 //! system and a structure for making spending proposals from this pot.
 //!
-//! - [`treasury::Config`](./trait.Config.html)
-//! - [`Call`](./enum.Call.html)
+//! - [`Config`]
+//! - [`Call`]
 //!
 //! ## Overview
 //!
@@ -127,7 +127,7 @@
 //!
 //! ## GenesisConfig
 //!
-//! The Treasury module depends on the [`GenesisConfig`](./struct.GenesisConfig.html).
+//! The Treasury module depends on the [`GenesisConfig`].
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -191,7 +191,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- hyperspace ---
-use hyperspace_support::balance::{lock::LockableCurrency, OnUnbalancedDna};
+use hyperspace_support::balance::*;
 use types::*;
 
 pub trait Config<I = DefaultInstance>: frame_system::Config {
@@ -649,7 +649,8 @@ decl_module! {
 			<Reasons<T, I>>::remove(&tip.reason);
 			<Tips<T, I>>::remove(&hash);
 			if !tip.deposit.is_zero() {
-				let _ = T::EtpCurrency::unreserve(&who, tip.deposit);
+				let err_amount = T::EtpCurrency::unreserve(&who, tip.deposit);
+				debug_assert!(err_amount.is_zero());
 			}
 			Self::deposit_event(RawEvent::TipRetracted(hash));
 		}
@@ -759,7 +760,7 @@ decl_module! {
 
 			let tip = <Tips<T, I>>::get(hash).ok_or(<Error<T, I>>::UnknownTip)?;
 			let n = tip.closes.as_ref().ok_or(<Error<T, I>>::StillOpen)?;
-			ensure!(<frame_system::Module<T>>::block_number() >= *n, <Error<T, I>>::Premature);
+			ensure!(<frame_system::Pallet<T>>::block_number() >= *n, <Error<T, I>>::Premature);
 			// closed.
 			<Reasons<T, I>>::remove(&tip.reason);
 			<Tips<T, I>>::remove(hash);
@@ -909,7 +910,7 @@ decl_module! {
 								// If the sender is not the curator, and the curator is inactive,
 								// slash the curator.
 								if sender != *curator {
-									let block_number = <frame_system::Module<T>>::block_number();
+									let block_number = <frame_system::Pallet<T>>::block_number();
 									if *update_due < block_number {
 										slash_curator(curator, &mut bounty.curator_deposit);
 										// Continue to change bounty status below...
@@ -920,7 +921,8 @@ decl_module! {
 								} else {
 									// Else this is the curator, willingly giving up their role.
 									// Give back their deposit.
-									let _ = T::EtpCurrency::unreserve(&curator, bounty.curator_deposit);
+									let err_amount = T::EtpCurrency::unreserve(&curator, bounty.curator_deposit);
+									debug_assert!(err_amount.is_zero());
 									// Continue to change bounty status below...
 								}
 							},
@@ -966,7 +968,7 @@ decl_module! {
 						T::EtpCurrency::reserve(curator, deposit)?;
 						bounty.curator_deposit = deposit;
 
-						let update_due = <frame_system::Module<T>>::block_number() + T::BountyUpdatePeriod::get();
+						let update_due = <frame_system::Pallet<T>>::block_number() + T::BountyUpdatePeriod::get();
 						bounty.status = BountyStatus::Active { curator: curator.clone(), update_due };
 
 						Ok(())
@@ -1001,7 +1003,7 @@ decl_module! {
 				bounty.status = BountyStatus::PendingPayout {
 					curator: signer,
 					beneficiary: beneficiary.clone(),
-					unlock_at: <frame_system::Module<T>>::block_number() + T::BountyDepositPayoutDelay::get(),
+					unlock_at: <frame_system::Pallet<T>>::block_number() + T::BountyDepositPayoutDelay::get(),
 				};
 
 				Ok(())
@@ -1022,14 +1024,18 @@ decl_module! {
 			<Bounties<T, I>>::try_mutate_exists(bounty_id, |maybe_bounty| -> DispatchResult {
 				let bounty = maybe_bounty.take().ok_or(<Error<T, I>>::InvalidIndex)?;
 				if let BountyStatus::PendingPayout { curator, beneficiary, unlock_at } = bounty.status {
-					ensure!(<frame_system::Module<T>>::block_number() >= unlock_at, <Error<T, I>>::Premature);
+					ensure!(<frame_system::Pallet<T>>::block_number() >= unlock_at, <Error<T, I>>::Premature);
 					let bounty_account = Self::bounty_account_id(bounty_id);
 					let balance = T::EtpCurrency::free_balance(&bounty_account);
 					let fee = bounty.fee.min(balance); // just to be safe
 					let payout = balance.saturating_sub(fee);
-					let _ = T::EtpCurrency::unreserve(&curator, bounty.curator_deposit);
-					let _ = T::EtpCurrency::transfer(&bounty_account, &curator, fee, AllowDeath); // should not fail
-					let _ = T::EtpCurrency::transfer(&bounty_account, &beneficiary, payout, AllowDeath); // should not fail
+					let err_amount = T::EtpCurrency::unreserve(&curator, bounty.curator_deposit);
+					debug_assert!(err_amount.is_zero());
+					let res = T::EtpCurrency::transfer(&bounty_account, &curator, fee, AllowDeath); // should not fail
+					debug_assert!(res.is_ok());
+					let res = T::EtpCurrency::transfer(&bounty_account, &beneficiary, payout, AllowDeath); // should not fail
+					debug_assert!(res.is_ok());
+
 					*maybe_bounty = None;
 
 					<BountyDescriptions<I>>::remove(bounty_id);
@@ -1079,7 +1085,8 @@ decl_module! {
 					},
 					BountyStatus::Active { curator, .. } => {
 						// Cancelled by council, refund deposit of the working curator.
-						let _ = T::EtpCurrency::unreserve(&curator, bounty.curator_deposit);
+						let err_amount = T::EtpCurrency::unreserve(&curator, bounty.curator_deposit);
+						debug_assert!(err_amount.is_zero());
 						// Then execute removal of the bounty below.
 					},
 					BountyStatus::PendingPayout { .. } => {
@@ -1096,7 +1103,8 @@ decl_module! {
 				<BountyDescriptions<I>>::remove(bounty_id);
 
 				let balance = T::EtpCurrency::free_balance(&bounty_account);
-				let _ = T::EtpCurrency::transfer(&bounty_account, &Self::account_id(), balance, AllowDeath); // should not fail
+				let res = T::EtpCurrency::transfer(&bounty_account, &Self::account_id(), balance, AllowDeath); // should not fail
+				debug_assert!(res.is_ok());
 				*maybe_bounty = None;
 
 				Self::deposit_event(<Event<T, I>>::BountyCanceled(bounty_id));
@@ -1120,7 +1128,7 @@ decl_module! {
 				match bounty.status {
 					BountyStatus::Active { ref curator, ref mut update_due } => {
 						ensure!(*curator == signer, <Error<T, I>>::RequireCurator);
-						*update_due = (<frame_system::Module<T>>::block_number() + T::BountyUpdatePeriod::get()).max(*update_due);
+						*update_due = (<frame_system::Pallet<T>>::block_number() + T::BountyUpdatePeriod::get()).max(*update_due);
 					},
 					_ => return Err(<Error<T, I>>::UnexpectedStatus.into()),
 				}
@@ -1240,7 +1248,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		Self::retain_active_tips(&mut tip.tips);
 		let threshold = (T::Tippers::count() + 1) / 2;
 		if tip.tips.len() >= threshold && tip.closes.is_none() {
-			tip.closes = Some(<frame_system::Module<T>>::block_number() + T::TipCountdown::get());
+			tip.closes = Some(<frame_system::Pallet<T>>::block_number() + T::TipCountdown::get());
 			true
 		} else {
 			false
@@ -1283,7 +1291,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		let max_payout = Self::pot::<T::EtpCurrency>();
 		let mut payout = tips[tips.len() / 2].1.min(max_payout);
 		if !tip.deposit.is_zero() {
-			let _ = T::EtpCurrency::unreserve(&tip.finder, tip.deposit);
+			let err_amount = T::EtpCurrency::unreserve(&tip.finder, tip.deposit);
+			debug_assert!(err_amount.is_zero());
 		}
 		if tip.finders_fee {
 			if tip.finder != tip.who {
@@ -1292,11 +1301,13 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 				payout -= finders_fee;
 				// this should go through given we checked it's at most the free balance, but still
 				// we only make a best-effort.
-				let _ = T::EtpCurrency::transfer(&treasury, &tip.finder, finders_fee, KeepAlive);
+				let res = T::EtpCurrency::transfer(&treasury, &tip.finder, finders_fee, KeepAlive);
+				debug_assert!(res.is_ok());
 			}
 		}
 		// same as above: best-effort only.
-		let _ = T::EtpCurrency::transfer(&treasury, &tip.who, payout, KeepAlive);
+		let res = T::EtpCurrency::transfer(&treasury, &tip.who, payout, KeepAlive);
+		debug_assert!(res.is_ok());
 		Self::deposit_event(RawEvent::TipClosed(hash, tip.who, payout));
 	}
 
@@ -1340,7 +1351,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 						budget_remaining_etp -= p.etp_value;
 
 						// return their deposit.
-						let _ = T::EtpCurrency::unreserve(&p.proposer, p.etp_bond);
+						let err_amount = T::EtpCurrency::unreserve(&p.proposer, p.etp_bond);
+						debug_assert!(err_amount.is_zero());
 
 						// provide the allocation.
 						imbalance_etp.subsume(T::EtpCurrency::deposit_creating(
@@ -1352,7 +1364,8 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 						budget_remaining_dna -= p.dna_value;
 
 						// return their deposit.
-						let _ = T::DnaCurrency::unreserve(&p.proposer, p.dna_bond);
+						let err_amount = T::DnaCurrency::unreserve(&p.proposer, p.dna_bond);
+						debug_assert!(err_amount.is_zero());
 
 						// provide the allocation.
 						imbalance_dna.subsume(T::DnaCurrency::deposit_creating(
@@ -1391,7 +1404,9 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 							bounty.status = BountyStatus::Funded;
 
 							// return their deposit.
-							let _ = T::EtpCurrency::unreserve(&bounty.proposer, bounty.bond);
+							let err_amount =
+								T::EtpCurrency::unreserve(&bounty.proposer, bounty.bond);
+							debug_assert!(err_amount.is_zero());
 
 							// fund the bounty account
 							imbalance_etp.subsume(T::EtpCurrency::deposit_creating(

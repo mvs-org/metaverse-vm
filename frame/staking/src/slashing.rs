@@ -724,7 +724,7 @@ pub fn do_slash<T: Config>(
 	let (slash_etp, slash_dna) = ledger.slash(
 		value.r,
 		value.k,
-		<frame_system::Module<T>>::block_number(),
+		<frame_system::Pallet<T>>::block_number(),
 		T::UnixTime::now().as_millis().saturated_into::<TsInMs>(),
 	);
 	let mut slashed = false;

@@ -62,7 +62,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- hyperspace ---
-use hyperspace_support::balance::lock::*;
+use hyperspace_support::balance::*;
 use types::*;
 
 pub trait Config: frame_system::Config {
@@ -548,7 +548,7 @@ mod secp_utils {
 		what: &[u8],
 		signed_message: &[u8],
 	) -> EcdsaSignature {
-		let msg = keccak_256(&<super::Module<T>>::eth_signable_message(
+		let msg = keccak_256(&<super::Pallet<T>>::eth_signable_message(
 			&to_ascii_hex(what)[..],
 			signed_message,
 		));
@@ -564,7 +564,7 @@ mod secp_utils {
 		what: &[u8],
 		signed_message: &[u8],
 	) -> EcdsaSignature {
-		let msg = keccak_256(&<super::Module<T>>::oldna_signable_message(
+		let msg = keccak_256(&<super::Pallet<T>>::oldna_signable_message(
 			&to_ascii_hex(what)[..],
 			signed_message,
 		));
@@ -583,7 +583,7 @@ mod tests {
 	// --- substrate ---
 	use frame_support::{
 		assert_err, assert_noop, assert_ok, dispatch::DispatchError::BadOrigin,
-		ord_parameter_types, parameter_types,
+		ord_parameter_types, parameter_types, traits::GenesisBuild,
 	};
 	use frame_system::mocking::*;
 	use sp_core::H256;
@@ -666,9 +666,9 @@ mod tests {
 			NodeBlock = Block,
 			UncheckedExtrinsic = UncheckedExtrinsic
 		{
-			System: frame_system::{Module, Call, Storage, Config},
-			Etp: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>},
-			Claims: hyperspace_claims::{Module, Call, Storage, Config}
+			System: frame_system::{Pallet, Call, Storage, Config},
+			Etp: hyperspace_balances::<Instance0>::{Pallet, Call, Storage, Config<T>},
+			Claims: hyperspace_claims::{Pallet, Call, Storage, Config}
 		}
 	}
 

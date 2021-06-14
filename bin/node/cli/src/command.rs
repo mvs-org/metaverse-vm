@@ -116,7 +116,7 @@ pub fn run() -> sc_cli::Result<()> {
 			runner.run_node_until_exit(|config| async move {
 				match config.role {
 					Role::Light => {
-						service::hyperspace_new_light(config).map(|(task_manager, _, _)| task_manager)
+						service::hyperspace_new_light(config).map(|(task_manager, _)| task_manager)
 					}
 					_ => service::hyperspace_new_full(config, authority_discovery_disabled)
 						.map(|(task_manager, _, _)| task_manager),
@@ -202,7 +202,10 @@ pub fn run() -> sc_cli::Result<()> {
 					sc_service::TaskManager::new(config.task_executor.clone(), registry)
 						.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
 
-				Ok((cmd.run::<Block, Executor>(config), task_manager))
+				Ok((
+					cmd.run::<service::hyperspace_runtime::Block, service::HyperspaceExecutor>(config),
+					task_manager,
+				))
 			})
 		}
 	}

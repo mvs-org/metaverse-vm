@@ -21,7 +21,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod weights;
-// --- hyperspace ---
+
+pub use pallet::*;
 pub use weights::WeightInfo;
 
 #[cfg(test)]
@@ -29,86 +30,141 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-mod types {
+#[frame_support::pallet]
+pub mod pallet {
+	pub mod types {
+		// --- hyperspace ---
+		use super::*;
+
+		// Generic type
+		pub type AccountId<T> = <T as frame_system::Config>::AccountId;
+		pub type EtpBalance<T> = <EtpCurrency<T> as Currency<AccountId<T>>>::Balance;
+		type EtpCurrency<T> = <T as Config>::EtpCurrency;
+		// Simple type
+		pub type MappedEtp = u128;
+	}
+	pub use types::*;
+
+	// --- substrate ---
+	use frame_support::{
+		pallet_prelude::*,
+		traits::{Currency, Get},
+	};
+	use frame_system::pallet_prelude::*;
+	use sp_runtime::{traits::AccountIdConversion, ModuleId};
 	// --- hyperspace ---
-	use crate::*;
+	use crate::weights::WeightInfo;
 
-	pub type MappedEtp = u128;
-
-	pub type AccountId<T> = <T as frame_system::Config>::AccountId;
-
-	pub type EtpBalance<T> = <EtpCurrency<T> as Currency<AccountId<T>>>::Balance;
-
-	type EtpCurrency<T> = <T as Config>::EtpCurrency;
-}
-
-// --- substrate ---
-use frame_support::{
-	decl_error, decl_event, decl_module, decl_storage,
-	traits::{Currency, Get},
-};
-use sp_runtime::{traits::AccountIdConversion, ModuleId};
-// --- hyperspace ---
-use types::*;
-
-pub trait Config: frame_system::Config {
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
-
-	type ModuleId: Get<ModuleId>;
-
-	type EtpCurrency: Currency<AccountId<Self>>;
-
-	type WeightInfo: WeightInfo;
-}
-
-decl_event! {
-	pub enum Event<T>
-	where
-		AccountId = AccountId<T>,
-		EtpBalance = EtpBalance<T>,
-	{
-		/// Dummy Event. [who, swapped *CETP*, burned Mapped *ETP*]
-		DummyEvent(AccountId, EtpBalance, MappedEtp),
-	}
-}
-
-decl_error! {
-	pub enum Error for Module<T: Config> {
-	}
-}
-
-decl_storage! {
-	trait Store for Module<T: Config> as HyperspaceOldetpIssuing {
-		pub TotalMappedEtp get(fn total_mapped_etp) config(): MappedEtp;
+	#[pallet::config]
+	pub trait Config: frame_system::Config {
+		// --- substrate ---
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type WeightInfo: WeightInfo;
+		// --- hyperspace ---
+		#[pallet::constant]
+		type ModuleId: Get<ModuleId>;
+		type EtpCurrency: Currency<AccountId<Self>>;
 	}
 
-	add_extra_genesis {
-		build(|config| {
+	#[pallet::event]
+	pub enum Event<T: Config> {
+		/// Dummy Event. \[who, swapped *CETP*, burned Mapped *ETP*\]
+		DummyEvent(AccountId<T>, EtpBalance<T>, MappedEtp),
+	}
+
+	#[pallet::error]
+	pub enum Error<T> {}
+
+	#[pallet::storage]
+	#[pallet::getter(fn total_mapped_etp)]
+	pub type TotalMappedEtp<T: Config> = StorageValue<_, MappedEtp>;
+
+	#[cfg_attr(feature = "std", derive(Default))]
+	#[pallet::genesis_config]
+	pub struct GenesisConfig {
+		pub total_mapped_etp: MappedEtp,
+	}
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+		fn build(&self) {
 			let _ = T::EtpCurrency::make_free_balance_be(
-				&<Module<T>>::account_id(),
+				&T::ModuleId::get().into_account(),
 				T::EtpCurrency::minimum_balance(),
 			);
 
-			TotalMappedEtp::put(config.total_mapped_etp);
-		});
+			<TotalMappedEtp<T>>::put(self.total_mapped_etp);
+		}
 	}
+
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {}
 }
 
-decl_module! {
-	pub struct Module<T: Config> for enum Call
-	where
-		origin: T::Origin
-	{
-		type Error = Error<T>;
+pub mod migration {
+	const OLD_PALLET_NAME: &[u8] = b"HyperspaceOldetpIssuing";
 
-		const ModuleId: ModuleId = T::ModuleId::get();
+	#[cfg(feature = "try-runtime")]
+	pub mod try_runtime {
+		// --- substrate ---
+		use frame_support::{pallet_prelude::*, traits::StorageInstance};
+		// --- hyperspace ---
+		use crate::*;
 
-		fn deposit_event() = default;
+		macro_rules! generate_storage_types {
+			($prefix:expr, $name:ident => Value<$value:ty>) => {
+				paste::paste! {
+					type $name = StorageValue<[<$name Instance>], $value, ValueQuery>;
+
+					struct [<$name Instance>];
+					impl StorageInstance for [<$name Instance>] {
+						const STORAGE_PREFIX: &'static str = "TotalMappedEtp";
+
+						fn pallet_prefix() -> &'static str { $prefix }
+					}
+				}
+			};
+		}
+
+		generate_storage_types!("HyperspaceOldetpIssuing", OldTotalMappedEtp => Value<()>);
+		generate_storage_types!("OldetpIssuing", NewTotalMappedEtp => Value<()>);
+
+		pub fn pre_migrate<T: Config>() -> Result<(), &'static str> {
+			log::info!(
+				"OldTotalMappedEtp.exits()? {:?}",
+				OldTotalMappedEtp::exists()
+			);
+			log::info!(
+				"NewTotalMappedEtp.exits()? {:?}",
+				NewTotalMappedEtp::exists()
+			);
+
+			assert!(OldTotalMappedEtp::exists());
+			assert!(!NewTotalMappedEtp::exists());
+
+			log::info!("Migrating `HyperspaceOldetpIssuing` to `OldetpIssuing`...");
+			migration::migrate(b"OldetpIssuing");
+
+			log::info!(
+				"OldTotalMappedEtp.exits()? {:?}",
+				OldTotalMappedEtp::exists()
+			);
+			log::info!(
+				"NewTotalMappedEtp.exits()? {:?}",
+				NewTotalMappedEtp::exists()
+			);
+
+			assert!(!OldTotalMappedEtp::exists());
+			assert!(NewTotalMappedEtp::exists());
+
+			Ok(())
+		}
 	}
-}
 
-impl<T: Config> Module<T> {
-	pub fn account_id() -> T::AccountId {
-		T::ModuleId::get().into_account()
+	pub fn migrate(new_pallet_name: &[u8]) {
+		frame_support::migration::move_pallet(OLD_PALLET_NAME, new_pallet_name);
 	}
 }

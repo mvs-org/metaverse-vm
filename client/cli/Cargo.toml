@@ -7,14 +7,14 @@ license     = "GPL-3.0"
 name        = "hyperspace-cli"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.1.0"
+version     = "2.2.0"
 
 [dependencies]
 # crates
-serde = { version = "1.0.124", features = ["derive"] }
+serde = { version = "1.0.125", features = ["derive"] }
 toml  = { version = "0.5.7" }
 # substrate
-sc-cli        = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sc-service    = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sc-tracing    = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sc-cli        = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sc-service    = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sc-tracing    = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }

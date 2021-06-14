@@ -27,12 +27,12 @@ use crate::*;
 use hyperspace_ethereum_relay::{EthereumRelayHeaderParcel, EthereumRelayProofs, MMRProof};
 use hyperspace_relay_primitives::relayer_game::*;
 use hyperspace_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
-use hyperspace_support::balance::lock::StakingLock;
+use hyperspace_support::balance::*;
 use ethereum_primitives::{
 	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumBlockNumber, EthereumNetworkType,
 };
 
-decl_tests!(EthereumRelay: hyperspace_ethereum_relay::{Module, Call, Storage});
+decl_tests!(EthereumRelay: hyperspace_ethereum_relay::{Pallet, Call, Storage});
 
 pub struct UnusedTechnicalMembership;
 impl Contains<AccountId> for UnusedTechnicalMembership {

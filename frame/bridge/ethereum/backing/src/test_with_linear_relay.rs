@@ -25,12 +25,12 @@ use sp_runtime::{traits::Dispatchable, AccountId32};
 // --- hyperspace ---
 use crate::*;
 use hyperspace_staking::{RewardDestination, StakingBalance, StakingLedger, TimeDepositItem};
-use hyperspace_support::balance::lock::StakingLock;
+use hyperspace_support::balance::*;
 use ethereum_primitives::{
 	header::EthereumHeader, receipt::EthereumReceiptProof, EthereumNetworkType,
 };
 
-decl_tests!(EthereumRelay: hyperspace_ethereum_linear_relay::{Module, Call, Storage});
+decl_tests!(EthereumRelay: hyperspace_ethereum_linear_relay::{Pallet, Call, Storage});
 
 frame_support::parameter_types! {
 	pub const EthereumLinearRelayModuleId: ModuleId = ModuleId(*b"da/ethli");

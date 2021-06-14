@@ -41,4 +41,5 @@ pub type HyperspacePrecompiles<Runtime> = (
 	hyperspace_evm_precompile_empty::Empty,      // 0x0000000000000000000000000000000000000014
 	hyperspace_evm_precompile_withdraw::WithDraw<Runtime>, // 0x0000000000000000000000000000000000000015
 	hyperspace_evm_precompile_dna::Dna<Runtime>, // 0x0000000000000000000000000000000000000016
+	hyperspace_evm_precompile_issuing::Issuing<Runtime>, // 0x0000000000000000000000000000000000000017
 );

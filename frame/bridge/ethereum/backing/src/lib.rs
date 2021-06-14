@@ -76,9 +76,8 @@ use sp_std::{convert::TryFrom, prelude::*};
 // --- hyperspace ---
 use hyperspace_relay_primitives::relay_authorities::*;
 use hyperspace_support::{
-	balance::lock::*,
+	balance::*,
 	traits::{EthereumReceipt, OnDepositRedeem},
-	utilities,
 };
 use ethereum_primitives::{
 	receipt::{EthereumTransactionIndex, LogEntry},
@@ -258,6 +257,7 @@ decl_module! {
 		///
 		/// This might kill the account just like `balances::transfer`
 		#[weight = 10_000_000]
+		#[frame_support::transactional]
 		pub fn lock(
 			origin,
 			#[compact] etp_to_lock: EtpBalance<T>,
@@ -266,67 +266,64 @@ decl_module! {
 		) {
 			let user = ensure_signed(origin)?;
 			let fee_account = Self::fee_account_id();
-			let locked = utilities::with_transaction_result(|| {
-				// 50 Etp for fee
-				// https://github.com/mvs-org/Hyperspacepull/377#issuecomment-730369387
-				T::EtpCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
 
-				let mut locked = false;
+			// 50 Etp for fee
+			// https://github.com/mvs-org/Hyperspacepull/377#issuecomment-730369387
+			T::EtpCurrency::transfer(&user, &fee_account, T::AdvancedFee::get(), KeepAlive)?;
 
-				if !etp_to_lock.is_zero() {
-					ensure!(etp_to_lock < T::EtpLockLimit::get(), <Error<T>>::EtpLockLim);
+			let mut locked = false;
 
-					T::EtpCurrency::transfer(
-						&user, &Self::account_id(),
-						etp_to_lock,
-						AllowDeath
-					)?;
+			if !etp_to_lock.is_zero() {
+				ensure!(etp_to_lock < T::EtpLockLimit::get(), <Error<T>>::EtpLockLim);
 
-					let raw_event = RawEvent::LockEtp(
-						user.clone(),
-						ethereum_account.clone(),
-						EtpTokenAddress::get(),
-						etp_to_lock
-					);
-					let module_event: <T as Config>::Event = raw_event.clone().into();
-					let system_event: <T as frame_system::Config>::Event = module_event.into();
+				T::EtpCurrency::transfer(
+					&user, &Self::account_id(),
+					etp_to_lock,
+					AllowDeath
+				)?;
 
-					locked = true;
+				let raw_event = RawEvent::LockEtp(
+					user.clone(),
+					ethereum_account.clone(),
+					EtpTokenAddress::get(),
+					etp_to_lock
+				);
+				let module_event: <T as Config>::Event = raw_event.clone().into();
+				let system_event: <T as frame_system::Config>::Event = module_event.into();
 
-					<LockAssetEvents<T>>::append(system_event);
-					Self::deposit_event(raw_event);
-				}
-				if !dna_to_lock.is_zero() {
-					ensure!(dna_to_lock < T::DnaLockLimit::get(), <Error<T>>::DnaLockLim);
+				locked = true;
 
-					T::DnaCurrency::transfer(
-						&user,
-						&Self::account_id(),
-						dna_to_lock,
-						AllowDeath
-					)?;
+				<LockAssetEvents<T>>::append(system_event);
+				Self::deposit_event(raw_event);
+			}
+			if !dna_to_lock.is_zero() {
+				ensure!(dna_to_lock < T::DnaLockLimit::get(), <Error<T>>::DnaLockLim);
 
-					let raw_event = RawEvent::LockDna(
-						user,
-						ethereum_account,
-						DnaTokenAddress::get(),
-						dna_to_lock
-					);
-					let module_event: <T as Config>::Event = raw_event.clone().into();
-					let system_event: <T as frame_system::Config>::Event = module_event.into();
+				T::DnaCurrency::transfer(
+					&user,
+					&Self::account_id(),
+					dna_to_lock,
+					AllowDeath
+				)?;
 
-					locked = true;
+				let raw_event = RawEvent::LockDna(
+					user,
+					ethereum_account,
+					DnaTokenAddress::get(),
+					dna_to_lock
+				);
+				let module_event: <T as Config>::Event = raw_event.clone().into();
+				let system_event: <T as frame_system::Config>::Event = module_event.into();
 
-					<LockAssetEvents<T>>::append(system_event);
-					Self::deposit_event(raw_event);
-				}
+				locked = true;
 
-				Ok(locked)
-			})?;
+				<LockAssetEvents<T>>::append(system_event);
+				Self::deposit_event(raw_event);
+			}
 
 			if locked {
 				T::EcdsaAuthorities::schedule_mmr_root((
-					<frame_system::Module<T>>::block_number().saturated_into::<u32>()
+					<frame_system::Pallet<T>>::block_number().saturated_into::<u32>()
 						/ 10 * 10 + 10
 				).saturated_into());
 			}

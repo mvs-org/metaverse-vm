@@ -796,13 +796,11 @@ impl Into<sc_client_api::ExecutionStrategy> for ExecutionStrategy {
 #[serde(rename_all = "PascalCase")]
 enum TracingReceiver {
 	Log,
-	Telemetry,
 }
 impl Into<sc_tracing::TracingReceiver> for TracingReceiver {
 	fn into(self) -> sc_tracing::TracingReceiver {
 		match self {
 			TracingReceiver::Log => sc_tracing::TracingReceiver::Log,
-			TracingReceiver::Telemetry => sc_tracing::TracingReceiver::Telemetry,
 		}
 	}
 }

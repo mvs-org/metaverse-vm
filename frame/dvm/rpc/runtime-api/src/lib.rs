@@ -17,6 +17,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
+use hyperspace_support::evm::INTERNAL_CALLER;
 use ethereum::{Block as EthereumBlock, Log};
 use ethereum_types::Bloom;
 use sp_core::{H160, H256, U256};
@@ -43,6 +44,49 @@ impl Default for TransactionStatus {
 			contract_address: None,
 			logs: Vec::new(),
 			logs_bloom: Bloom::default(),
+		}
+	}
+}
+
+/// The dvm transaction used by inner pallets, such as ethereum-issuing.
+pub struct DVMTransaction {
+	/// source of the transaction
+	pub source: H160,
+	/// gas price wrapped by Option
+	pub gas_price: Option<U256>,
+	/// the transaction defined in ethereum lib
+	pub tx: ethereum::Transaction,
+}
+
+impl DVMTransaction {
+	/// the internal transaction usually used by pallets
+	/// the source account is specified by INTERNAL_CALLER
+	/// gas_price is None means no need for gas fee
+	/// a default signature which will not be verified
+	pub fn new(nonce: U256, target: H160, input: Vec<u8>) -> Self {
+		let transaction = ethereum::Transaction {
+			nonce,
+			// Not used, and will be overwritten by None later.
+			gas_price: U256::zero(),
+			gas_limit: U256::from(0x100000),
+			action: ethereum::TransactionAction::Call(target),
+			value: U256::zero(),
+			input,
+			signature: ethereum::TransactionSignature::new(
+				// Reference https://github.com/ethereum/EIPs/issues/155
+				//
+				// But this transaction is sent by hyperspace-issuing system from `0x0`
+				// So ignore signature checking, simply set `chain_id` to `1`
+				1 * 2 + 36,
+				H256::from_slice(&[55u8; 32]),
+				H256::from_slice(&[55u8; 32]),
+			)
+			.unwrap(),
+		};
+		Self {
+			source: INTERNAL_CALLER,
+			gas_price: None,
+			tx: transaction,
 		}
 	}
 }

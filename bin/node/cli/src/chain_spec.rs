@@ -67,6 +67,8 @@ const TEAM_MEMBERS: &[&'static str] = &[
 	"0x187c272f576b1999d6cf3dd529b59b832db12125b43e57fb088677eb0c570a6b",
 	// Xavier
 	"0xb4f7f03bebc56ebe96bc52ea5ed3159d45a0ce3a8d7f082983c33ef133274747",
+	// Xuelei
+	"0x88d388115bd0df43e805b029207cfa4925cecfb29026e345979d9b0004466c49",
 ];
 const EVM_ACCOUNTS: &[&'static str] = &[
 	"0x68898db1012808808c903f390909c52d9f706749",
@@ -89,6 +91,8 @@ const SET_AUTHORITIES_ADDRESS: &'static str = "0xD35Bb6F1bc1C84b53E0995c1830454A
 const ETP_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
 const DNA_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
 const ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str = "0x68898db1012808808c903f390909c52d9f706749";
+const MAPPING_FACTORY_ADDRESS: &'static str = "0x6b58D3903Ae8997A5dA02FAAd51333D4Bf6958cC";
+const ETHEREUM_BACKING_ADDRESS: &'static str = "0xbF6E8B2A6387952C39634f4cCF6Acf4FA2b99FA4";
 
 fn session_keys(
 	babe: BabeId,
@@ -244,7 +248,10 @@ fn hyperspace_build_spec_genesis() -> hyperspace_runtime::GenesisConfig {
 			code: hyperspace_runtime::wasm_binary_unwrap().to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		pallet_babe: Default::default(),
+		pallet_babe: hyperspace_runtime::BabeConfig {
+			authorities: vec![],
+			epoch_config: Some(hyperspace_runtime::BABE_GENESIS_EPOCH_CONFIG)
+		},
 		hyperspace_balances_Instance0: hyperspace_runtime::BalancesConfig {
 			balances: vec![
 				(root.clone(), BUNCH_OF_COINS),
@@ -321,8 +328,8 @@ fn hyperspace_build_spec_genesis() -> hyperspace_runtime::GenesisConfig {
 		hyperspace_claims: Default::default(),
 		hyperspace_vesting: Default::default(),
 		pallet_sudo: hyperspace_runtime::SudoConfig { key: root.clone() },
-		hyperspace_oldetp_issuing: hyperspace_runtime::OldetpIssuingConfig { total_mapped_etp: BUNCH_OF_COINS },
-		hyperspace_oldetp_backing: hyperspace_runtime::OldetpBackingConfig { backed_etp: BUNCH_OF_COINS },
+		hyperspace_oldetp_issuing: hyperspace_runtime::HyperspaceOldetpIssuingConfig { total_mapped_etp: BUNCH_OF_COINS },
+		hyperspace_oldetp_backing: hyperspace_runtime::HyperspaceOldetpBackingConfig { backed_etp: BUNCH_OF_COINS },
 		hyperspace_ethereum_relay: hyperspace_runtime::EthereumRelayConfig {
 			genesis_header_info: (
 				vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 29, 204, 77, 232, 222, 199, 93, 122, 171, 133, 181, 103, 182, 204, 212, 26, 211, 18, 69, 27, 148, 138, 116, 19, 240, 161, 66, 253, 64, 212, 147, 71, 128, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 33, 123, 11, 188, 251, 114, 226, 213, 126, 40, 243, 60, 179, 97, 185, 152, 53, 19, 23, 119, 85, 220, 63, 51, 206, 62, 112, 34, 237, 98, 183, 123, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 132, 160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 136, 0, 0, 0, 0, 0, 0, 0, 66, 1, 65, 148, 16, 35, 104, 9, 35, 224, 254, 77, 116, 163, 75, 218, 200, 20, 31, 37, 64, 227, 174, 144, 98, 55, 24, 228, 125, 102, 209, 202, 74, 45],
@@ -342,6 +349,10 @@ fn hyperspace_build_spec_genesis() -> hyperspace_runtime::GenesisConfig {
 			dna_token_address: array_bytes::hex2array_unchecked!(DNA_TOKEN_ADDRESS, 20).into(),
 			etp_locked: BUNCH_OF_COINS,
 			dna_locked: BUNCH_OF_COINS,
+		},
+		hyperspace_ethereum_issuing: hyperspace_runtime::EthereumIssuingConfig {
+			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
+			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
 		},
 		hyperspace_relay_authorities_Instance0: hyperspace_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(
@@ -413,7 +424,10 @@ fn hyperspace_development_genesis() -> hyperspace_runtime::GenesisConfig {
 			code: hyperspace_runtime::wasm_binary_unwrap().to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		pallet_babe: Default::default(),
+		pallet_babe: hyperspace_runtime::BabeConfig {
+			authorities: vec![],
+			epoch_config: Some(hyperspace_runtime::BABE_GENESIS_EPOCH_CONFIG)
+		},
 		hyperspace_balances_Instance0: hyperspace_runtime::BalancesConfig {
 			balances: endowed_accounts
 				.clone()
@@ -471,8 +485,8 @@ fn hyperspace_development_genesis() -> hyperspace_runtime::GenesisConfig {
 		},
 		hyperspace_vesting: Default::default(),
 		pallet_sudo: hyperspace_runtime::SudoConfig { key: root.clone() },
-		hyperspace_oldetp_issuing: hyperspace_runtime::OldetpIssuingConfig { total_mapped_etp: BUNCH_OF_COINS },
-		hyperspace_oldetp_backing: hyperspace_runtime::OldetpBackingConfig { backed_etp: BUNCH_OF_COINS },
+		hyperspace_oldetp_issuing: hyperspace_runtime::HyperspaceOldetpIssuingConfig { total_mapped_etp: BUNCH_OF_COINS },
+		hyperspace_oldetp_backing: hyperspace_runtime::HyperspaceOldetpBackingConfig { backed_etp: BUNCH_OF_COINS },
 		hyperspace_ethereum_relay: hyperspace_runtime::EthereumRelayConfig {
 			genesis_header_info: (
 				vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 29, 204, 77, 232, 222, 199, 93, 122, 171, 133, 181, 103, 182, 204, 212, 26, 211, 18, 69, 27, 148, 138, 116, 19, 240, 161, 66, 253, 64, 212, 147, 71, 128, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 33, 123, 11, 188, 251, 114, 226, 213, 126, 40, 243, 60, 179, 97, 185, 152, 53, 19, 23, 119, 85, 220, 63, 51, 206, 62, 112, 34, 237, 98, 183, 123, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 132, 160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 136, 0, 0, 0, 0, 0, 0, 0, 66, 1, 65, 148, 16, 35, 104, 9, 35, 224, 254, 77, 116, 163, 75, 218, 200, 20, 31, 37, 64, 227, 174, 144, 98, 55, 24, 228, 125, 102, 209, 202, 74, 45],
@@ -492,6 +506,10 @@ fn hyperspace_development_genesis() -> hyperspace_runtime::GenesisConfig {
 			dna_token_address: array_bytes::hex2array_unchecked!(DNA_TOKEN_ADDRESS, 20).into(),
 			etp_locked: BUNCH_OF_COINS,
 			dna_locked: BUNCH_OF_COINS,
+		},
+		hyperspace_ethereum_issuing: hyperspace_runtime::EthereumIssuingConfig {
+			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
+			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
 		},
 		hyperspace_relay_authorities_Instance0: hyperspace_runtime::EthereumRelayAuthoritiesConfig {
 			authorities: vec![(

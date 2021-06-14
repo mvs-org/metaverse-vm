@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "dc-db"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.1.0"
+version     = "2.2.0"
 
 [dependencies]
 # crates
@@ -16,6 +16,6 @@ kvdb         = { version = "0.9.0" }
 kvdb-rocksdb = { version = "0.11.0" }
 parking_lot  = { version = "0.11.1" }
 # substrate
-sp-core     = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-database = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-runtime  = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-core     = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-database = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-runtime  = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }

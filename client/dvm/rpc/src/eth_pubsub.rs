@@ -1,3 +1,4 @@
+use crate::{frontier_backend_client, overrides::OverrideHandle};
 pub use dvm_rpc_core::EthPubSubApiServer;
 // --- hyperspace ---
 use dp_rpc::{
@@ -6,10 +7,9 @@ use dp_rpc::{
 };
 use dvm_rpc_core::EthPubSubApi::{self as EthPubSubApiT};
 use dvm_rpc_runtime_api::{EthereumRuntimeRPCApi, TransactionStatus};
-
 // --- substrate ---
 use sc_client_api::{
-	backend::{AuxStore, Backend, StateBackend, StorageProvider},
+	backend::{Backend, StateBackend, StorageProvider},
 	client::BlockchainEvents,
 };
 use sc_network::{ExHashT, NetworkService};
@@ -69,20 +69,29 @@ pub struct EthPubSubApi<B: BlockT, P, C, BE, H: ExHashT> {
 	client: Arc<C>,
 	network: Arc<NetworkService<B, H>>,
 	subscriptions: SubscriptionManager<HexEncodedIdProvider>,
+	overrides: Arc<OverrideHandle<B>>,
 	_marker: PhantomData<(B, BE)>,
 }
-impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApi<B, P, C, BE, H> {
+impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApi<B, P, C, BE, H>
+where
+	B: BlockT<Hash = H256> + Send + Sync + 'static,
+	C: ProvideRuntimeApi<B>,
+	C::Api: EthereumRuntimeRPCApi<B>,
+	C: Send + Sync + 'static,
+{
 	pub fn new(
 		_pool: Arc<P>,
 		client: Arc<C>,
 		network: Arc<NetworkService<B, H>>,
 		subscriptions: SubscriptionManager<HexEncodedIdProvider>,
+		overrides: Arc<OverrideHandle<B>>,
 	) -> Self {
 		Self {
 			_pool,
-			client,
+			client: client.clone(),
 			network,
 			subscriptions,
+			overrides,
 			_marker: PhantomData,
 		}
 	}
@@ -206,7 +215,7 @@ impl<B: BlockT, P, C, BE, H: ExHashT> EthPubSubApiT for EthPubSubApi<B, P, C, BE
 where
 	B: BlockT<Hash = H256> + Send + Sync + 'static,
 	P: TransactionPool<Block = B> + Send + Sync + 'static,
-	C: ProvideRuntimeApi<B> + StorageProvider<B, BE> + BlockchainEvents<B> + AuxStore,
+	C: ProvideRuntimeApi<B> + StorageProvider<B, BE> + BlockchainEvents<B>,
 	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
 	C: Send + Sync + 'static,
 	C::Api: EthereumRuntimeRPCApi<B>,
@@ -227,6 +236,7 @@ where
 		};
 		let client = self.client.clone();
 		let network = self.network.clone();
+		let overrides = self.overrides.clone();
 		match kind {
 			Kind::Logs => {
 				self.subscriptions.add(subscriber, |sink| {
@@ -235,10 +245,20 @@ where
 						.filter_map(move |notification| {
 							if notification.is_new_best {
 								let id = BlockId::Hash(notification.hash);
-								let receipts = client.runtime_api().current_receipts(&id);
-								let block = client.runtime_api().current_block(&id);
+								let schema = frontier_backend_client::onchain_storage_schema::<
+									B,
+									C,
+									BE,
+								>(client.as_ref(), id);
+								let handler = overrides
+									.schemas
+									.get(&schema)
+									.unwrap_or(&overrides.fallback);
+
+								let block = handler.current_block(&id);
+								let receipts = handler.current_receipts(&id);
 								match (receipts, block) {
-									(Ok(Some(receipts)), Ok(Some(block))) => {
+									(Some(receipts), Some(block)) => {
 										futures::future::ready(Some((block, receipts)))
 									}
 									_ => futures::future::ready(None),
@@ -272,11 +292,18 @@ where
 						.filter_map(move |notification| {
 							if notification.is_new_best {
 								let id = BlockId::Hash(notification.hash);
-								let block = client.runtime_api().current_block(&id);
-								match block {
-									Ok(Some(block)) => futures::future::ready(Some(block)),
-									_ => futures::future::ready(None),
-								}
+								let schema = frontier_backend_client::onchain_storage_schema::<
+									B,
+									C,
+									BE,
+								>(client.as_ref(), id);
+								let handler = overrides
+									.schemas
+									.get(&schema)
+									.unwrap_or(&overrides.fallback);
+
+								let block = handler.current_block(&id);
+								futures::future::ready(block)
 							} else {
 								futures::future::ready(None)
 							}

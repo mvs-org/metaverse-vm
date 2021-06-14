@@ -1,7 +1,7 @@
 //! # Democracy Pallet
 //!
-//! - [`democracy::Config`](./trait.Config.html)
-//! - [`Call`](./enum.Call.html)
+//! - [`Config`]
+//! - [`Call`]
 //!
 //! ## Overview
 //!
@@ -148,7 +148,8 @@ use frame_support::{
 	ensure,
 	traits::{
 		schedule::{DispatchTime, Named as ScheduleNamed},
-		BalanceStatus, Currency, EnsureOrigin, Get, OnUnbalanced, ReservableCurrency,
+		BalanceStatus, Currency, EnsureOrigin, Get, LockIdentifier, OnUnbalanced,
+		ReservableCurrency, WithdrawReasons,
 	},
 	weights::{DispatchClass, Pays, Weight},
 	Parameter,
@@ -160,7 +161,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- hyperspace ---
-use hyperspace_support::balance::lock::*;
+use hyperspace_support::balance::*;
 
 mod conviction;
 mod types;
@@ -584,7 +585,7 @@ decl_module! {
 
 			if let Some((until, _)) = <Blacklist<T>>::get(proposal_hash) {
 				ensure!(
-					<frame_system::Module<T>>::block_number() >= until,
+					<frame_system::Pallet<T>>::block_number() >= until,
 					Error::<T>::ProposalBlacklisted,
 				);
 			}
@@ -676,7 +677,7 @@ decl_module! {
 			ensure!(!<NextExternal<T>>::exists(), Error::<T>::DuplicateProposal);
 			if let Some((until, _)) = <Blacklist<T>>::get(proposal_hash) {
 				ensure!(
-					<frame_system::Module<T>>::block_number() >= until,
+					<frame_system::Pallet<T>>::block_number() >= until,
 					Error::<T>::ProposalBlacklisted,
 				);
 			}
@@ -764,7 +765,7 @@ decl_module! {
 			ensure!(proposal_hash == e_proposal_hash, Error::<T>::InvalidHash);
 
 			<NextExternal<T>>::kill();
-			let now = <frame_system::Module<T>>::block_number();
+			let now = <frame_system::Pallet<T>>::block_number();
 			Self::inject_referendum(now + voting_period, proposal_hash, threshold, delay);
 		}
 
@@ -794,7 +795,7 @@ decl_module! {
 				.err().ok_or(Error::<T>::AlreadyVetoed)?;
 
 			existing_vetoers.insert(insert_position, who.clone());
-			let until = <frame_system::Module<T>>::block_number() + T::CooloffPeriod::get();
+			let until = <frame_system::Pallet<T>>::block_number() + T::CooloffPeriod::get();
 			<Blacklist<T>>::insert(&proposal_hash, (until, existing_vetoers));
 
 			Self::deposit_event(RawEvent::Vetoed(who, proposal_hash, until));
@@ -992,13 +993,14 @@ decl_module! {
 					_ => None,
 				}).ok_or(Error::<T>::PreimageMissing)?;
 
-			let now = <frame_system::Module<T>>::block_number();
+			let now = <frame_system::Pallet<T>>::block_number();
 			let (voting, enactment) = (T::VotingPeriod::get(), T::EnactmentPeriod::get());
 			let additional = if who == provider { Zero::zero() } else { enactment };
 			ensure!(now >= since + voting + additional, Error::<T>::TooEarly);
 			ensure!(expiry.map_or(true, |e| now > e), Error::<T>::Imminent);
 
-			let _ = T::Currency::repatriate_reserved(&provider, &who, deposit, BalanceStatus::Free);
+			let res = T::Currency::repatriate_reserved(&provider, &who, deposit, BalanceStatus::Free);
+			debug_assert!(res.is_ok());
 			<Preimages<T>>::remove(&proposal_hash);
 			Self::deposit_event(RawEvent::PreimageReaped(proposal_hash, provider, deposit, who));
 		}
@@ -1204,7 +1206,7 @@ impl<T: Config> Module<T> {
 		delay: T::BlockNumber,
 	) -> ReferendumIndex {
 		<Module<T>>::inject_referendum(
-			<frame_system::Module<T>>::block_number() + T::VotingPeriod::get(),
+			<frame_system::Pallet<T>>::block_number() + T::VotingPeriod::get(),
 			proposal_hash,
 			threshold,
 			delay,
@@ -1329,7 +1331,7 @@ impl<T: Config> Module<T> {
 					Some(ReferendumInfo::Finished { end, approved }) => {
 						if let Some((lock_periods, balance)) = votes[i].1.locked_if(approved) {
 							let unlock_at = end + T::EnactmentPeriod::get() * lock_periods.into();
-							let now = system::Module::<T>::block_number();
+							let now = <system::Pallet<T>>::block_number();
 							if now < unlock_at {
 								ensure!(
 									matches!(scope, UnvoteScope::Any),
@@ -1474,7 +1476,7 @@ impl<T: Config> Module<T> {
 					// remove any delegation votes to our current target.
 					let votes =
 						Self::reduce_upstream_delegation(&target, conviction.votes(balance));
-					let now = system::Module::<T>::block_number();
+					let now = <system::Pallet<T>>::block_number();
 					let lock_periods = conviction.lock_periods().into();
 					prior.accumulate(now + T::EnactmentPeriod::get() * lock_periods, balance);
 					voting.set_common(delegations, prior);
@@ -1492,7 +1494,7 @@ impl<T: Config> Module<T> {
 	/// a security hole) but may be reduced from what they are currently.
 	fn update_lock(who: &T::AccountId) {
 		let lock_needed = VotingOf::<T>::mutate(who, |voting| {
-			voting.rejig(system::Module::<T>::block_number());
+			voting.rejig(<system::Pallet<T>>::block_number());
 			voting.locked_balance()
 		});
 		if lock_needed.is_zero() {
@@ -1598,7 +1600,8 @@ impl<T: Config> Module<T> {
 		}) = preimage
 		{
 			if let Ok(proposal) = T::Proposal::decode(&mut &data[..]) {
-				let _ = T::Currency::unreserve(&provider, deposit);
+				let err_amount = T::Currency::unreserve(&provider, deposit);
+				debug_assert!(err_amount.is_zero());
 				Self::deposit_event(RawEvent::PreimageUsed(proposal_hash, provider, deposit));
 
 				let ok = proposal
@@ -1787,7 +1790,7 @@ impl<T: Config> Module<T> {
 			.saturating_mul(T::PreimageByteDeposit::get());
 		T::Currency::reserve(&who, deposit)?;
 
-		let now = <frame_system::Module<T>>::block_number();
+		let now = <frame_system::Pallet<T>>::block_number();
 		let a = PreimageStatus::Available {
 			data: encoded_proposal,
 			provider: who.clone(),
@@ -1814,7 +1817,7 @@ impl<T: Config> Module<T> {
 			.to_missing_expiry()
 			.ok_or(Error::<T>::DuplicatePreimage)?;
 
-		let now = <frame_system::Module<T>>::block_number();
+		let now = <frame_system::Pallet<T>>::block_number();
 		let free = <BalanceOf<T>>::zero();
 		let a = PreimageStatus::Available {
 			data: encoded_proposal,

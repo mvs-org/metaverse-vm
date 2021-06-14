@@ -59,7 +59,7 @@ use codec::Encode;
 // --- substrate ---
 use frame_support::{
 	decl_error, decl_event, decl_module, decl_storage, ensure,
-	traits::{Currency, EnsureOrigin, Get, LockIdentifier},
+	traits::{Currency, EnsureOrigin, Get, LockIdentifier, WithdrawReasons},
 	weights::Weight,
 	StorageValue,
 };
@@ -73,7 +73,7 @@ use sp_std::borrow::ToOwned;
 use sp_std::prelude::*;
 // --- hyperspace ---
 use hyperspace_relay_primitives::relay_authorities::*;
-use hyperspace_support::balance::lock::*;
+use hyperspace_support::balance::*;
 use types::*;
 
 pub trait Config<I: Instance = DefaultInstance>: frame_system::Config {
@@ -223,7 +223,7 @@ decl_storage! {
 					account_id: account_id.to_owned(),
 					signer: signer.to_owned(),
 					stake: *stake,
-					term: <frame_system::Module<T>>::block_number() + T::TermDuration::get()
+					term: <frame_system::Pallet<T>>::block_number() + T::TermDuration::get()
 				});
 			}
 
@@ -379,7 +379,7 @@ decl_module! {
 
 				for account_id in account_ids {
 					let mut authority = Self::remove_candidate_by_id_with(&account_id, || ())?;
-					authority.term = <frame_system::Module<T>>::block_number() + T::TermDuration::get();
+					authority.term = <frame_system::Pallet<T>>::block_number() + T::TermDuration::get();
 
 					authorities.push(authority);
 				}
@@ -405,7 +405,7 @@ decl_module! {
 
 			let next_authorities = Self::remove_authority_by_ids_with(
 				vec![account_id],
-				|authority| if authority.term >= <frame_system::Module<T>>::block_number() {
+				|authority| if authority.term >= <frame_system::Pallet<T>>::block_number() {
 					Some(<Error<T, I>>::AuthorityIT)
 				} else {
 					None
@@ -500,7 +500,7 @@ decl_module! {
 
 			signatures.push((authority, signature));
 
-			if Perbill::from_rational_approximation(signatures.len() as u32, authorities.len() as _)
+			if Perbill::from_rational(signatures.len() as u32, authorities.len() as _)
 				>= T::SignThreshold::get()
 			{
 				// TODO: clean the mmr root which was contains in this mmr root?
@@ -554,7 +554,7 @@ decl_module! {
 
 			signatures.push((authority, signature));
 
-			if Perbill::from_rational_approximation(signatures.len() as u32, authorities.len() as _)
+			if Perbill::from_rational(signatures.len() as u32, authorities.len() as _)
 				>= T::SignThreshold::get()
 			{
 				Self::apply_authorities_change()?;
@@ -588,7 +588,7 @@ decl_module! {
 			{
 				<MMRRootsToSign<T, I>>::remove_all();
 				let schedule = (
-					<frame_system::Module<T>>::block_number().saturated_into::<u64>() / 10 * 10 + 10
+					<frame_system::Pallet<T>>::block_number().saturated_into::<u64>() / 10 * 10 + 10
 				).saturated_into();
 				<MMRRootsToSignKeys<T, I>>::mutate(|schedules| *schedules = vec![schedule]);
 				Self::schedule_mmr_root(schedule);
@@ -716,7 +716,7 @@ where
 
 		<NextAuthorities<T, I>>::put(ScheduledAuthoritiesChange {
 			next_authorities,
-			deadline: <frame_system::Module<T>>::block_number() + submit_duration,
+			deadline: <frame_system::Pallet<T>>::block_number() + submit_duration,
 		});
 		<SubmitDuration<T, I>>::mutate(|submit_duration_| *submit_duration_ += submit_duration);
 

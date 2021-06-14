@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "dp-rpc"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.1.0"
+version     = "2.2.0"
 
 [dependencies]
 # crates

@@ -70,8 +70,8 @@ frame_support::construct_runtime! {
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Module, Call, Storage, Config},
-		HeaderMMR: hyperspace_header_mmr::{Module, Call, Storage},
+		System: frame_system::{Pallet, Call, Storage, Config},
+		HeaderMMR: hyperspace_header_mmr::{Pallet, Call, Storage},
 	}
 }
 

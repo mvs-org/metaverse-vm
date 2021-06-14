@@ -73,9 +73,7 @@ use sp_std::{convert::From, marker::PhantomData, prelude::*};
 // --- hyperspace ---
 use crate::mmr::{leaf_index_to_mmr_size, leaf_index_to_pos, MMRMerge, MerkleProof};
 use hyperspace_relay_primitives::relayer_game::*;
-use hyperspace_support::{
-	balance::lock::LockableCurrency, traits::EthereumReceipt as EthereumReceiptT,
-};
+use hyperspace_support::{balance::*, traits::EthereumReceipt as EthereumReceiptT};
 use ethereum_primitives::{
 	ethashproof::EthashProof,
 	header::EthereumHeader,
@@ -422,9 +420,9 @@ decl_module! {
 					let reject = nays.len() as u32;
 					let total = T::TechnicalMembership::count() as u32;
 					let approve_threashold =
-						Perbill::from_rational_approximation(approve, total);
+						Perbill::from_rational(approve, total);
 					let reject_threashold =
-						Perbill::from_rational_approximation(reject, total);
+						Perbill::from_rational(reject, total);
 
 					if approve_threashold >= T::ApproveThreshold::get() {
 						Self::confirm_relay_header_parcel_with_reason(
@@ -871,7 +869,7 @@ impl<T: Config> Relayable for Module<T> {
 			);
 		} else {
 			<PendingRelayHeaderParcels<T>>::append((
-				<frame_system::Module<T>>::block_number() + confirm_period,
+				<frame_system::Pallet<T>>::block_number() + confirm_period,
 				relay_header_parcel,
 				RelayVotingState::default(),
 			));

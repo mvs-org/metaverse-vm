@@ -97,9 +97,9 @@ frame_support::construct_runtime! {
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system::{Module, Call, Storage, Config},
-		Etp: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>},
-		EthereumRelay: hyperspace_ethereum_linear_relay::{Module, Call, Storage, Config<T>},
+		System: frame_system::{Pallet, Call, Storage, Config},
+		Etp: hyperspace_balances::<Instance0>::{Pallet, Call, Storage, Config<T>},
+		EthereumRelay: hyperspace_ethereum_linear_relay::{Pallet, Call, Storage, Config<T>},
 	}
 }
 

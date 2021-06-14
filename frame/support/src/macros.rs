@@ -70,7 +70,7 @@ macro_rules! impl_account_data {
 
 			fn usable(
 				&self,
-				reasons: hyperspace_support::balance::lock::LockReasons,
+				reasons: hyperspace_support::balance::LockReasons,
 				frozen_balance: hyperspace_support::balance::FrozenBalance<$btype>,
 			) -> $btype {
 				self.free.saturating_sub(frozen_balance.frozen_for(reasons))
@@ -98,7 +98,7 @@ macro_rules! impl_account_data {
 
 			fn usable(
 				&self,
-				reasons: hyperspace_support::balance::lock::LockReasons,
+				reasons: hyperspace_support::balance::LockReasons,
 				frozen_balance: hyperspace_support::balance::FrozenBalance<$btype>,
 			) -> $btype {
 				self.free_dna.saturating_sub(frozen_balance.frozen_for(reasons))

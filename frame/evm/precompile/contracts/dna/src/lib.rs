@@ -24,24 +24,23 @@ use codec::Decode;
 use core::str::FromStr;
 use ethabi::{Function, Param, ParamType, Token};
 use evm::{Context, ExitError, ExitSucceed};
-use frame_support::{
-	ensure,
-	traits::{Currency, ExistenceRequirement},
-};
+use frame_support::{ensure, traits::Currency};
 use sha3::Digest;
 use sp_core::{H160, U256};
-use sp_runtime::traits::UniqueSaturatedInto;
-use sp_std::borrow::ToOwned;
-use sp_std::marker::PhantomData;
-use sp_std::prelude::*;
-use sp_std::vec::Vec;
+use sp_runtime::{traits::UniqueSaturatedInto, SaturatedConversion};
+use sp_std::{borrow::ToOwned, marker::PhantomData, prelude::*, vec::Vec};
 
-use hyperspace_evm::{AddressMapping, Config, Runner};
+use hyperspace_evm::{Account, AccountBasic, Config, Module, Runner};
+use hyperspace_support::evm::POW_9;
 use dp_evm::Precompile;
+use dvm_ethereum::{
+	account_basic::{DnaRemainBalance, RemainBalanceOp},
+	DnaBalance,
+};
 
 type AccountId<T> = <T as frame_system::Config>::AccountId;
 
-const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,address,uint256)";
+const TRANSFER_AND_CALL_ACTION: &[u8] = b"transfer_and_call(address,uint256)";
 const WITHDRAW_ACTION: &[u8] = b"withdraw(bytes32,uint256)";
 const DNA_PRECOMPILE: &str = "0000000000000000000000000000000000000016";
 /// Dna Precompile Contract is used to support the exchange of DNA native asset between hyperspace and dvm contract
@@ -51,7 +50,7 @@ pub struct Dna<T: Config> {
 	_maker: PhantomData<T>,
 }
 
-impl<T: Config> Precompile for Dna<T> {
+impl<T: Config + dvm_ethereum::Config> Precompile for Dna<T> {
 	/// There are two actions, one is `transfer_and_call` and the other is `withdraw`
 	/// 1. Transfer_and_call Action, triggered by the user sending a transaction to the dna precompile
 	/// 	   special evm address, eg(0000000000000000000000000000000000000016). and transfer the sender's
@@ -67,35 +66,39 @@ impl<T: Config> Precompile for Dna<T> {
 		target_limit: Option<u64>,
 		context: &Context,
 	) -> core::result::Result<(ExitSucceed, Vec<u8>, u64), ExitError> {
-		let helper = U256::from(10)
-			.checked_pow(U256::from(9))
-			.unwrap_or(U256::MAX);
+		let helper = U256::from(POW_9);
 		let action = which_action::<T>(&input)?;
-		let con_caller = T::AddressMapping::into_account_id(context.caller);
+
 		match action {
-			Action::TransferAndCall(tacd) => {
-				// 1. Transfer dna from sender to dna erc20 contract
-				let wdna_account_id = T::AddressMapping::into_account_id(tacd.wdna_address);
-				let transfer_value = tacd.value.saturating_mul(helper).low_u128();
+			Action::TransferAndCall(call_data) => {
+				// Ensure wdna is a contract
 				ensure!(
-					T::DnaCurrency::free_balance(&con_caller)
-						>= transfer_value.unique_saturated_into(),
+					!crate::Module::<T>::is_contract_code_empty(&call_data.wdna_address),
+					ExitError::Other("Wdna must be a contract!".into())
+				);
+				// Ensure context's apparent_value is zero, since the transfer value is encoded in input field
+				ensure!(
+					context.apparent_value == U256::zero(),
+					ExitError::Other("The value in tx must be zero!".into())
+				);
+				// Ensure caller's balance is enough
+				ensure!(
+					T::DnaAccountBasic::account_basic(&context.caller).balance >= call_data.value,
 					ExitError::OutOfFund
 				);
-				T::DnaCurrency::transfer(
-					&con_caller,
-					&wdna_account_id,
-					transfer_value.unique_saturated_into(),
-					ExistenceRequirement::AllowDeath,
-				)
-				.map_err(|_| ExitError::Other("Transfer in Dna precompile failed".into()))?;
 
-				// 2. Call wdna sol contract deposit
-				let raw_input = make_call_data(context.caller, tacd.value)?;
-				let precompile_address = H160::from_str(DNA_PRECOMPILE).unwrap();
+				// Transfer dna from sender to DNA wrapped contract
+				T::DnaAccountBasic::transfer(
+					&context.caller,
+					&call_data.wdna_address,
+					call_data.value,
+				)?;
+				// Call WDNA wrapped contract deposit
+				let precompile_address = H160::from_str(DNA_PRECOMPILE).unwrap_or_default();
+				let raw_input = make_call_data(context.caller, call_data.value)?;
 				T::Runner::call(
 					precompile_address,
-					tacd.wdna_address,
+					call_data.wdna_address,
 					raw_input.to_vec(),
 					U256::zero(),
 					target_limit.unwrap_or_default(),
@@ -108,14 +111,39 @@ impl<T: Config> Precompile for Dna<T> {
 				Ok((ExitSucceed::Returned, vec![], 20000))
 			}
 			Action::Withdraw(wd) => {
-				let withdraw_value = wd.dna_value.saturating_mul(helper);
-				T::DnaCurrency::transfer(
-					&con_caller,
+				// Ensure wdna is a contract
+				ensure!(
+					!crate::Module::<T>::is_contract_code_empty(&context.caller),
+					ExitError::Other("The caller must be wdna contract!".into())
+				);
+				// Ensure context's apparent_value is zero
+				ensure!(
+					context.apparent_value == U256::zero(),
+					ExitError::Other("The value in tx must be zero!".into())
+				);
+				// Ensure caller's balance is enough
+				let caller_dna = T::DnaAccountBasic::account_basic(&context.caller);
+				ensure!(caller_dna.balance >= wd.dna_value, ExitError::OutOfFund);
+
+				// Transfer
+				let new_wdna_balance = caller_dna.balance.saturating_sub(wd.dna_value);
+				T::DnaAccountBasic::mutate_account_basic(
+					&context.caller,
+					Account {
+						nonce: caller_dna.nonce,
+						balance: new_wdna_balance,
+					},
+				);
+				let (currency_value, remain_balance) = wd.dna_value.div_mod(helper);
+				<T as hyperspace_evm::Config>::DnaCurrency::deposit_creating(
 					&wd.to_account_id,
-					withdraw_value.low_u128().unique_saturated_into(),
-					ExistenceRequirement::AllowDeath,
-				)
-				.map_err(|_| ExitError::Other("Withdraw in Dna precompile failed".into()))?;
+					currency_value.low_u128().unique_saturated_into(),
+				);
+				<DnaRemainBalance as RemainBalanceOp<T, DnaBalance<T>>>::inc_remaining_balance(
+					&wd.to_account_id,
+					remain_balance.low_u128().saturated_into(),
+				);
+
 				Ok((ExitSucceed::Returned, vec![], 20000))
 			}
 		}

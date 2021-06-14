@@ -16,18 +16,22 @@
 
 //! Test utilities
 
-use crate::{self as dvm_ethereum, account_basic::DVMAccountBasicMapping, *};
+use crate::{
+	self as dvm_ethereum,
+	account_basic::{DvmAccountBasic, DnaRemainBalance, EtpRemainBalance},
+	*,
+};
 use codec::{Decode, Encode};
-use hyperspace_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator};
+use hyperspace_evm::{AddressMapping, EnsureAddressTruncated, FeeCalculator, IssuingHandler};
 use ethereum::{TransactionAction, TransactionSignature};
-use frame_support::ConsensusEngineId;
+use frame_support::{traits::GenesisBuild, ConsensusEngineId};
 use frame_system::mocking::*;
 use rlp::*;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	AccountId32, ModuleId, Perbill, RuntimeDebug,
+	AccountId32, DispatchResult, ModuleId, Perbill, RuntimeDebug,
 };
 
 hyperspace_support::impl_test_account_data! {}
@@ -118,6 +122,14 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
+/// EmptyIssuingHandler
+pub struct EmptyIssuingHandler;
+impl IssuingHandler for EmptyIssuingHandler {
+	fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
+		Ok(())
+	}
+}
+
 pub struct EthereumFindAuthor;
 impl FindAuthor<H160> for EthereumFindAuthor {
 	fn find_author<'a, I>(_digests: I) -> Option<H160>
@@ -130,8 +142,9 @@ impl FindAuthor<H160> for EthereumFindAuthor {
 
 frame_support::parameter_types! {
 	pub const TransactionByteFee: u64 = 1;
-	pub const ChainId: u64 = 42;
+	pub const ChainId: u64 = 23;
 	pub const EVMModuleId: ModuleId = ModuleId(*b"py/evmpa");
+	pub const BlockGasLimit: U256 = U256::MAX;
 }
 
 pub struct HashedAddressMapping;
@@ -153,22 +166,27 @@ impl hyperspace_evm::Config for Test {
 	type EtpCurrency = Etp;
 	type DnaCurrency = Dna;
 	type Event = ();
-	type Precompiles = hyperspace_evm_precompile::HyperspacePrecompiles<Self>;
+	type Precompiles = (
+		hyperspace_evm_precompile_simple::ECRecover,
+		hyperspace_evm_precompile_simple::Sha256,
+		hyperspace_evm_precompile_simple::Ripemd160,
+		hyperspace_evm_precompile_simple::Identity,
+		hyperspace_evm_precompile_withdraw::WithDraw<Self>,
+	);
 	type ChainId = ChainId;
+	type BlockGasLimit = BlockGasLimit;
 	type Runner = hyperspace_evm::runner::stack::Runner<Self>;
-	type AccountBasicMapping = DVMAccountBasicMapping<Self>;
-}
-
-frame_support::parameter_types! {
-	pub const BlockGasLimit: U256 = U256::MAX;
+	type EtpAccountBasic = DvmAccountBasic<Self, Etp, EtpRemainBalance>;
+	type DnaAccountBasic = DvmAccountBasic<Self, Dna, DnaRemainBalance>;
+	type IssuingHandler = EmptyIssuingHandler;
 }
 
 impl Config for Test {
 	type Event = ();
 	type FindAuthor = EthereumFindAuthor;
 	type StateRoot = IntermediateStateRoot;
-	type BlockGasLimit = BlockGasLimit;
 	type EtpCurrency = Etp;
+	type DnaCurrency = Dna;
 }
 
 frame_support::construct_runtime! {
@@ -177,12 +195,12 @@ frame_support::construct_runtime! {
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Module, Call, Config, Storage},
-		Timestamp: pallet_timestamp::{Module, Call, Storage},
-		Etp: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>},
-		Dna: hyperspace_balances::<Instance1>::{Module, Call, Storage},
-		EVM: hyperspace_evm::{Module, Call, Storage},
-		Ethereum: dvm_ethereum::{Module, Call, Storage},
+		System: frame_system::{Pallet, Call, Config, Storage},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
+		Etp: hyperspace_balances::<Instance0>::{Pallet, Call, Storage, Config<T>},
+		Dna: hyperspace_balances::<Instance1>::{Pallet, Call, Storage},
+		EVM: hyperspace_evm::{Pallet, Call, Storage},
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage},
 	}
 }
 

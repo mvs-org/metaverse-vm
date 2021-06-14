@@ -19,7 +19,10 @@
 //! Tests for treasury.
 
 // --- substrate ---
-use frame_support::{assert_noop, assert_ok, traits::OnInitialize};
+use frame_support::{
+	assert_noop, assert_ok,
+	traits::{GenesisBuild, OnInitialize},
+};
 use sp_runtime::traits::BlakeTwo256;
 // --- hyperspace ---
 use crate::{self as hyperspace_treasury, mock::*, *};

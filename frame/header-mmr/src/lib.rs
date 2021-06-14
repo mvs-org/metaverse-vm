@@ -110,7 +110,7 @@ decl_module! {
 	{
 		fn on_finalize(_block_number: T::BlockNumber) {
 			let store = <ModuleMMRStore<T>>::default();
-			let parent_hash = <frame_system::Module<T>>::parent_hash();
+			let parent_hash = <frame_system::Pallet<T>>::parent_hash();
 			let mut mmr = <MMR<_, MMRMerge<T>, _>>::new(MMRCounter::get(), store);
 
 			// Update MMR and add mmr root to digest of block header
@@ -124,7 +124,7 @@ decl_module! {
 					};
 					let mmr_item = DigestItem::Other(mmr_root_log.encode());
 
-					<frame_system::Module<T>>::deposit_log(mmr_item.into());
+					<frame_system::Pallet<T>>::deposit_log(mmr_item.into());
 				} else {
 					log::error!("[hyperspace-header-mmr] FAILED to Commit MMR");
 				}

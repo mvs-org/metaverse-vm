@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "dvm-rpc-core"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.1.0"
+version     = "2.2.0"
 
 [dependencies]
 # crates
@@ -19,14 +19,14 @@ jsonrpc-derive = { version = "15.1.0" }
 jsonrpc-pubsub = { version = "15.1.0" }
 
 # hyperspace
-hyperspace-evm    = { default-features = false, path = "../../evm" }
-dp-evm          = { default-features = false, path = "../../../primitives/evm" }
-dp-rpc          = { default-features = false, path = "../../../primitives/rpc" }
+hyperspace-evm = { default-features = false, path = "../../evm" }
+dp-evm       = { default-features = false, path = "../../../primitives/evm" }
+dp-rpc       = { default-features = false, path = "../../../primitives/rpc" }
 # substrate
-sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sp-api     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-core    = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-std     = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 
 [features]
 default = ["std"]

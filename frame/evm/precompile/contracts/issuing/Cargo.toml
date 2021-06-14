@@ -1,0 +1,34 @@
+[package]
+authors     = ["Hyperspace Network <contact@mvs.org>"]
+description = "Issuing precompile for EVM pallet."
+edition     = "2018"
+homepage    = "https://mvs.org/"
+license     = "GPL-3.0"
+name        = "hyperspace-evm-precompile-issuing"
+readme      = "README.md"
+repository  = "https://github.com/mvs-org/Hyperspace"
+version     = "2.2.0"
+
+[dependencies]
+# crates
+evm = { default-features = false, version = "0.25.0", features = ["with-codec"] }
+# hyperspace
+hyperspace-evm = { default-features = false, path = "../../../" }
+dp-evm       = { default-features = false, path = "../../../../../primitives/evm" }
+
+[features]
+default = ["std"]
+
+std = [
+	"crates-std",
+	"hyperspace-std",
+]
+
+crates-std = [
+	"evm/std",
+]
+
+hyperspace-std = [
+	"hyperspace-evm/std",
+	"dp-evm/std",
+]

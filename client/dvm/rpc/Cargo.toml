@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "dc-rpc"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.1.0"
+version     = "2.2.0"
 
 [dependencies]
 # crates
@@ -15,6 +15,7 @@ array-bytes         = { version = "1.1.0" }
 codec               = { package = "parity-scale-codec", version = "2.0.1" }
 ethereum            = { version = "0.7.1", features = ["with-codec"] }
 ethereum-types      = { version = "0.11.0" }
+evm                 = { version = "0.25.0" }
 futures             = { version = "0.3.13", features = ["compat"] }
 jsonrpc-core        = { version = "15.1.0" }
 jsonrpc-core-client = { version = "15.1.0" }
@@ -26,7 +27,6 @@ rand                = { version = "0.7" }
 rlp                 = { version = "0.5.0" }
 sha3                = { version = "0.8" }
 # hyperspace
-hyperspace-evm        = { path = "../../../frame/evm" }
 dc-consensus        = { path = "../consensus" }
 dc-db               = { path = "../db" }
 dp-rpc              = { path = "../../../primitives/rpc" }
@@ -36,16 +36,16 @@ dvm-ethereum        = { path = "../../../frame/dvm" }
 dvm-rpc-core        = { path = "../../../frame/dvm/rpc" }
 dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
 # substrate
-sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sc-network          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sc-service          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-api              = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-io               = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sc-network          = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sc-rpc              = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sc-service          = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-io               = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-storage          = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-transaction-pool = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
 
 [features]
 rpc_binary_search_estimate = []

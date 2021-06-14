@@ -20,10 +20,9 @@
 use codec::{Decode, Encode};
 use num_traits::Zero;
 // --- substrate ---
+use frame_support::traits::{LockIdentifier, WithdrawReasons};
 use sp_runtime::{traits::AtLeast32BitUnsigned, RuntimeDebug};
 use sp_std::{ops::BitOr, prelude::*};
-// --- hyperspace ---
-use crate::balance::lock::{LockIdentifier, WithdrawReasons};
 
 /// Frozen balance information for an account.
 pub struct FrozenBalance<Balance> {

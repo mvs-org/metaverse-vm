@@ -53,6 +53,10 @@ pub mod constants {
 		items as Balance * 20 * COIN + (bytes as Balance) * 100 * MICRO
 	}
 }
+pub use constants::*;
+
+pub mod pallets;
+pub use pallets::*;
 
 pub mod impls {
 	//! Some configurable implementations as associated type for the substrate runtime.
@@ -172,7 +176,7 @@ pub mod impls {
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
 				negative: false,
-				coeff_frac: Perbill::from_rational_approximation(p % q, q),
+				coeff_frac: Perbill::from_rational(p % q, q),
 				coeff_integer: p / q,
 			}]
 		}
@@ -203,135 +207,16 @@ pub mod wasm {
 		return WASM_BINARY;
 	}
 }
-
-pub mod system;
-pub use system::*;
-
-pub mod babe;
-pub use babe::*;
-
-pub mod timestamp;
-pub use timestamp::*;
-
-pub mod balances;
-pub use balances::*;
-
-pub mod transaction_payment;
-pub use transaction_payment::*;
-
-pub mod authorship;
-pub use authorship::*;
-
-pub mod election_provider_multi_phase;
-pub use election_provider_multi_phase::*;
-
-pub mod staking;
-pub use staking::*;
-
-pub mod offences;
-pub use offences::*;
-
-pub mod session_historical;
-pub use session_historical::*;
-
-pub mod session;
-pub use session::*;
-
-pub mod grandpa;
-pub use grandpa::*;
-
-pub mod im_online;
-pub use im_online::*;
-
-pub mod authority_discovery;
-pub use authority_discovery::*;
-
-pub mod header_mmr;
-pub use header_mmr::*;
-
-pub mod democracy;
-pub use democracy::*;
-
-pub mod collective;
-pub use collective::*;
-
-pub mod elections_phragmen;
-pub use elections_phragmen::*;
-
-pub mod membership;
-pub use membership::*;
-
-pub mod treasury;
-pub use treasury::*;
-
-pub mod sudo;
-pub use sudo::*;
-
-pub mod claims;
-pub use claims::*;
-
-pub mod vesting;
-pub use vesting::*;
-
-pub mod utility;
-pub use utility::*;
-
-pub mod identity;
-pub use identity::*;
-
-pub mod society;
-pub use society::*;
-
-pub mod recovery;
-pub use recovery::*;
-
-pub mod scheduler;
-pub use scheduler::*;
-
-pub mod proxy;
-pub use proxy::*;
-
-pub mod multisig;
-pub use multisig::*;
-
-pub mod oldetp_issuing;
-pub use oldetp_issuing::*;
-
-pub mod oldetp_backing;
-pub use oldetp_backing::*;
-
-pub mod ethereum_relay;
-pub use ethereum_relay::*;
-
-pub mod ethereum_backing;
-pub use ethereum_backing::*;
-
-pub mod relayer_game;
-pub use relayer_game::*;
-
-pub mod relay_authorities;
-pub use relay_authorities::*;
-
-pub mod oldna_backing;
-pub use oldna_backing::*;
-
-pub mod evm;
-pub use evm::*;
-
-pub mod dvm;
-pub use dvm::*;
-
-// --- hyperspace ---
-pub use constants::*;
-pub use hyperspace_staking::StakerStatus;
 pub use wasm::*;
+
+pub use hyperspace_staking::StakerStatus;
 
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
 use frame_support::{
-	traits::{KeyOwnerProofSystem, Randomness},
-	weights::constants::ExtrinsicBaseWeight,
+	traits::{KeyOwnerProofSystem, OnRuntimeUpgrade, Randomness},
+	weights::{constants::ExtrinsicBaseWeight, Weight},
 };
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -340,6 +225,7 @@ use pallet_transaction_payment::FeeDetails;
 use pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo as TransactionPaymentRuntimeDispatchInfo;
 use sp_api::impl_runtime_apis;
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
+use sp_consensus_babe::{AllowedSlots, BabeEpochConfiguration};
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256, U256};
 use sp_runtime::{
 	create_runtime_str, generic,
@@ -361,11 +247,11 @@ use dvm_rpc_runtime_api::TransactionStatus;
 use impls::*;
 
 /// The address format for describing accounts.
-type Address = MultiAddress<AccountId, ()>;
+pub type Address = MultiAddress<AccountId, ()>;
 /// Block type as expected by this runtime.
-type Block = generic::Block<Header, UncheckedExtrinsic>;
+pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// The SignedExtension to the basic transaction logic.
-type SignedExtra = (
+pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -376,19 +262,18 @@ type SignedExtra = (
 	hyperspace_ethereum_relay::CheckEthereumRelayHeaderParcel<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
-type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
 /// Executive: handles dispatch to the various modules.
-type Executive = frame_executive::Executive<
+pub type Executive = frame_executive::Executive<
 	Runtime,
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllModules,
-	// (),
-	// CustomOnRuntimeUpgrade,
+	AllPallets,
+	CustomOnRuntimeUpgrade,
 >;
 /// The payload being signed in transactions.
-type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
+pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
 
 type Etp = Balances;
 
@@ -397,11 +282,17 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("Hyperspace"),
 	impl_name: create_runtime_str!("Hyperspace"),
 	authoring_version: 1,
-	// crate version ~2.1.0 := >=2.1.0, <2.2.0
-	spec_version: 213,
+	// crate version ~2.2.0 := >=2.2.0, <2.3.0
+	spec_version: 221,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
+};
+
+/// The BABE epoch configuration at genesis.
+pub const BABE_GENESIS_EPOCH_CONFIG: BabeEpochConfiguration = BabeEpochConfiguration {
+	c: PRIMARY_PROBABILITY,
+	allowed_slots: AllowedSlots::PrimaryAndSecondaryPlainSlots,
 };
 
 /// The version information used to identify this runtime when compiled natively.
@@ -421,78 +312,79 @@ frame_support::construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		// Basic stuff; balances is uncallable initially.
-		System: frame_system::{Module, Call, Storage, Config, Event<T>} = 0,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage} = 1,
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 0,
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage} = 1,
 
 		// Must be before session.
-		Babe: pallet_babe::{Module, Call, Storage, Config, ValidateUnsigned} = 2,
+		Babe: pallet_babe::{Pallet, Call, Storage, Config, ValidateUnsigned} = 2,
 
-		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent} = 3,
-		Balances: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>} = 4,
-		Dna: hyperspace_balances::<Instance1>::{Module, Call, Storage, Config<T>, Event<T>} = 5,
-		TransactionPayment: pallet_transaction_payment::{Module, Storage} = 6,
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 3,
+		Balances: hyperspace_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 4,
+		Dna: hyperspace_balances::<Instance1>::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 6,
 
 		// Consensus support.
-		Authorship: pallet_authorship::{Module, Call, Storage, Inherent} = 7,
-		ElectionProviderMultiPhase: pallet_election_provider_multi_phase::{Module, Call, Storage, Event<T>, ValidateUnsigned} = 8,
-		Staking: hyperspace_staking::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 9,
-		Offences: pallet_offences::{Module, Call, Storage, Event} = 10,
-		Historical: pallet_session_historical::{Module} = 11,
-		Session: pallet_session::{Module, Call, Storage, Config<T>, Event} = 12,
-		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event, ValidateUnsigned} = 13,
-		ImOnline: pallet_im_online::{Module, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
-		AuthorityDiscovery: pallet_authority_discovery::{Module, Call, Config} = 15,
-		HeaderMMR: hyperspace_header_mmr::{Module, Call, Storage} = 16,
+		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent} = 7,
+		ElectionProviderMultiPhase: pallet_election_provider_multi_phase::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 8,
+		Staking: hyperspace_staking::{Pallet, Call, Storage, Config<T>, Event<T>} = 9,
+		Offences: pallet_offences::{Pallet, Call, Storage, Event} = 10,
+		Historical: pallet_session_historical::{Pallet} = 11,
+		Session: pallet_session::{Pallet, Call, Storage, Config<T>, Event} = 12,
+		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 13,
+		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
+		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Call, Config} = 15,
+		HeaderMMR: hyperspace_header_mmr::{Pallet, Call, Storage} = 16,
 
 		// Governance stuff; uncallable initially.
-		Democracy: hyperspace_democracy::{Module, Call, Storage, Config, Event<T>} = 17,
-		Council: pallet_collective::<Instance0>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
-		TechnicalCommittee: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
-		ElectionsPhragmen: hyperspace_elections_phragmen::{Module, Call, Storage, Config<T>, Event<T>} = 20,
-		TechnicalMembership: pallet_membership::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>} = 21,
-		Treasury: hyperspace_treasury::{Module, Call, Storage, Event<T>} = 22,
+		Democracy: hyperspace_democracy::{Pallet, Call, Storage, Config, Event<T>} = 17,
+		Council: pallet_collective::<Instance0>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
+		TechnicalCommittee: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
+		ElectionsPhragmen: hyperspace_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
+		TechnicalMembership: pallet_membership::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
+		Treasury: hyperspace_treasury::{Pallet, Call, Storage, Event<T>} = 22,
 
-		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>} = 23,
+		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 23,
 
 		// Claims. Usable initially.
-		Claims: hyperspace_claims::{Module, Call, Storage, Config, Event<T>, ValidateUnsigned} = 24,
+		Claims: hyperspace_claims::{Pallet, Call, Storage, Config, Event<T>, ValidateUnsigned} = 24,
 
 		// Vesting. Usable initially, but removed once all vesting is finished.
-		Vesting: hyperspace_vesting::{Module, Call, Storage, Event<T>, Config<T>} = 25,
+		Vesting: hyperspace_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 25,
 
 		// Utility module.
-		Utility: pallet_utility::{Module, Call, Event} = 26,
+		Utility: pallet_utility::{Pallet, Call, Event} = 26,
 
 		// Less simple identity module.
-		Identity: pallet_identity::{Module, Call, Storage, Event<T>} = 27,
+		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 27,
 
 		// Society module.
-		Society: pallet_society::{Module, Call, Storage, Event<T>} = 28,
+		Society: pallet_society::{Pallet, Call, Storage, Event<T>} = 28,
 
 		// Social recovery module.
-		Recovery: pallet_recovery::{Module, Call, Storage, Event<T>} = 29,
+		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>} = 29,
 
 		// System scheduler.
-		Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>} = 30,
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 30,
 
 		// Proxy module. Late addition.
-		Proxy: pallet_proxy::{Module, Call, Storage, Event<T>} = 31,
+		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 31,
 
 		// Multisig module. Late addition.
-		Multisig: pallet_multisig::{Module, Call, Storage, Event<T>} = 32,
+		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 32,
 
-		OldetpIssuing: hyperspace_oldetp_issuing::{Module, Call, Storage, Config, Event<T>} = 33,
-		OldetpBacking: hyperspace_oldetp_backing::{Module, Storage, Config<T>} = 34,
+		HyperspaceOldetpIssuing: hyperspace_oldetp_issuing::{Pallet, Call, Storage, Config, Event<T>} = 33,
+		HyperspaceOldetpBacking: hyperspace_oldetp_backing::{Pallet, Storage, Config<T>} = 34,
 
-		EthereumRelay: hyperspace_ethereum_relay::{Module, Call, Storage, Config<T>, Event<T>} = 35,
-		EthereumBacking: hyperspace_ethereum_backing::{Module, Call, Storage, Config<T>, Event<T>} = 36,
-		EthereumRelayerGame: hyperspace_relayer_game::<Instance0>::{Module, Storage} = 37,
-		EthereumRelayAuthorities: hyperspace_relay_authorities::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>} = 38,
+		EthereumRelay: hyperspace_ethereum_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
+		EthereumBacking: hyperspace_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
+		EthereumIssuing: hyperspace_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
+		EthereumRelayerGame: hyperspace_relayer_game::<Instance0>::{Pallet, Storage} = 37,
+		EthereumRelayAuthorities: hyperspace_relay_authorities::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
 
-		OldnaBacking: hyperspace_oldna_backing::{Module, Storage, Config<T>} = 39,
+		OldnaBacking: hyperspace_oldna_backing::{Pallet, Storage, Config<T>} = 39,
 
-		EVM: hyperspace_evm::{Module, Call, Storage, Config, Event<T>} = 40,
-		Ethereum: dvm_ethereum::{Module, Call, Storage, Config, Event, ValidateUnsigned} = 41,
+		EVM: hyperspace_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
+		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
 	}
 }
 
@@ -597,7 +489,7 @@ impl_runtime_apis! {
 		}
 
 		fn random_seed() -> <Block as BlockT>::Hash {
-			RandomnessCollectiveFlip::random_seed()
+			pallet_babe::RandomnessFromOneEpochAgo::<Runtime>::random_seed().0
 		}
 	}
 
@@ -656,10 +548,10 @@ impl_runtime_apis! {
 			sp_consensus_babe::BabeGenesisConfiguration {
 				slot_duration: Babe::slot_duration(),
 				epoch_length: EpochDuration::get(),
-				c: PRIMARY_PROBABILITY,
+				c: BABE_GENESIS_EPOCH_CONFIG.c,
 				genesis_authorities: Babe::authorities(),
 				randomness: Babe::randomness(),
-				allowed_slots: sp_consensus_babe::AllowedSlots::PrimaryAndSecondaryPlainSlots,
+				allowed_slots: BABE_GENESIS_EPOCH_CONFIG.allowed_slots,
 			}
 		}
 
@@ -768,10 +660,9 @@ impl_runtime_apis! {
 		}
 
 		fn account_basic(address: H160) -> EVMAccount {
-			// --- hyperspace ---
-			use hyperspace_evm::AccountBasicMapping;
+			use hyperspace_evm::AccountBasic;
 
-			<Runtime as hyperspace_evm::Config>::AccountBasicMapping::account_basic(&address)
+			<Runtime as hyperspace_evm::Config>::EtpAccountBasic::account_basic(&address)
 		}
 
 		fn account_code_at(address: H160) -> Vec<u8> {
@@ -874,7 +765,10 @@ impl_runtime_apis! {
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {
-		fn on_runtime_upgrade() -> Result<(Weight, Weight), sp_runtime::RuntimeString> {
+		fn on_runtime_upgrade() -> Result<
+			(Weight, Weight),
+			sp_runtime::RuntimeString
+		> {
 			let weight = Executive::try_runtime_upgrade()?;
 			Ok((weight, RuntimeBlockWeights::get().max_block))
 		}
@@ -900,12 +794,17 @@ impl dvm_rpc_runtime_api::ConvertTransaction<OpaqueExtrinsic> for TransactionCon
 	}
 }
 
-// pub struct CustomOnRuntimeUpgrade;
-// impl frame_support::traits::OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
-// 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-// 		// --- substrate ---
-// 		use frame_support::migration::*;
+pub struct CustomOnRuntimeUpgrade;
+impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<(), &'static str> {
+		hyperspace_balances::migration::try_runtime::pre_migrate()
+	}
 
-// 		MAXIMUM_BLOCK_WEIGHT
-// 	}
-// }
+	fn on_runtime_upgrade() -> Weight {
+		hyperspace_balances::migration::migrate(b"Instance0HyperspaceBalances", b"Balances");
+		hyperspace_balances::migration::migrate(b"Instance1HyperspaceBalances", b"Dna");
+
+		RuntimeBlockWeights::get().max_block
+	}
+}

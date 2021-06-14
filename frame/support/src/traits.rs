@@ -16,23 +16,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Hyperspace. If not, see <https://www.gnu.org/licenses/>.
 
-// --- substrate ---
-pub use frame_support::traits::{LockIdentifier, VestingSchedule, WithdrawReasons};
-
 // --- core ---
 use core::fmt::Debug;
 // --- crates ---
 use codec::FullCodec;
 use impl_trait_for_tuples::impl_for_tuples;
 // --- substrate ---
-use frame_support::traits::{Currency, Get, TryDrop};
+use frame_support::traits::{Currency, Get, LockIdentifier, TryDrop, WithdrawReasons};
 use sp_runtime::{DispatchError, DispatchResult};
 use sp_std::prelude::*;
 // --- hyperspace ---
-use crate::balance::{
-	lock::{LockFor, LockReasons},
-	FrozenBalance,
-};
+use crate::structs::{FrozenBalance, LockFor, LockReasons};
 use ethereum_primitives::receipt::EthereumTransactionIndex;
 
 pub trait BalanceInfo<Balance, Module> {

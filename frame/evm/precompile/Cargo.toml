@@ -7,11 +7,12 @@ license     = "GPL-3.0"
 name        = "hyperspace-evm-precompile"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.1.0"
+version     = "2.2.0"
 
 [dependencies]
 # hyperspace
 hyperspace-evm-precompile-empty    = { default-features = false, path = "contracts/empty" }
+hyperspace-evm-precompile-issuing  = { default-features = false, path = "contracts/issuing" }
 hyperspace-evm-precompile-dna     = { default-features = false, path = "contracts/dna" }
 hyperspace-evm-precompile-simple   = { default-features = false, path = "contracts/simple" }
 hyperspace-evm-precompile-withdraw = { default-features = false, path = "contracts/withdraw" }
@@ -21,6 +22,7 @@ default = ["std"]
 
 std = [
 	"hyperspace-evm-precompile-empty/std",
+	"hyperspace-evm-precompile-issuing/std",
 	"hyperspace-evm-precompile-dna/std",
 	"hyperspace-evm-precompile-simple/std",
 	"hyperspace-evm-precompile-withdraw/std",

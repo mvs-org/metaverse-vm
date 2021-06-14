@@ -5,7 +5,7 @@ use codec::Encode;
 // --- substrate ---
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types,
-	traits::{Contains, Filter, OnInitialize},
+	traits::{Contains, Filter, GenesisBuild, OnInitialize},
 	weights::Weight,
 };
 use frame_system::{mocking::*, EnsureRoot, EnsureSignedBy};
@@ -187,10 +187,10 @@ frame_support::construct_runtime! {
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Module, Call, Config, Storage, Event<T>},
-		Balances: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>, Event<T>},
-		Scheduler: pallet_scheduler::{Module, Call, Storage, Config, Event<T>},
-		Democracy: hyperspace_democracy::{Module, Call, Storage, Config, Event<T>},
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		Balances: hyperspace_balances::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Config, Event<T>},
+		Democracy: hyperspace_democracy::{Pallet, Call, Storage, Config, Event<T>},
 	}
 }
 

@@ -25,6 +25,7 @@ mod schema_v1_override;
 
 pub use schema_v1_override::SchemaV1Override;
 // --- hyperspace ---
+use dvm_ethereum::EthereumStorageSchema;
 pub use dvm_rpc_core::{EthApiServer, NetApiServer};
 use dvm_rpc_runtime_api::EthereumRuntimeRPCApi;
 use dvm_rpc_runtime_api::TransactionStatus;
@@ -35,7 +36,13 @@ use sp_runtime::traits::Block as BlockT;
 // --- std ---
 use ethereum::Block as EthereumBlock;
 use ethereum_types::{H160, H256, U256};
+use std::collections::BTreeMap;
 use std::{marker::PhantomData, sync::Arc};
+
+pub struct OverrideHandle<Block: BlockT> {
+	pub schemas: BTreeMap<EthereumStorageSchema, Box<dyn StorageOverride<Block> + Send + Sync>>,
+	pub fallback: Box<dyn StorageOverride<Block> + Send + Sync>,
+}
 
 /// Something that can fetch Ethereum-related data. This trait is quite similar to the runtime API,
 /// and indeed oe implementation of it uses the runtime API.

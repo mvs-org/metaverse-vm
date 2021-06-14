@@ -14,6 +14,8 @@ members = [
 	"frame/bridge/oldetp/backing",
 	"frame/bridge/oldetp/issuing",
 	"frame/bridge/ethereum/backing",
+	"frame/bridge/ethereum/issuing",
+	"frame/bridge/ethereum/issuing/contract",
 	"frame/bridge/ethereum/linear-relay",
 	"frame/bridge/ethereum/relay",
 	"frame/bridge/relayer-game",

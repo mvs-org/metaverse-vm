@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "dc-consensus"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "2.1.0"
+version     = "2.2.0"
 
 [dependencies]
 # crates
@@ -20,13 +20,13 @@ log         = { version = "0.4.14" }
 dp_consensus        = { path = "../../../primitives/consensus/" }
 dvm-rpc-runtime-api = { path = "../../../frame/dvm/rpc/runtime-api" }
 # substrate
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-api              = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-block-builder    = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-consensus        = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-core             = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-inherents        = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
-sp-timestamp        = { git = "https://github.com/darwinia-network/substrate.git", tag = "rococo-v1.1" }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sc-client-api       = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-api              = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-block-builder    = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-blockchain       = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-consensus        = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-core             = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-inherents        = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-runtime          = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }
+sp-timestamp        = { git = "https://github.com/darwinia-network/substrate.git", tag = "darwinia-v0.10.0" }

@@ -86,9 +86,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 // --- hyperspace ---
-use hyperspace_support::{
-	balance::lock::LockableCurrency, traits::EthereumReceipt as EthereumReceiptT,
-};
+use hyperspace_support::{balance::*, traits::EthereumReceipt as EthereumReceiptT};
 use ethereum_primitives::{
 	ethashproof::EthashProof,
 	header::EthereumHeader,

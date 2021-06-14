@@ -27,7 +27,7 @@ fn the_lock(amount: u64) -> BalanceLock<Balance, BlockNumber> {
 	BalanceLock {
 		id: DEMOCRACY_ID,
 		lock_for: LockFor::Common { amount },
-		lock_reasons: hyperspace_support::balance::lock::LockReasons::Misc,
+		lock_reasons: hyperspace_support::balance::LockReasons::Misc,
 	}
 }
 

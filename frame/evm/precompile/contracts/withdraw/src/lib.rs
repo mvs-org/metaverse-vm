@@ -27,6 +27,7 @@ use sp_std::vec::Vec;
 
 use codec::Decode;
 use hyperspace_evm::{AddressMapping, Config};
+use hyperspace_support::evm::POW_9;
 use dp_evm::Precompile;
 use evm::{Context, ExitError, ExitSucceed};
 
@@ -53,9 +54,7 @@ impl<T: Config> Precompile for WithDraw<T> {
 		// Decode input data
 		let input = InputData::<T>::decode(&input)?;
 
-		let helper = U256::from(10)
-			.checked_pow(U256::from(9))
-			.unwrap_or(U256::MAX);
+		let helper = U256::from(POW_9);
 		let contract_address = T::AddressMapping::into_account_id(context.address);
 		let context_value = context.apparent_value.div_mod(helper).0;
 		let context_value = context_value.low_u128().unique_saturated_into();

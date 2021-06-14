@@ -241,7 +241,7 @@ use std::time::Instant;
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::traits::OnFinalize;
+use frame_support::traits::{GenesisBuild, OnFinalize};
 use frame_system::mocking::*;
 use sp_runtime::RuntimeDebug;
 // --- hyperspace ---
@@ -348,10 +348,10 @@ frame_support::construct_runtime! {
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system::{Module, Call, Storage, Config},
-		Etp: hyperspace_balances::<Instance0>::{Module, Call, Storage, Config<T>},
-		Relay: mock_relay::{Module, Storage},
-		RelayerGame: hyperspace_relayer_game::{Module, Storage},
+		System: frame_system::{Pallet, Call, Storage, Config},
+		Etp: hyperspace_balances::<Instance0>::{Pallet, Call, Storage, Config<T>},
+		Relay: mock_relay::{Pallet, Storage},
+		RelayerGame: hyperspace_relayer_game::{Pallet, Storage},
 	}
 }
 
