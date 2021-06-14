@@ -37,16 +37,16 @@
 //!
 //! ### Digest Item
 //! The is a ```MerkleMountainRangeRoot(Hash)``` digest item pre-subscribed in Digest.
-//! This is implemented in Hyperspace's fork of substrate: https://github.com/new-mvs/substrate
-//! The Pull request link is https://github.com/new-mvs/substrate/pull/1
+//! This is implemented in Hyperspace's fork of substrate: https://github.com/hyperspace-network/substrate
+//! The Pull request link is https://github.com/hyperspace-network/substrate/pull/1
 //!
 //! ## Implementation
 //! We are using the MMR library from https://github.com/nervosnetwork/merkle-mountain-range
-//! Pull request: https://github.com/new-mvs/hyperspace/pull/358
+//! Pull request: https://github.com/hyperspace-network/hyperspace/pull/358
 //!
 //! ## References
 //! Hyperspace Relay's Technical Paper:
-//! https://github.com/new-mvs/rfcs/blob/master/paper/Hyperspace_Relay_Sublinear_Optimistic_Relay_for_Interoperable_Blockchains_v0.7.pdf
+//! https://github.com/hyperspace-network/rfcs/blob/master/paper/Hyperspace_Relay_Sublinear_Optimistic_Relay_for_Interoperable_Blockchains_v0.7.pdf
 //!
 //! https://github.com/mimblewimble/grin/blob/master/doc/mmr.md#structure
 //! https://github.com/mimblewimble/grin/blob/0ff6763ee64e5a14e70ddd4642b99789a1648a32/core/src/core/pmmr.rs#L606

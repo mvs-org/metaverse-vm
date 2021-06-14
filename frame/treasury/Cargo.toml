@@ -7,7 +7,7 @@ license     = "GPL-3.0"
 name        = "hyperspace-treasury"
 readme      = "README.md"
 repository  = "https://github.com/mvs-org/Hyperspace"
-version     = "1.4.0"
+version     = "2.0.0"
 
 [dependencies]
 # crates
@@ -16,18 +16,18 @@ serde = { version = "1.0.124", optional = true, features = ["derive"] }
 # hyperspace
 hyperspace-support = { default-features = false, path = "../support" }
 # substrate
-frame-support = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
-frame-system  = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
-sp-runtime    = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
-sp-std        = { default-features = false, git = "https://github.com/new-mvs/substrate", branch = "latest" }
+frame-support = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+frame-system  = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sp-runtime    = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sp-std        = { default-features = false, git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
 
 [dev-dependencies]
 # hyperspace
 hyperspace-balances = { path = "../balances" }
 # substrate
-sp-core    = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
-sp-io      = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
-sp-storage = { git = "https://github.com/new-mvs/substrate", branch = "latest" }
+sp-core    = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sp-io      = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
+sp-storage = { git = "https://github.com/new-mvs/substrate.git", branch = "latest" }
 
 [features]
 default = ["std"]

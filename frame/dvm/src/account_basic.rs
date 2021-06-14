@@ -85,7 +85,7 @@ impl<T: crate::Config + hyperspace_balances::Config<hyperspace_balances::Instanc
 				let value = <T as hyperspace_balances::Config<hyperspace_balances::Instance0>>::Balance::unique_saturated_from(
 					diff_remaining_balance.low_u128(),
 				);
-				crate::Module::<T>::dec_remain_balance(&account_id, value);
+				crate::Module::<T>::dec_remaining_balance(&account_id, value);
 			}
 		} else if current.balance < new.balance {
 			let diff = new.balance - current.balance;
@@ -111,7 +111,7 @@ impl<T: crate::Config + hyperspace_balances::Config<hyperspace_balances::Instanc
 				let value = <T as hyperspace_balances::Config<hyperspace_balances::Instance0>>::Balance::unique_saturated_from(
 					diff_remaining_balance.low_u128(),
 				);
-				crate::Module::<T>::inc_remain_balance(&account_id, value);
+				crate::Module::<T>::inc_remaining_balance(&account_id, value);
 			}
 		}
 	}

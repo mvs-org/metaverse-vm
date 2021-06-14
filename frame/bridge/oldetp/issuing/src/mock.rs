@@ -1,6 +1,6 @@
 // This file is part of Hyperspace.
 //
-// Copyright (C) 2018-2021 Metaverse
+// Copyright (C) 2018-2021 Hyperspace Network
 // SPDX-License-Identifier: GPL-3.0
 //
 // Hyperspace is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
 //
 // Hyperspace is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -18,7 +18,7 @@
 
 #![allow(dead_code)]
 
-pub mod oldETP_issuing {
+pub mod oldetp_issuing {
 	// --- hyperspace ---
 	pub use crate::Event;
 }
@@ -26,12 +26,12 @@ pub mod oldETP_issuing {
 // --- crates ---
 use codec::{Decode, Encode};
 // --- substrate ---
-use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, weights::Weight};
+use frame_support::{impl_outer_event, impl_outer_origin, parameter_types};
 use sp_io::TestExternalities;
 use sp_runtime::{
 	testing::{Header, H256},
 	traits::{BlakeTwo256, IdentityLookup},
-	Perbill, RuntimeDebug,
+	RuntimeDebug,
 };
 // --- hyperspace ---
 use crate::*;
@@ -40,11 +40,9 @@ pub type AccountId = u64;
 pub type Balance = u128;
 
 pub type System = frame_system::Module<Test>;
-pub type Etp = hyperspace_balances::Module<Test, EtpInstance>;
-pub type oldETPIssuing = Module<Test>;
+pub type OldetpIssuing = Module<Test>;
 
-pub type oldETPIssuingError = Error<Test>;
-pub type EtpError = hyperspace_balances::Error<Test, EtpInstance>;
+pub type OldetpIssuingError = Error<Test>;
 
 impl_outer_origin! {
 	pub enum Origin for Test where system = frame_system {}
@@ -54,33 +52,29 @@ impl_outer_event! {
 	pub enum Event for Test {
 		frame_system <T>,
 		hyperspace_balances Instance0<T>,
-		oldETP_issuing <T>,
+		oldetp_issuing <T>,
 	}
 }
 
-hyperspace_support::impl_test_account_data! {}
+hyperspace_support::impl_test_account_data! { deprecated }
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
 parameter_types! {
-	pub const oldETPIssuingModuleId: ModuleId = ModuleId(*b"da/oldETPi");
+	pub const OldetpIssuingModuleId: ModuleId = ModuleId(*b"da/oldetpi");
 }
-impl Trait for Test {
+impl Config for Test {
 	type Event = Event;
-	type ModuleId = oldETPIssuingModuleId;
+	type ModuleId = OldetpIssuingModuleId;
 	type EtpCurrency = Etp;
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = 1024;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const MinimumPeriod: u64 = 5;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
-}
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
 	type Origin = Origin;
 	type Call = ();
 	type Index = u64;
@@ -92,25 +86,19 @@ impl frame_system::Trait for Test {
 	type Header = Header;
 	type Event = Event;
 	type BlockHashCount = ();
-	type MaximumBlockWeight = ();
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = ();
-	type MaximumBlockLength = ();
-	type AvailableBlockRatio = ();
 	type Version = ();
 	type PalletInfo = ();
 	type AccountData = AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
+	type SS58Prefix = ();
 }
 
 parameter_types! {
 	pub const ExistentialDeposit: Balance = 0;
 }
-impl hyperspace_balances::Trait<EtpInstance> for Test {
+impl hyperspace_balances::Config<EtpInstance> for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;
@@ -127,7 +115,7 @@ pub fn new_test_ext() -> TestExternalities {
 		.build_storage::<Test>()
 		.unwrap();
 
-	hyperspace_balances::GenesisConfig::<Test, EtpInstance> {
+	EtpConfig {
 		balances: (1..10)
 			.map(|i: AccountId| vec![(i, 100 * i as Balance), (10 * i, 1000 * i as Balance)])
 			.flatten()
@@ -155,9 +143,9 @@ pub fn events() -> Vec<Event> {
 	events
 }
 
-pub fn oldETP_issuing_events() -> Vec<Event> {
+pub fn oldetp_issuing_events() -> Vec<Event> {
 	events()
 		.into_iter()
-		.filter(|e| matches!(e, Event::oldETP_issuing(_)))
+		.filter(|e| matches!(e, Event::oldetp_issuing(_)))
 		.collect()
 }

@@ -21,7 +21,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use core::convert::TryFrom;
-use hyperspace_evm_primitives::LinearCostPrecompile;
+use dp_evm::LinearCostPrecompile;
 use ed25519_dalek::{PublicKey, Signature, Verifier};
 use evm::{ExitError, ExitSucceed};
 

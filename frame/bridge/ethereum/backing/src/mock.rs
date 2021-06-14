@@ -32,7 +32,6 @@ macro_rules! decl_tests {
 			ModuleId, {KeyTypeId, MultiSignature, Perbill},
 		};
 		// --- hyperspace ---
-		
 		use hyperspace_staking::{EraIndex, Exposure, ExposureOf};
 
 		type Balance = u128;
