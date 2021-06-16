@@ -17,7 +17,7 @@
 // along with Hyperspace. If not, see <https://www.gnu.org/licenses/>.
 
 // --- std ---
-use std::{collections::BTreeMap, marker::PhantomData};
+use std::{collections::BTreeMap};
 // --- substrate ---
 use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
 use sc_service::{ChainType, Properties};
@@ -31,8 +31,6 @@ use sp_runtime::{
 	Perbill,
 };
 // --- hyperspace ---
-use hyperspace_claims::ClaimsList;
-use hyperspace_ethereum_relay::DagsMerkleRootsLoader as DagsMerkleRootsLoaderR;
 use hyperspace_evm::GenesisAccount;
 use hyperspace_primitives::*;
 
@@ -84,15 +82,6 @@ const EVM_ACCOUNTS: &[&'static str] = &[
 const A_FEW_COINS: Balance = 1 << 44;
 const MANY_COINS: Balance = A_FEW_COINS << 6;
 const BUNCH_OF_COINS: Balance = MANY_COINS << 6;
-
-const TOKEN_REDEEM_ADDRESS: &'static str = "0x49262B932E439271d05634c32978294C7Ea15d0C";
-const DEPOSIT_REDEEM_ADDRESS: &'static str = "0x6EF538314829EfA8386Fc43386cB13B4e0A67D1e";
-const SET_AUTHORITIES_ADDRESS: &'static str = "0xD35Bb6F1bc1C84b53E0995c1830454AB7C4147f1";
-const ETP_TOKEN_ADDRESS: &'static str = "0xb52FBE2B925ab79a821b261C82c5Ba0814AAA5e0";
-const DNA_TOKEN_ADDRESS: &'static str = "0x1994100c58753793D52c6f457f189aa3ce9cEe94";
-const ETHEREUM_RELAY_AUTHORITY_SIGNER: &'static str = "0x68898db1012808808c903f390909c52d9f706749";
-const MAPPING_FACTORY_ADDRESS: &'static str = "0xcB8531Bc0B7C8F41B55CF4E94698C37b130597B9";
-const ETHEREUM_BACKING_ADDRESS: &'static str = "0xb2Bea2358d817dAE01B0FD0DC3aECB25910E65AA";
 
 fn session_keys(
 	babe: BabeId,
@@ -224,7 +213,6 @@ fn hyperspace_build_spec_genesis() -> hyperspace_runtime::GenesisConfig {
 			"0x1ed7de3855ffcce134d718b570febb49bbbbeb32ebbc8c319f44fb9f5690643a",
 		),
 	];
-	let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
 	let evm_accounts = {
 		let mut map = BTreeMap::new();
 
@@ -314,57 +302,7 @@ fn hyperspace_build_spec_genesis() -> hyperspace_runtime::GenesisConfig {
 		pallet_grandpa: Default::default(),
 		pallet_im_online: Default::default(),
 		pallet_authority_discovery: Default::default(),
-		hyperspace_democracy: Default::default(),
-		pallet_collective_Instance0: hyperspace_runtime::CouncilConfig {
-			phantom: PhantomData::<hyperspace_runtime::CouncilCollective>,
-			members: collective_members.clone(),
-		},
-		pallet_collective_Instance1: hyperspace_runtime::TechnicalCommitteeConfig {
-			phantom: PhantomData::<hyperspace_runtime::TechnicalCollective>,
-			members: collective_members
-		},
-		hyperspace_elections_phragmen: Default::default(),
-		pallet_membership_Instance0: Default::default(),
-		hyperspace_claims: Default::default(),
-		hyperspace_vesting: Default::default(),
 		pallet_sudo: hyperspace_runtime::SudoConfig { key: root.clone() },
-		hyperspace_oldetp_issuing: hyperspace_runtime::OldetpIssuingConfig { total_mapped_etp: BUNCH_OF_COINS },
-		hyperspace_oldetp_backing: hyperspace_runtime::OldetpBackingConfig { backed_etp: BUNCH_OF_COINS },
-		hyperspace_ethereum_relay: hyperspace_runtime::EthereumRelayConfig {
-			genesis_header_info: (
-				vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 29, 204, 77, 232, 222, 199, 93, 122, 171, 133, 181, 103, 182, 204, 212, 26, 211, 18, 69, 27, 148, 138, 116, 19, 240, 161, 66, 253, 64, 212, 147, 71, 128, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 33, 123, 11, 188, 251, 114, 226, 213, 126, 40, 243, 60, 179, 97, 185, 152, 53, 19, 23, 119, 85, 220, 63, 51, 206, 62, 112, 34, 237, 98, 183, 123, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 132, 160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 136, 0, 0, 0, 0, 0, 0, 0, 66, 1, 65, 148, 16, 35, 104, 9, 35, 224, 254, 77, 116, 163, 75, 218, 200, 20, 31, 37, 64, 227, 174, 144, 98, 55, 24, 228, 125, 102, 209, 202, 74, 45],
-				b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into()
-			),
-			dags_merkle_roots_loader: DagsMerkleRootsLoaderR::from_file(
-				"bin/res/ethereum/dags-merkle-roots.json",
-				"DAG_MERKLE_ROOTS_PATH",
-			),
-			..Default::default()
-		},
-		hyperspace_ethereum_backing: hyperspace_runtime::EthereumBackingConfig {
-			token_redeem_address: array_bytes::hex2array_unchecked!(TOKEN_REDEEM_ADDRESS, 20).into(),
-			deposit_redeem_address: array_bytes::hex2array_unchecked!(DEPOSIT_REDEEM_ADDRESS, 20).into(),
-			set_authorities_address: array_bytes::hex2array_unchecked!(SET_AUTHORITIES_ADDRESS, 20).into(),
-			etp_token_address: array_bytes::hex2array_unchecked!(ETP_TOKEN_ADDRESS, 20).into(),
-			dna_token_address: array_bytes::hex2array_unchecked!(DNA_TOKEN_ADDRESS, 20).into(),
-			backed_etp: BUNCH_OF_COINS,
-			backed_dna: BUNCH_OF_COINS,
-		},
-		hyperspace_ethereum_issuing: hyperspace_runtime::EthereumIssuingConfig {
-			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
-			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
-		},
-		hyperspace_relay_authorities_Instance0: hyperspace_runtime::EthereumRelayAuthoritiesConfig {
-			authorities: vec![(
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				array_bytes::hex2array_unchecked!(ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(),
-				1
-			)]
-		},
-		hyperspace_oldna_backing: hyperspace_runtime::OldnaBackingConfig {
-			backed_etp: BUNCH_OF_COINS,
-			backed_dna: BUNCH_OF_COINS,
-		},
 		hyperspace_evm: hyperspace_runtime::EVMConfig { accounts: evm_accounts },
 		dvm_ethereum: Default::default(),
 	}
@@ -400,7 +338,6 @@ fn hyperspace_development_genesis() -> hyperspace_runtime::GenesisConfig {
 			.map(|m| array_bytes::hex2array_unchecked!(m, 32).into()),
 	)
 	.collect::<Vec<_>>();
-	let collective_members = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
 	let evm_accounts = {
 		let mut map = BTreeMap::new();
 
@@ -466,62 +403,8 @@ fn hyperspace_development_genesis() -> hyperspace_runtime::GenesisConfig {
 		pallet_grandpa: Default::default(),
 		pallet_im_online: Default::default(),
 		pallet_authority_discovery: Default::default(),
-		hyperspace_democracy: Default::default(),
-		pallet_collective_Instance0: hyperspace_runtime::CouncilConfig {
-			phantom: PhantomData::<hyperspace_runtime::CouncilCollective>,
-			members: collective_members.clone(),
-		},
-		pallet_collective_Instance1: hyperspace_runtime::TechnicalCommitteeConfig {
-			phantom: PhantomData::<hyperspace_runtime::TechnicalCollective>,
-			members: collective_members
-		},
-		hyperspace_elections_phragmen: Default::default(),
-		pallet_membership_Instance0: Default::default(),
-		hyperspace_claims: hyperspace_runtime::ClaimsConfig {
-			claims_list: ClaimsList::from_file(
-				"bin/res/claims-list.json",
-				"CLAIMS_LIST_PATH",
-			),
-		},
-		hyperspace_vesting: Default::default(),
 		pallet_sudo: hyperspace_runtime::SudoConfig { key: root.clone() },
-		hyperspace_oldetp_issuing: hyperspace_runtime::OldetpIssuingConfig { total_mapped_etp: BUNCH_OF_COINS },
-		hyperspace_oldetp_backing: hyperspace_runtime::OldetpBackingConfig { backed_etp: BUNCH_OF_COINS },
-		hyperspace_ethereum_relay: hyperspace_runtime::EthereumRelayConfig {
-			genesis_header_info: (
-				vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 29, 204, 77, 232, 222, 199, 93, 122, 171, 133, 181, 103, 182, 204, 212, 26, 211, 18, 69, 27, 148, 138, 116, 19, 240, 161, 66, 253, 64, 212, 147, 71, 128, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 53, 33, 123, 11, 188, 251, 114, 226, 213, 126, 40, 243, 60, 179, 97, 185, 152, 53, 19, 23, 119, 85, 220, 63, 51, 206, 62, 112, 34, 237, 98, 183, 123, 86, 232, 31, 23, 27, 204, 85, 166, 255, 131, 69, 230, 146, 192, 248, 110, 91, 72, 224, 27, 153, 108, 173, 192, 1, 98, 47, 181, 227, 99, 180, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 132, 160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 136, 0, 0, 0, 0, 0, 0, 0, 66, 1, 65, 148, 16, 35, 104, 9, 35, 224, 254, 77, 116, 163, 75, 218, 200, 20, 31, 37, 64, 227, 174, 144, 98, 55, 24, 228, 125, 102, 209, 202, 74, 45],
-				b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00".into()
-			),
-			dags_merkle_roots_loader: DagsMerkleRootsLoaderR::from_file(
-				"bin/res/ethereum/dags-merkle-roots.json",
-				"DAG_MERKLE_ROOTS_PATH",
-			),
-			..Default::default()
-		},
-		hyperspace_ethereum_backing: hyperspace_runtime::EthereumBackingConfig {
-			token_redeem_address: array_bytes::hex2array_unchecked!(TOKEN_REDEEM_ADDRESS, 20).into(),
-			deposit_redeem_address: array_bytes::hex2array_unchecked!(DEPOSIT_REDEEM_ADDRESS, 20).into(),
-			set_authorities_address: array_bytes::hex2array_unchecked!(SET_AUTHORITIES_ADDRESS, 20).into(),
-			etp_token_address: array_bytes::hex2array_unchecked!(ETP_TOKEN_ADDRESS, 20).into(),
-			dna_token_address: array_bytes::hex2array_unchecked!(DNA_TOKEN_ADDRESS, 20).into(),
-			backed_etp: BUNCH_OF_COINS,
-			backed_dna: BUNCH_OF_COINS,
-		},
-		hyperspace_ethereum_issuing: hyperspace_runtime::EthereumIssuingConfig {
-			mapping_factory_address: array_bytes::hex2array_unchecked!(MAPPING_FACTORY_ADDRESS, 20).into(),
-			ethereum_backing_address: array_bytes::hex2array_unchecked!(ETHEREUM_BACKING_ADDRESS, 20).into(),
-		},
-		hyperspace_relay_authorities_Instance0: hyperspace_runtime::EthereumRelayAuthoritiesConfig {
-			authorities: vec![(
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				array_bytes::hex2array_unchecked!(ETHEREUM_RELAY_AUTHORITY_SIGNER, 20).into(),
-				1
-			)]
-		},
-		hyperspace_oldna_backing: hyperspace_runtime::OldnaBackingConfig {
-			backed_etp: BUNCH_OF_COINS,
-			backed_dna: BUNCH_OF_COINS,
-		},
+		
 		hyperspace_evm: hyperspace_runtime::EVMConfig { accounts: evm_accounts },
 		dvm_ethereum: Default::default(),
 	}

@@ -106,7 +106,6 @@ pub trait RuntimeApiCollection:
 	+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
 	+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 	+ hyperspace_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
-	+ hyperspace_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
 	+ hyperspace_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
 	+ dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>
 where
@@ -127,7 +126,6 @@ where
 		+ frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Nonce>
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ hyperspace_balances_rpc_runtime_api::BalancesApi<Block, AccountId, Balance>
-		+ hyperspace_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash>
 		+ hyperspace_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power>
 		+ dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,

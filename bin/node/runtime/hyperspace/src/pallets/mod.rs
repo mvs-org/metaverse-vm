@@ -40,32 +40,8 @@ pub use im_online::*;
 pub mod authority_discovery;
 pub use authority_discovery::*;
 
-pub mod header_mmr;
-pub use header_mmr::*;
-
-pub mod democracy;
-pub use democracy::*;
-
-pub mod collective;
-pub use collective::*;
-
-pub mod elections_phragmen;
-pub use elections_phragmen::*;
-
-pub mod membership;
-pub use membership::*;
-
-pub mod treasury;
-pub use treasury::*;
-
 pub mod sudo;
 pub use sudo::*;
-
-pub mod claims;
-pub use claims::*;
-
-pub mod vesting;
-pub use vesting::*;
 
 pub mod utility;
 pub use utility::*;
@@ -73,44 +49,11 @@ pub use utility::*;
 pub mod identity;
 pub use identity::*;
 
-pub mod society;
-pub use society::*;
-
-pub mod recovery;
-pub use recovery::*;
-
 pub mod scheduler;
 pub use scheduler::*;
 
-pub mod proxy;
-pub use proxy::*;
-
 pub mod multisig;
 pub use multisig::*;
-
-pub mod oldetp_issuing;
-pub use oldetp_issuing::*;
-
-pub mod oldetp_backing;
-pub use oldetp_backing::*;
-
-pub mod ethereum_relay;
-pub use ethereum_relay::*;
-
-pub mod ethereum_backing;
-pub use ethereum_backing::*;
-
-pub mod ethereum_issuing;
-pub use ethereum_issuing::*;
-
-pub mod relayer_game;
-pub use relayer_game::*;
-
-pub mod relay_authorities;
-pub use relay_authorities::*;
-
-pub mod oldna_backing;
-pub use oldna_backing::*;
 
 pub mod evm;
 pub use evm::*;

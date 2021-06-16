@@ -27,12 +27,8 @@ tokio          = { version = "0.3.6", optional = true, features = ["rt-multi-thr
 # hyperspace
 hyperspace-balances-rpc               = { path = "../../../frame/balances/rpc" }
 hyperspace-balances-rpc-runtime-api   = { path = "../../../frame/balances/rpc/runtime-api" }
-hyperspace-claims                     = { path = "../../../frame/claims" }
 hyperspace-cli                        = { optional = true, path = "../../../client/cli" }
-hyperspace-ethereum-relay             = { path = "../../../frame/bridge/ethereum/relay" }
 hyperspace-evm                        = { path = "../../../frame/evm" }
-hyperspace-header-mmr-rpc             = { path = "../../../frame/header-mmr/rpc" }
-hyperspace-header-mmr-rpc-runtime-api = { path = "../../../frame/header-mmr/rpc/runtime-api" }
 hyperspace-staking                    = { path = "../../../frame/staking" }
 hyperspace-staking-rpc                = { path = "../../../frame/staking/rpc" }
 hyperspace-staking-rpc-runtime-api    = { path = "../../../frame/staking/rpc/runtime-api" }

@@ -161,7 +161,6 @@ impl hyperspace_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated;
-	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = HashedAddressMapping;
 	type EtpCurrency = Etp;
 	type DnaCurrency = Dna;

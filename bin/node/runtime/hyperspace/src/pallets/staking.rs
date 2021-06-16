@@ -26,20 +26,20 @@ impl Config for Runtime {
 	type BondingDurationInBlockNumber = BondingDurationInBlockNumber;
 	type SlashDeferDuration = SlashDeferDuration;
 	/// A super-majority of the council can cancel the slash.
-	type SlashCancelOrigin = EnsureRootOrHalfCouncil;
+	type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type SessionInterface = Self;
 	type NextNewSession = Session;
 	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
 	type ElectionProvider = ElectionProviderMultiPhase;
 	type EtpCurrency = Etp;
-	type EtpRewardRemainder = Treasury;
-	// send the slashed funds to the treasury.
-	type EtpSlash = Treasury;
+	type EtpRewardRemainder =();
+
+	type EtpSlash = ();
 	// rewards are minted from the void
 	type EtpReward = ();
 	type DnaCurrency = Dna;
-	// send the slashed funds to the treasury.
-	type DnaSlash = Treasury;
+	
+	type DnaSlash = ();
 	// rewards are minted from the void
 	type DnaReward = ();
 	type Cap = Cap;

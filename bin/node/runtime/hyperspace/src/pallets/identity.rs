@@ -21,8 +21,8 @@ impl Config for Runtime {
 	type MaxSubAccounts = MaxSubAccounts;
 	type MaxAdditionalFields = MaxAdditionalFields;
 	type MaxRegistrars = MaxRegistrars;
-	type Slashed = Treasury;
-	type ForceOrigin = EnsureRootOrMoreThanHalfCouncil;
-	type RegistrarOrigin = EnsureRootOrMoreThanHalfCouncil;
+	type Slashed = ();
+	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+	type RegistrarOrigin = frame_system::EnsureRoot<AccountId>;
 	type WeightInfo = ();
 }

@@ -129,7 +129,6 @@ where
 	C::Api: sc_consensus_babe::BabeApi<Block>,
 	C::Api: sp_block_builder::BlockBuilder<Block>,
 	C::Api: hyperspace_balances_rpc::BalancesRuntimeApi<Block, AccountId, Balance>,
-	C::Api: hyperspace_header_mmr_rpc::HeaderMMRRuntimeApi<Block, Hash>,
 	C::Api: hyperspace_staking_rpc::StakingRuntimeApi<Block, AccountId, Power>,
 	C::Api: dvm_rpc_runtime_api::EthereumRuntimeRPCApi<Block>,
 	P: 'static + Sync + Send + sp_transaction_pool::TransactionPool<Block = Block>,
@@ -147,7 +146,6 @@ where
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
 	// --- hyperspace ---
 	use hyperspace_balances_rpc::{Balances, BalancesApi};
-	use hyperspace_header_mmr_rpc::{HeaderMMR, HeaderMMRApi};
 	use hyperspace_staking_rpc::{Staking, StakingApi};
 	use dc_rpc::{
 		EthApi, EthApiServer, EthFilterApi, EthFilterApiServer, EthPubSubApi, EthPubSubApiServer,
@@ -215,7 +213,6 @@ where
 		deny_unsafe,
 	)));
 	io.extend_with(BalancesApi::to_delegate(Balances::new(client.clone())));
-	io.extend_with(HeaderMMRApi::to_delegate(HeaderMMR::new(client.clone())));
 	io.extend_with(StakingApi::to_delegate(Staking::new(client.clone())));
 
 	let mut overrides_map = BTreeMap::new();

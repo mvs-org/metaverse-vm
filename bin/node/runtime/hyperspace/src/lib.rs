@@ -61,57 +61,7 @@ pub use pallets::*;
 pub mod impls {
 	//! Some configurable implementations as associated type for the substrate runtime.
 
-	pub mod relay {
-		// --- hyperspace ---
-		use crate::*;
-		use hyperspace_relay_primitives::relayer_game::*;
-		use ethereum_primitives::EthereumBlockNumber;
-
-		pub struct EthereumRelayerGameAdjustor;
-		impl AdjustableRelayerGame for EthereumRelayerGameAdjustor {
-			type Moment = BlockNumber;
-			type Balance = Balance;
-			type RelayHeaderId = EthereumBlockNumber;
-
-			fn max_active_games() -> u8 {
-				32
-			}
-
-			fn affirm_time(round: u32) -> Self::Moment {
-				match round {
-					// 1.5 mins
-					0 => 15,
-					// 0.5 mins
-					_ => 5,
-				}
-			}
-
-			fn complete_proofs_time(round: u32) -> Self::Moment {
-				match round {
-					// 1.5 mins
-					0 => 15,
-					// 0.5 mins
-					_ => 5,
-				}
-			}
-
-			fn update_sample_points(sample_points: &mut Vec<Vec<Self::RelayHeaderId>>) {
-				sample_points.push(vec![sample_points.last().unwrap().last().unwrap() - 1]);
-			}
-
-			fn estimate_stake(round: u32, affirmations_count: u32) -> Self::Balance {
-				match round {
-					0 => match affirmations_count {
-						0 => 1000 * COIN,
-						_ => 1500 * COIN,
-					},
-					_ => 100 * COIN,
-				}
-			}
-		}
-	}
-
-	// --- crates ---
+		// --- crates ---
 	use smallvec::smallvec;
 	// --- substrate ---
 	use frame_support::{
@@ -156,8 +106,6 @@ pub mod impls {
 					// for tips, if any, 100% to author
 					tips.merge_into(&mut split.1);
 				}
-				Treasury::on_unbalanced(split.0);
-				ToAuthor::on_unbalanced(split.1);
 			}
 		}
 	}
@@ -176,7 +124,6 @@ pub mod impls {
 	impl WeightToFeePolynomial for WeightToFee {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-			// in Oldetp, extrinsic base weight (smallest non-zero weight) is mapped to 100 MILLI:
 			let p = 100 * MILLI;
 			let q = Balance::from(ExtrinsicBaseWeight::get());
 			smallvec![WeightToFeeCoefficient {
@@ -246,7 +193,6 @@ use sp_version::RuntimeVersion;
 // --- hyperspace ---
 use hyperspace_balances_rpc_runtime_api::RuntimeDispatchInfo as BalancesRuntimeDispatchInfo;
 use hyperspace_evm::{Account as EVMAccount, FeeCalculator, Runner};
-use hyperspace_header_mmr_rpc_runtime_api::RuntimeDispatchInfo as HeaderMMRRuntimeDispatchInfo;
 use hyperspace_staking_rpc_runtime_api::RuntimeDispatchInfo as StakingRuntimeDispatchInfo;
 use hyperspace_primitives::*;
 use dvm_rpc_runtime_api::TransactionStatus;
@@ -265,7 +211,6 @@ pub type SignedExtra = (
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-	hyperspace_ethereum_relay::CheckEthereumRelayHeaderParcel<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -289,7 +234,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("Hyperspace"),
 	authoring_version: 1,
 	// crate version ~2.2.0 := >=2.2.0, <2.3.0
-	spec_version: 1224,
+	spec_version: 1231,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -339,23 +284,8 @@ frame_support::construct_runtime! {
 		Grandpa: pallet_grandpa::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 13,
 		ImOnline: pallet_im_online::{Pallet, Call, Storage, Config<T>, Event<T>, ValidateUnsigned} = 14,
 		AuthorityDiscovery: pallet_authority_discovery::{Pallet, Call, Config} = 15,
-		HeaderMMR: hyperspace_header_mmr::{Pallet, Call, Storage} = 16,
-
-		// Governance stuff; uncallable initially.
-		Democracy: hyperspace_democracy::{Pallet, Call, Storage, Config, Event<T>} = 17,
-		Council: pallet_collective::<Instance0>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 18,
-		TechnicalCommittee: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Config<T>, Event<T>} = 19,
-		ElectionsPhragmen: hyperspace_elections_phragmen::{Pallet, Call, Storage, Config<T>, Event<T>} = 20,
-		TechnicalMembership: pallet_membership::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
-		Treasury: hyperspace_treasury::{Pallet, Call, Storage, Event<T>} = 22,
 
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 23,
-
-		// Claims. Usable initially.
-		Claims: hyperspace_claims::{Pallet, Call, Storage, Config, Event<T>, ValidateUnsigned} = 24,
-
-		// Vesting. Usable initially, but removed once all vesting is finished.
-		Vesting: hyperspace_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 25,
 
 		// Utility module.
 		Utility: pallet_utility::{Pallet, Call, Event} = 26,
@@ -363,31 +293,11 @@ frame_support::construct_runtime! {
 		// Less simple identity module.
 		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 27,
 
-		// Society module.
-		Society: pallet_society::{Pallet, Call, Storage, Event<T>} = 28,
-
-		// Social recovery module.
-		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>} = 29,
-
 		// System scheduler.
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 30,
 
-		// Proxy module. Late addition.
-		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 31,
-
 		// Multisig module. Late addition.
 		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 32,
-
-		OldetpIssuing: hyperspace_oldetp_issuing::{Pallet, Call, Storage, Config} = 33,
-		OldetpBacking: hyperspace_oldetp_backing::{Pallet, Storage, Config<T>} = 34,
-
-		EthereumRelay: hyperspace_ethereum_relay::{Pallet, Call, Storage, Config<T>, Event<T>} = 35,
-		EthereumBacking: hyperspace_ethereum_backing::{Pallet, Call, Storage, Config<T>, Event<T>} = 36,
-		EthereumIssuing: hyperspace_ethereum_issuing::{Pallet, Call, Storage, Config, Event<T>} = 42,
-		EthereumRelayerGame: hyperspace_relayer_game::<Instance0>::{Pallet, Storage} = 37,
-		EthereumRelayAuthorities: hyperspace_relay_authorities::<Instance0>::{Pallet, Call, Storage, Config<T>, Event<T>} = 38,
-
-		OldnaBacking: hyperspace_oldna_backing::{Pallet, Config<T>} = 39,
 
 		EVM: hyperspace_evm::{Pallet, Call, Storage, Config, Event<T>} = 40,
 		Ethereum: dvm_ethereum::{Pallet, Call, Storage, Config, Event, ValidateUnsigned} = 41,
@@ -426,7 +336,6 @@ where
 			frame_system::CheckNonce::<Runtime>::from(nonce),
 			frame_system::CheckWeight::<Runtime>::new(),
 			pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
-			hyperspace_ethereum_relay::CheckEthereumRelayHeaderParcel::<Runtime>::new(),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|e| {
@@ -641,15 +550,6 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl hyperspace_header_mmr_rpc_runtime_api::HeaderMMRApi<Block, Hash> for Runtime {
-		fn gen_proof(
-			block_number_of_member_leaf: u64,
-			block_number_of_last_leaf: u64
-		) -> HeaderMMRRuntimeDispatchInfo<Hash> {
-			HeaderMMR::gen_proof_rpc(block_number_of_member_leaf, block_number_of_last_leaf )
-		}
-	}
-
 	impl hyperspace_staking_rpc_runtime_api::StakingApi<Block, AccountId, Power> for Runtime {
 		fn power_of(account: AccountId) -> StakingRuntimeDispatchInfo<Power> {
 			Staking::power_of_rpc(account)
@@ -804,11 +704,11 @@ pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
-		hyperspace_header_mmr::migration::try_runtime::pre_migrate::<Runtime>()
+		//hyperspace_header_mmr::migration::try_runtime::pre_migrate::<Runtime>()
 	}
 
 	fn on_runtime_upgrade() -> Weight {
-		hyperspace_header_mmr::migration::migrate(b"HeaderMMR");
+		//hyperspace_header_mmr::migration::migrate(b"HeaderMMR");
 
 		RuntimeBlockWeights::get().max_block
 	}

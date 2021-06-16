@@ -805,14 +805,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ckb-merkle-mountain-range"
-version = "0.3.0"
-source = "git+https://github.com/darwinia-network/merkle-mountain-range.git#6ab7d95f407aa345e8f7fd6681a127609ad50e5a"
-dependencies = [
- "cfg-if 0.1.10",
-]
-
-[[package]]
 name = "clang-sys"
 version = "0.29.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1818,9 +1810,9 @@ dependencies = [
 
 [[package]]
 name = "evm-core"
-version = "0.25.0"
+version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b4eea3882c798813a6f92e8855ec1fc3f5ababd8b274cb81d4bedee701b478e"
+checksum = "e1e6640dd44ba663316c7121e0c6fee38000d8249127fd9221bfdc331f75cbfe"
 dependencies = [
  "funty",
  "parity-scale-codec",
@@ -2776,12 +2768,8 @@ dependencies = [
  "futures 0.3.14",
  "hyperspace-balances-rpc",
  "hyperspace-balances-rpc-runtime-api",
- "hyperspace-claims",
  "hyperspace-cli",
- "hyperspace-ethereum-relay",
  "hyperspace-evm",
- "hyperspace-header-mmr-rpc",
- "hyperspace-header-mmr-rpc-runtime-api",
  "hyperspace-primitives",
  "hyperspace-runtime",
  "hyperspace-staking",
@@ -2883,26 +2871,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hyperspace-claims"
-version = "2.2.0"
-dependencies = [
- "array-bytes",
- "frame-support",
- "frame-system",
- "hyperspace-balances",
- "hyperspace-support",
- "libsecp256k1",
- "log",
- "parity-scale-codec",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "hyperspace-cli"
 version = "2.2.0"
 dependencies = [
@@ -2912,155 +2880,6 @@ dependencies = [
  "sc-tracing",
  "serde",
  "toml",
-]
-
-[[package]]
-name = "hyperspace-democracy"
-version = "2.2.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "hex-literal",
- "hyperspace-balances",
- "hyperspace-support",
- "pallet-scheduler",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sp-storage",
- "substrate-test-utils",
-]
-
-[[package]]
-name = "hyperspace-elections-phragmen"
-version = "2.2.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "hex-literal",
- "hyperspace-balances",
- "hyperspace-support",
- "log",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-npos-elections",
- "sp-runtime",
- "sp-std",
- "substrate-test-utils",
-]
-
-[[package]]
-name = "hyperspace-ethereum-backing"
-version = "2.2.0"
-dependencies = [
- "array-bytes",
- "ethabi",
- "ethereum-primitives",
- "frame-election-provider-support",
- "frame-support",
- "frame-system",
- "hyperspace-balances",
- "hyperspace-ethereum-linear-relay",
- "hyperspace-ethereum-relay",
- "hyperspace-relay-primitives",
- "hyperspace-relayer-game",
- "hyperspace-staking",
- "hyperspace-support",
- "log",
- "pallet-session",
- "pallet-timestamp",
- "parity-scale-codec",
- "rlp",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-staking",
- "sp-std",
-]
-
-[[package]]
-name = "hyperspace-ethereum-issuing"
-version = "2.2.0"
-dependencies = [
- "dp-evm",
- "dvm-ethereum",
- "ethereum-primitives",
- "ethereum-types",
- "frame-support",
- "frame-system",
- "hyperspace-ethereum-issuing-contract",
- "hyperspace-evm",
- "hyperspace-evm-precompile",
- "hyperspace-relay-primitives",
- "hyperspace-support",
- "log",
- "parity-scale-codec",
- "serde",
- "serde_json",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "hyperspace-ethereum-issuing-contract"
-version = "2.2.0"
-dependencies = [
- "ethabi",
- "ethereum-types",
-]
-
-[[package]]
-name = "hyperspace-ethereum-linear-relay"
-version = "2.2.0"
-dependencies = [
- "array-bytes",
- "ethereum-primitives",
- "ethereum-types",
- "frame-support",
- "frame-system",
- "hyperspace-balances",
- "hyperspace-support",
- "log",
- "parity-scale-codec",
- "rlp",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "hyperspace-ethereum-relay"
-version = "2.2.0"
-dependencies = [
- "array-bytes",
- "blake2-rfc",
- "ckb-merkle-mountain-range",
- "ethereum-primitives",
- "ethereum-types",
- "frame-support",
- "frame-system",
- "hyperspace-balances",
- "hyperspace-relay-primitives",
- "hyperspace-relayer-game",
- "hyperspace-support",
- "parity-scale-codec",
- "rlp",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -3241,144 +3060,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "hyperspace-header-mmr"
-version = "2.2.0"
-dependencies = [
- "array-bytes",
- "ckb-merkle-mountain-range",
- "frame-support",
- "frame-system",
- "hyperspace-header-mmr-rpc-runtime-api",
- "hyperspace-relay-primitives",
- "hyperspace-support",
- "log",
- "parity-scale-codec",
- "serde",
- "serde_json",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "hyperspace-header-mmr-rpc"
-version = "2.2.0"
-dependencies = [
- "hyperspace-header-mmr-rpc-runtime-api",
- "jsonrpc-core",
- "jsonrpc-core-client",
- "jsonrpc-derive",
- "parity-scale-codec",
- "sp-api",
- "sp-blockchain",
- "sp-runtime",
-]
-
-[[package]]
-name = "hyperspace-header-mmr-rpc-runtime-api"
-version = "2.2.0"
-dependencies = [
- "hyperspace-support",
- "parity-scale-codec",
- "serde",
- "sp-api",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "hyperspace-oldetp-backing"
-version = "2.2.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "serde",
- "sp-runtime",
-]
-
-[[package]]
-name = "hyperspace-oldetp-issuing"
-version = "2.2.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "hyperspace-balances",
- "hyperspace-support",
- "log",
- "parity-scale-codec",
- "paste",
- "serde",
- "serde_json",
- "sp-io",
- "sp-runtime",
-]
-
-[[package]]
-name = "hyperspace-oldna-backing"
-version = "2.2.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "serde",
- "sp-runtime",
-]
-
-[[package]]
 name = "hyperspace-primitives"
 version = "2.2.0"
 dependencies = [
  "sp-core",
  "sp-runtime",
-]
-
-[[package]]
-name = "hyperspace-relay-authorities"
-version = "2.2.0"
-dependencies = [
- "array-bytes",
- "frame-support",
- "frame-system",
- "hyperspace-balances",
- "hyperspace-relay-primitives",
- "hyperspace-support",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "hyperspace-relay-primitives"
-version = "2.2.0"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "hyperspace-relayer-game"
-version = "2.2.0"
-dependencies = [
- "env_logger 0.8.3",
- "frame-support",
- "frame-system",
- "hyperspace-balances",
- "hyperspace-relay-primitives",
- "hyperspace-support",
- "log",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -3396,46 +3082,25 @@ dependencies = [
  "frame-try-runtime",
  "hyperspace-balances",
  "hyperspace-balances-rpc-runtime-api",
- "hyperspace-claims",
- "hyperspace-democracy",
- "hyperspace-elections-phragmen",
- "hyperspace-ethereum-backing",
- "hyperspace-ethereum-issuing",
- "hyperspace-ethereum-relay",
  "hyperspace-evm",
  "hyperspace-evm-precompile",
- "hyperspace-header-mmr",
- "hyperspace-header-mmr-rpc-runtime-api",
- "hyperspace-oldetp-backing",
- "hyperspace-oldetp-issuing",
- "hyperspace-oldna-backing",
  "hyperspace-primitives",
- "hyperspace-relay-authorities",
- "hyperspace-relay-primitives",
- "hyperspace-relayer-game",
  "hyperspace-staking",
  "hyperspace-staking-rpc-runtime-api",
  "hyperspace-support",
- "hyperspace-treasury",
- "hyperspace-vesting",
  "log",
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
- "pallet-collective",
  "pallet-election-provider-multi-phase",
  "pallet-grandpa",
  "pallet-identity",
  "pallet-im-online",
- "pallet-membership",
  "pallet-multisig",
  "pallet-offences",
- "pallet-proxy",
  "pallet-randomness-collective-flip",
- "pallet-recovery",
  "pallet-scheduler",
  "pallet-session",
- "pallet-society",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -3532,42 +3197,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "hyperspace-treasury"
-version = "2.2.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "hyperspace-balances",
- "hyperspace-support",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sp-storage",
-]
-
-[[package]]
-name = "hyperspace-vesting"
-version = "2.2.0"
-dependencies = [
- "enumflags2",
- "frame-support",
- "frame-system",
- "hex-literal",
- "hyperspace-balances",
- "hyperspace-support",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "sp-storage",
 ]
 
 [[package]]
@@ -5277,22 +4906,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-collective"
-version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.10.0#3655f9bb44d75ff205737023760198733a237685"
-dependencies = [
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-election-provider-multi-phase"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.10.0#3655f9bb44d75ff205737023760198733a237685"
@@ -5369,20 +4982,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-membership"
-version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.10.0#3655f9bb44d75ff205737023760198733a237685"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "serde",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-multisig"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.10.0#3655f9bb44d75ff205737023760198733a237685"
@@ -5414,21 +5013,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-proxy"
-version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.10.0#3655f9bb44d75ff205737023760198733a237685"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-randomness-collective-flip"
 version = "3.0.0"
 source = "git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.10.0#3655f9bb44d75ff205737023760198733a237685"
@@ -5437,21 +5021,6 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "safe-mix",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-recovery"
-version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.10.0#3655f9bb44d75ff205737023760198733a237685"
-dependencies = [
- "enumflags2",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "serde",
- "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -5490,20 +5059,6 @@ dependencies = [
  "sp-staking",
  "sp-std",
  "sp-trie",
-]
-
-[[package]]
-name = "pallet-society"
-version = "3.0.0"
-source = "git+https://github.com/darwinia-network/substrate.git?tag=darwinia-v0.10.0#3655f9bb44d75ff205737023760198733a237685"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "rand_chacha 0.2.2",
- "serde",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -9628,7 +9183,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.3.23",
+ "rand 0.7.3",
  "static_assertions",
 ]
 

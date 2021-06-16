@@ -3,12 +3,20 @@ use sp_core::U256;
 // --- hyperspace ---
 use crate::*;
 use hyperspace_evm::{
-	runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated, FeeCalculator,
+	runner::stack::Runner, ConcatAddressMapping, Config, EnsureAddressTruncated, FeeCalculator,IssuingHandler
 };
 use hyperspace_evm_precompile::HyperspacePrecompiles;
 use dvm_ethereum::account_basic::DvmAccountBasic;
 use dvm_ethereum::account_basic::{DnaRemainBalance, EtpRemainBalance};
 
+use sp_runtime::DispatchResult;
+/// EmptyIssuingHandler
+pub struct EmptyIssuingHandler;
+impl IssuingHandler for EmptyIssuingHandler {
+	fn handle(_address: H160, _caller: H160, _input: &[u8]) -> DispatchResult {
+		Ok(())
+	}
+}
 /// Fixed gas price.
 pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
@@ -25,7 +33,6 @@ impl Config for Runtime {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = ();
 	type CallOrigin = EnsureAddressTruncated;
-	type WithdrawOrigin = EnsureAddressTruncated;
 	type AddressMapping = ConcatAddressMapping;
 	type EtpCurrency = Etp;
 	type DnaCurrency = Dna;
@@ -36,5 +43,5 @@ impl Config for Runtime {
 	type EtpAccountBasic = DvmAccountBasic<Self, Etp, EtpRemainBalance>;
 	type DnaAccountBasic = DvmAccountBasic<Self, Dna, DnaRemainBalance>;
 	type Runner = Runner<Self>;
-	type IssuingHandler = EthereumIssuing;
+	type IssuingHandler = EmptyIssuingHandler;
 }

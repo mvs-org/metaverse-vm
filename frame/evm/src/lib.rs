@@ -156,11 +156,8 @@ pub trait Config: frame_system::Config + pallet_timestamp::Config {
 	type FeeCalculator: FeeCalculator;
 	/// Maps Ethereum gas to Substrate weight.
 	type GasWeightMapping: GasWeightMapping;
-
 	/// Allow the origin to call on behalf of given address.
 	type CallOrigin: EnsureAddressOrigin<Self::Origin>;
-	/// Allow the origin to withdraw on behalf of given address.
-	type WithdrawOrigin: EnsureAddressOrigin<Self::Origin, Success = Self::AccountId>;
 
 	/// Mapping from address to account id.
 	type AddressMapping: AddressMapping<Self::AccountId>;

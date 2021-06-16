@@ -409,8 +409,6 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T, I = ()> {
-		/// Vesting balance too high to send value
-		VestingBalance,
 		/// Account liquidity restrictions prevent withdrawal
 		LiquidityRestrictions,
 		/// Got an overflow after adding
@@ -421,8 +419,6 @@ pub mod pallet {
 		ExistentialDeposit,
 		/// Transfer/payment would kill account
 		KeepAlive,
-		/// A vesting schedule already exists for this account
-		ExistingVestingSchedule,
 		/// Beneficiary account must pre-exist
 		DeadAccount,
 		/// Lock - POISONED
@@ -914,7 +910,7 @@ pub mod pallet {
 		}
 
 		// Ensure that an account can withdraw from their free balance given any existing withdrawal
-		// restrictions like locks and vesting balance.
+		// restrictions like locks.
 		// Is a no-op if amount to be withdrawn is zero.
 		//
 		// # <weight>
@@ -1641,13 +1637,11 @@ pub mod migration {
 			};
 		}
 
-		generate_storage_types!("Instance0HyperspaceBalances", "TotalIssuance", OldEtpTotalIssuance => Value<()>);
 		generate_storage_types!("Balances", "TotalIssuance", NewEtpTotalIssuance => Value<()>);
 		generate_storage_types!("Instance1HyperspaceBalances", "TotalIssuance", OldDnaTotalIssuance => Value<()>);
 		generate_storage_types!("Dna", "TotalIssuance", NewDnaTotalIssuance => Value<()>);
 
 		pub fn pre_migrate() -> Result<(), &'static str> {
-			assert!(OldEtpTotalIssuance::exists());
 			assert!(!NewEtpTotalIssuance::exists());
 			assert!(OldDnaTotalIssuance::exists());
 			assert!(!NewDnaTotalIssuance::exists());
@@ -1658,7 +1652,6 @@ pub mod migration {
 			log::info!("Migrating `Instance1Hyperspace` to `Dna`...");
 			migration::migrate(b"Instance1HyperspaceBalances", b"Dna");
 
-			assert!(!OldEtpTotalIssuance::exists());
 			assert!(NewEtpTotalIssuance::exists());
 			assert!(!OldDnaTotalIssuance::exists());
 			assert!(NewDnaTotalIssuance::exists());
